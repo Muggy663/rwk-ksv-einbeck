@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,8 +39,8 @@ export default function TermineVerwaltungPage() {
     const loadEvents = async () => {
       setIsLoading(true);
       try {
-        // Auto-Cleanup via API (Admin-Rechte)
-        fetch('/api/cleanup-events').catch(() => {});
+        // Auto-Cleanup via API (nur für angemeldete Nutzer)
+        import('@/lib/auth/authFetch').then(({ authFetch }) => authFetch('/api/cleanup-events').catch(() => {}));
         
         const eventsData = await fetchEvents();
         const cutoff = new Date();

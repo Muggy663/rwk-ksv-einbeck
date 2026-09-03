@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, ChevronDown, BookOpen } from "lucide-react";
+import { BookOpen } from "lucide-react";
 
 interface TocItem {
   id: string;
@@ -17,7 +17,6 @@ interface HandbookTocProps {
 }
 
 export function HandbookToc({ activeTab }: HandbookTocProps) {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
 
   useEffect(() => {
@@ -43,16 +42,6 @@ export function HandbookToc({ activeTab }: HandbookTocProps) {
     // Warte kurz, bis DOM aktualisiert ist
     setTimeout(generateToc, 100);
   }, [activeTab]);
-
-  const toggleSection = (sectionId: string) => {
-    const newExpanded = new Set(expandedSections);
-    if (newExpanded.has(sectionId)) {
-      newExpanded.delete(sectionId);
-    } else {
-      newExpanded.add(sectionId);
-    }
-    setExpandedSections(newExpanded);
-  };
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);

@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CheckCircle, ChevronRight, ChevronLeft, X, Users, ListChecks, Trophy, User } from 'lucide-react';
+import { CheckCircle, ChevronRight, ChevronLeft, Users, ListChecks, Trophy, User } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { getMemberPermissions } from '@/lib/permissions/memberPermissions';
 
 interface OnboardingStep {
   title: string;
@@ -20,11 +20,11 @@ interface OnboardingStep {
 const ONBOARDING_COMPLETED_KEY_PREFIX = 'rwk-onboarding-completed-';
 
 export function OnboardingWizard() {
-  const { user, userPermissions } = useAuth();
+  const { user, userAppPermissions } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+  const [, setHasSeenOnboarding] = useState(false);
   const [storageError, setStorageError] = useState(false);
 
   // Überprüfen, ob der Benutzer das Onboarding bereits gesehen hat
@@ -46,9 +46,12 @@ export function OnboardingWizard() {
     }
   }, [user]);
 
-  const role = userPermissions?.role || '';
-  const isVereinsvertreter = role === 'vereinsvertreter';
-  const isMannschaftsfuehrer = role === 'mannschaftsfuehrer';
+  const role = userAppPermissions?.role || '';
+  // Verwaltungs-Schritte (Mannschaften + Mitglieder) für alle, die tatsächlich
+  // verwalten dürfen: Sportleiter, KM-Orga und Admin (über die zentrale
+  // Rechte-Logik) sowie die Legacy-Rolle "vereinsvertreter" für Bestandsnutzer.
+  const memberPerms = getMemberPermissions(userAppPermissions, user?.email);
+  const canManage = memberPerms.canEdit || role === 'vereinsvertreter';
 
   // Gemeinsame Schritte für beide Rollen
   const commonSteps: OnboardingStep[] = [
@@ -98,15 +101,15 @@ export function OnboardingWizard() {
     }
   ];
 
-  // Spezifische Schritte für Vereinsvertreter
-  const vereinsvertreterSteps: OnboardingStep[] = [
+  // Verwaltungs-Schritte (für Sportleiter, KM-Orga, Admin und Legacy-Vereinsvertreter)
+  const verwaltungSteps: OnboardingStep[] = [
     {
       title: "Mannschaftsverwaltung",
       description: "So verwalten Sie Ihre Mannschaften",
       icon: <Users className="h-8 w-8 text-primary" />,
       content: (
         <div className="space-y-4">
-          <p>Als Vereinsvertreter können Sie Mannschaften für Ihren Verein verwalten:</p>
+          <p>Unter "Meine Mannschaften" können Sie die Mannschaften Ihres Vereins verwalten:</p>
           <ol className="list-decimal list-inside space-y-2">
             <li>Unter "Meine Mannschaften" können Sie neue Mannschaften anlegen</li>
             <li>Wählen Sie die Saison und geben Sie einen Namen ein</li>
@@ -117,16 +120,16 @@ export function OnboardingWizard() {
       )
     },
     {
-      title: "Schützenverwaltung",
-      description: "So verwalten Sie Ihre Schützen",
+      title: "Mitgliederverwaltung",
+      description: "So verwalten Sie Ihre Mitglieder",
       icon: <User className="h-8 w-8 text-primary" />,
       content: (
         <div className="space-y-4">
-          <p>Als Vereinsvertreter können Sie Schützen für Ihren Verein verwalten:</p>
+          <p>Mitglieder werden zentral unter „Mitglieder" gepflegt – eine gemeinsame Liste für Rundenwettkampf und Kreismeisterschaft:</p>
           <ol className="list-decimal list-inside space-y-2">
-            <li>Unter "Meine Schützen" sehen Sie alle Schützen Ihres Vereins</li>
-            <li>Sie können neue Schützen anlegen (Name, Vorname, Geschlecht)</li>
-            <li>Bestehende Schützen können bearbeitet oder gelöscht werden</li>
+            <li>Unter "Mitglieder" sehen Sie alle Mitglieder Ihrer Vereine</li>
+            <li>Neue Mitglieder anlegen (Vorname, Nachname, Geschlecht, Verein; optional Mitgliedsnummer und Kontaktdaten)</li>
+            <li>Bestehende Mitglieder bearbeiten oder entfernen (dabei werden sie deaktiviert; Ergebnisse bleiben erhalten)</li>
             <li>Die Zuordnung zu Mannschaften erfolgt in der Mannschaftsverwaltung</li>
           </ol>
         </div>
@@ -134,9 +137,9 @@ export function OnboardingWizard() {
     }
   ];
 
-  // Zusammenstellen der Schritte basierend auf der Rolle
-  const steps = isVereinsvertreter 
-    ? [...commonSteps, ...vereinsvertreterSteps] 
+  // Zusammenstellen der Schritte basierend auf den tatsächlichen Rechten
+  const steps = canManage 
+    ? [...commonSteps, ...verwaltungSteps] 
     : commonSteps;
 
   const handleComplete = () => {
@@ -177,7 +180,7 @@ export function OnboardingWizard() {
     toast({
       title: "Hinweis",
       description: "Ihr Browser unterstützt keine lokale Speicherung. Die Einführung wird bei jedem Besuch angezeigt.",
-      variant: "warning",
+      variant: "destructive",
     });
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -278,7 +278,7 @@ export default function KMAdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-2">
-              <Link href="/km-orga/mitglieder">
+              <Link href="/mitglieder">
                 <Button variant="outline" className="w-full h-12 text-left justify-start">👥 Alle Mitglieder</Button>
               </Link>
               <Link href="/km-orga/disziplinen">
@@ -297,7 +297,7 @@ export default function KMAdminDashboard() {
                 <Button variant="outline" className="w-full h-12 text-left justify-start">🔑 Passwort ändern</Button>
               </Link>
               {!isOrganisator && (
-                <Link href="/km-orga/mitglieder/import">
+                <Link href="/mitglieder/import">
                   <Button variant="outline" className="w-full h-12 text-left justify-start">📥 Mitglieder importieren</Button>
                 </Link>
               )}

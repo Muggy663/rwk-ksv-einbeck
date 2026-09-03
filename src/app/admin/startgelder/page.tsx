@@ -1,7 +1,7 @@
 // src/app/admin/startgelder/page.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -84,10 +84,11 @@ export default function StartgelderPage() {
       const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
       if (!selectedSeason) return;
 
-      // Lade alle Teams der Saison
+      // Lade alle Teams der Saison (nach seasonId, nicht nach Jahr —
+      // sonst werden Teams anderer Saisons/Disziplinen desselben Jahres mitgezählt)
       const teamsQuery = query(
         collection(db, 'rwk_teams'),
-        where('competitionYear', '==', selectedSeason.competitionYear)
+        where('seasonId', '==', selectedSeason.id)
       );
       const teamsSnapshot = await getDocs(teamsQuery);
       const teams = teamsSnapshot.docs.map(doc => ({

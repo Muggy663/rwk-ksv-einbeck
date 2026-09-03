@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Download, Upload, FileText, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { David21Service } from '@/lib/services/david21-service';
+import { authFetch } from '@/lib/auth/authFetch';
 
 export default function David21Page() {
   const router = useRouter();
@@ -43,9 +44,9 @@ export default function David21Page() {
         const startlistenData = startlistenSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        })) as Array<{ id: string; [key: string]: any }>;
         
-        setStartlisten(startlistenData.sort((a, b) => new Date(b.erstellt?.toDate?.() || b.erstellt) - new Date(a.erstellt?.toDate?.() || a.erstellt)));
+        setStartlisten(startlistenData.sort((a, b) => (new Date(b.erstellt?.toDate?.() || b.erstellt) as any) - (new Date(a.erstellt?.toDate?.() || a.erstellt) as any)));
       } catch (error) {
         logError('Fehler beim Laden der Startlisten:', error);
       }
@@ -110,7 +111,7 @@ export default function David21Page() {
         startzeit: exportData.startzeit
       };
 
-      const response = await fetch('/api/km/david21-export', {
+      const response = await authFetch('/api/km/david21-export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(exportPayload)
@@ -157,7 +158,7 @@ export default function David21Page() {
       formData.append('file', importFile);
       formData.append('saisonId', importData.saisonId);
 
-      const response = await fetch('/api/km/david21-import', {
+      const response = await authFetch('/api/km/david21-import', {
         method: 'POST',
         body: formData
       });
@@ -222,7 +223,7 @@ export default function David21Page() {
                     options={startlisten.map(s => {
                       const datum = s.konfiguration?.datum ? new Date(s.konfiguration.datum).toLocaleDateString('de-DE') : 'Kein Datum';
                       const starterCount = s.startliste?.length || 0;
-                      const disziplinen = [...new Set(s.startliste?.map((starter: any) => starter.disziplin).filter(Boolean))] || [];
+                      const disziplinen = [...new Set(s.startliste?.map((starter: any) => starter.disziplin).filter(Boolean))];
                       const austragungsort = s.konfiguration?.austragungsort || 'Unbekannt';
                       
                       return {

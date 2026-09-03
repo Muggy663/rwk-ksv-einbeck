@@ -59,7 +59,7 @@ export async function downloadPDFSafari(blob: Blob, fileName: string): Promise<v
         }, 1000);
         
       } catch (downloadError) {
-        logWarn('Safari Download fehlgeschlagen:', downloadError);
+        logWarn('Safari Download fehlgeschlagen:', downloadError instanceof Error ? downloadError.message : String(downloadError));
         
         // Fallback: Öffne in neuem Tab
         window.open(url, '_blank');
@@ -78,7 +78,7 @@ export async function downloadPDFSafari(blob: Blob, fileName: string): Promise<v
 /**
  * Zeigt Safari-spezifische Anweisungen für PDF-Probleme
  */
-export function showSafariPDFInstructions(): void {
+export function showSafariPDFInstructions(): boolean {
   const instructions = `
 Safari PDF-Hinweise:
 
@@ -128,7 +128,7 @@ export async function generateSimplePDFForSafari(
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
   let xPos = 14;
-  headers.forEach((header, index) => {
+  headers.forEach((header) => {
     doc.text(header, xPos, yPos);
     xPos += 35; // Feste Spaltenbreite für Safari
   });
@@ -137,14 +137,14 @@ export async function generateSimplePDFForSafari(
   doc.setFont('helvetica', 'normal');
   yPos += 8;
   
-  data.forEach((row, rowIndex) => {
+  data.forEach((row) => {
     if (yPos > 190) { // Neue Seite bei Bedarf
       doc.addPage();
       yPos = 20;
     }
     
     xPos = 14;
-    headers.forEach((header, colIndex) => {
+    headers.forEach((header) => {
       const cellValue = row[header] || '-';
       doc.text(String(cellValue), xPos, yPos);
       xPos += 35;

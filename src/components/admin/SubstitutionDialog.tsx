@@ -1,7 +1,7 @@
 // src/components/admin/SubstitutionDialog.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -129,7 +129,7 @@ export function SubstitutionDialog({
       const substitution: Omit<TeamSubstitution, 'id'> = {
         teamId: team.id,
         teamName: team.name,
-        leagueId: team.leagueId,
+        leagueId: team.leagueId || '',
         competitionYear: team.competitionYear,
         originalShooterId: selectedOriginalShooter,
         originalShooterName: originalShooter.name,

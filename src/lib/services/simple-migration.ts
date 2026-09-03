@@ -44,7 +44,7 @@ export async function simpleMigration() {
       logDebug(`Migriert: ${migrated}`);
     }
     
-    logDebug('Migration abgeschlossen:', migrated, 'Mitglieder');
+    logDebug(`Migration abgeschlossen: ${migrated} Mitglieder`);
     return migrated;
     
   } catch (error) {

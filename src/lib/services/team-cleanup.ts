@@ -1,6 +1,6 @@
 import { db } from '@/lib/firebase/config';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
-import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, writeBatch, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 /**
@@ -12,7 +12,7 @@ export async function cleanupDeletedTeamReferences(teamId: string) {
     // 1. Entferne Referenzen in rwk_scores (alle Collections durchsuchen)
     // Da wir nicht wissen, in welcher Collection die Scores sind, müssen wir alle durchsuchen
     const currentYear = new Date().getFullYear();
-    const disciplines = ['KKG', 'KKP', 'LGA', 'LGS', 'LP'];
+    const disciplines: import('@/types/rwk').FirestoreLeagueSpecificDiscipline[] = ['KKG', 'KKP', 'LGA', 'LGS', 'LP'];
     
     const batch = writeBatch(db);
     
@@ -28,7 +28,7 @@ export async function cleanupDeletedTeamReferences(teamId: string) {
           batch.delete(scoreDoc.ref);
         });
       } catch (error) {
-        logWarn(`Fehler beim Durchsuchen von ${discipline} Collection:`, error);
+        logWarn(`Fehler beim Durchsuchen von ${discipline} Collection:`, error instanceof Error ? error.message : String(error));
       }
     }
     
@@ -59,7 +59,7 @@ export async function cleanupDeletedTeamReferences(teamId: string) {
  * @param clubId - ID des Vereins
  * @param userId - ID des Benutzers, der die Bereinigung durchführt (optional)
  */
-export async function cleanupAllDeletedTeamReferencesForClub(clubId: string, userId?: string) {
+export async function cleanupAllDeletedTeamReferencesForClub(clubId: string, _userId?: string) {
   try {
     // Hole alle aktiven Mannschaften des Vereins
     const teamsRef = collection(db, 'rwk_teams');
@@ -87,7 +87,7 @@ export async function cleanupAllDeletedTeamReferencesForClub(clubId: string, use
     
     // Hole alle Ergebnisse für den Verein aus allen Collections
     const currentYear = new Date().getFullYear();
-    const disciplines = ['KKG', 'KKP', 'LGA', 'LGS', 'LP'];
+    const disciplines: import('@/types/rwk').FirestoreLeagueSpecificDiscipline[] = ['KKG', 'KKP', 'LGA', 'LGS', 'LP'];
     
     for (const discipline of disciplines) {
       try {
@@ -105,7 +105,7 @@ export async function cleanupAllDeletedTeamReferencesForClub(clubId: string, use
           }
         });
       } catch (error) {
-        logWarn(`Fehler beim Durchsuchen von ${discipline} Collection:`, error);
+        logWarn(`Fehler beim Durchsuchen von ${discipline} Collection:`, error instanceof Error ? error.message : String(error));
       }
     }
     

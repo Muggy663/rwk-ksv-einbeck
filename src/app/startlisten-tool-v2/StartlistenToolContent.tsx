@@ -6,25 +6,26 @@ import { getDocs, collection, query, orderBy, addDoc } from 'firebase/firestore'
 import { db } from '@/lib/firebase/config';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { logInfo, logWarn, logError, getErrorMessage } from '@/lib/utils/secure-logger';
+import { authFetch } from '@/lib/auth/authFetch';
 
 export function StartlistenToolV2Content() {
   const searchParams = useSearchParams();
   const configId = searchParams.get('id');
 
-  const [saisons, setSaisons] = useState([]);
+  const [saisons, setSaisons] = useState<Array<{ id: string; jahr?: number; name?: string; [key: string]: any }>>([]);
   const [selectedSaison, setSelectedSaison] = useState('');
-  const [meldungen, setMeldungen] = useState([]);
+  const [meldungen, setMeldungen] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDisziplinen, setSelectedDisziplinen] = useState([]);
-  const [staende, setStaende] = useState([1,2,3,4,5,6,7,8,9]);
+  const [selectedDisziplinen, setSelectedDisziplinen] = useState<string[]>([]);
+  const [staende, setStaende] = useState<number[]>([1,2,3,4,5,6,7,8,9]);
   const [startzeit, setStartzeit] = useState('14:00');
   const [durchgang, setDurchgang] = useState(50);
   const [wechsel, setWechsel] = useState(10);
-  const [vereinsLimit, setVereinsLimit] = useState(null);
+  const [vereinsLimit, setVereinsLimit] = useState<number | null>(null);
   const [datum, setDatum] = useState('');
   const [austragungsort, setAustragungsort] = useState('');
   const [geminiLoading, setGeminiLoading] = useState(false);
-  const [geminiResult, setGeminiResult] = useState(null);
+  const [geminiResult, setGeminiResult] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -48,7 +49,7 @@ export function StartlistenToolV2Content() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [dummyRes1, dummyRes2] = await Promise.all([
+        await Promise.all([
           Promise.resolve({ ok: true }),
           Promise.resolve({ ok: true })
         ]);
@@ -56,20 +57,20 @@ export function StartlistenToolV2Content() {
         const shootersSnapshot = await getDocs(
           query(collection(db, 'shooters'), orderBy('lastName', 'asc'))
         );
-        const schuetzenMap = {};
+        const schuetzenMap: Record<string, any> = {};
         shootersSnapshot.docs.forEach(doc => {
           schuetzenMap[doc.id] = { id: doc.id, ...doc.data() };
         });
         
         // Lade Disziplinen über die gleiche API wie KM-Orga
         const disziplinenRes = await fetch('/api/km/disziplinen');
-        const disziplinenMap = {};
+        const disziplinenMap: Record<string, any> = {};
         
         if (disziplinenRes.ok) {
           const disziplinenData = await disziplinenRes.json();
           const alleDisziplinen = disziplinenData.data || [];
           
-          alleDisziplinen.forEach(disziplin => {
+          alleDisziplinen.forEach((disziplin: any) => {
             disziplinenMap[disziplin.id] = {
               name: disziplin.name,
               spoNummer: disziplin.spoNummer || '1.41'
@@ -84,7 +85,7 @@ export function StartlistenToolV2Content() {
         
         // Lade Vereine direkt aus Firebase
         const clubsSnapshot = await getDocs(collection(db, 'clubs'));
-        const vereineMap = {};
+        const vereineMap: Record<string, string> = {};
         clubsSnapshot.docs.forEach(doc => {
           const data = doc.data();
           vereineMap[doc.id] = data.name;
@@ -92,8 +93,8 @@ export function StartlistenToolV2Content() {
         logInfo('DEBUG: Vereine aus Firebase:', { data: Object.keys(vereineMap).length });
         
         // Lade Meldungen über die gleiche API wie KM-Orga
-        const meldungenRes = await fetch(`/api/km/meldungen?saison=${selectedSaison}`);
-        let saisonMeldungen = [];
+        const meldungenRes = await authFetch(`/api/km/meldungen?saison=${selectedSaison}`);
+        let saisonMeldungen: any[] = [];
         
         if (meldungenRes.ok) {
           const meldungenData = await meldungenRes.json();
@@ -114,7 +115,7 @@ export function StartlistenToolV2Content() {
             if (!schuetze || !disziplinName) return null;
             
             // Berechne Altersklasse wie in KM-Orga
-            const berechneAltersklasse = (schuetze, disziplin, selectedSaison) => {
+            const berechneAltersklasse = (schuetze: any, disziplin: any, selectedSaison: any) => {
               if (!schuetze?.birthYear) return 'Unbekannt';
               
               const currentSaison = saisons.find(s => s.id === selectedSaison);
@@ -146,12 +147,14 @@ export function StartlistenToolV2Content() {
             };
             
             const disziplinData = disziplinenMap[data.disziplinId];
-            const berechnetAltersklasse = berechneAltersklasse(schuetze, disziplinData, selectedSaison);
+            // Bevorzugt die bei der Meldung gespeicherte Altersklasse (Single Source
+            // of Truth). Nur als Fallback (Alt-Meldungen ohne Feld) lokal berechnen.
+            const berechnetAltersklasse = data.altersklasse || berechneAltersklasse(schuetze, disziplinData, selectedSaison);
             
             return {
               id: data.id,
               name: schuetze?.name || `${schuetze?.firstName || ''} ${schuetze?.lastName || ''}`.trim() || 'Unbekannt',
-              verein: vereineMap[getShooterClubId(schuetze)] || 'Unbekannt',
+              verein: vereineMap[getShooterClubId(schuetze) || ''] || 'Unbekannt',
               disziplin: disziplinName,
               altersklasse: berechnetAltersklasse,
               anmerkung: data.anmerkung || '',
@@ -194,7 +197,7 @@ export function StartlistenToolV2Content() {
   const getAlleDisziplinen = (): Record<string, typeof meldungen> => {
     const nachDisziplin: Record<string, typeof meldungen> = {};
     meldungen.forEach(m => {
-      const disziplinName = m.disziplin;
+      const disziplinName = m.disziplin || '';
       if (!nachDisziplin[disziplinName]) {
         nachDisziplin[disziplinName] = [];
       }
@@ -243,7 +246,7 @@ export function StartlistenToolV2Content() {
       if (result.success) {
         setGeminiResult(result.data);
         if (result.data.startliste) {
-          const mappedStartliste = result.data.startliste.map((starter, index) => {
+          const mappedStartliste = result.data.startliste.map((starter: any, index: number) => {
             const originalMeldung = gefilterteMeldungen[index];
             
             return {
@@ -438,7 +441,7 @@ export function StartlistenToolV2Content() {
                   <button
                     onClick={() => {
                       const lmDisziplinen = Object.entries(getAlleDisziplinen())
-                        .filter(([disziplin, meldungenListe]) => 
+                        .filter(([_disziplin, meldungenListe]) => 
                           meldungenListe.some(m => m.lmTeilnahme === true)
                         )
                         .map(([disziplin]) => disziplin);
@@ -540,7 +543,7 @@ export function StartlistenToolV2Content() {
                 const belegteZeiten = new Set();
                 
                 // Sammle alle belegten Zeit/Stand Kombinationen
-                geminiResult.startliste.forEach((starter, index) => {
+                geminiResult.startliste.forEach((starter: any, index: number) => {
                   const key = `${starter.startzeit}_${starter.stand}`;
                   belegteZeiten.add(key);
                   if (!zeitStandMap[key]) zeitStandMap[key] = [];
@@ -548,7 +551,7 @@ export function StartlistenToolV2Content() {
                 });
                 
                 // Finde freie Alternativen
-                const findeFreieAlternativen = (konfliktZeit, konfliktStand) => {
+                const findeFreieAlternativen = (konfliktZeit: any, konfliktStand: any) => {
                   const alternativen = [];
                   const startZeit = new Date(`2000-01-01T${startzeit}:00`);
                   const durchgangMin = durchgang || 50;
@@ -591,7 +594,7 @@ export function StartlistenToolV2Content() {
                     konflikte.push({
                       zeit,
                       stand,
-                      starter: starter.map(s => s.schuetzeName || s.name),
+                      starter: starter.map(s => s.schuetzeName || s.name).filter((v): v is string => Boolean(v)),
                       indices: starter.map(s => s.index),
                       alternativen
                     });
@@ -629,7 +632,7 @@ export function StartlistenToolV2Content() {
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Schütze manuell hinzufügen ({meldungen
                       .filter(m => 
-                        !geminiResult?.startliste?.some(s => (s.name || s.schuetzeName) === m.name && s.disziplin === m.disziplin) &&
+                        !geminiResult?.startliste?.some((s: any) => (s.name || s.schuetzeName) === m.name && s.disziplin === m.disziplin) &&
                         (searchTerm === '' || 
                          m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          m.verein.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -651,7 +654,7 @@ export function StartlistenToolV2Content() {
                   <div className="grid grid-cols-2 gap-2">
                     {meldungen
                       .filter(m => 
-                        !geminiResult?.startliste?.some(s => (s.name || s.schuetzeName) === m.name && s.disziplin === m.disziplin) &&
+                        !geminiResult?.startliste?.some((s: any) => (s.name || s.schuetzeName) === m.name && s.disziplin === m.disziplin) &&
                         (searchTerm === '' || 
                          m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          m.verein.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -664,13 +667,13 @@ export function StartlistenToolV2Content() {
                           onClick={() => {
                             // Finde den letzten Durchgang und nächsten freien Stand
                             const aktuelleStartliste = geminiResult?.startliste || [];
-                            const maxDurchgang = Math.max(...aktuelleStartliste.map(s => s.durchgang || 1), 0);
+                            const maxDurchgang = Math.max(...aktuelleStartliste.map((s: any) => s.durchgang || 1), 0);
                             
                             // Sammle alle belegten Zeit/Stand Kombinationen im letzten Durchgang
                             const belegteSlots = new Set();
                             aktuelleStartliste
-                              .filter(s => s.durchgang === maxDurchgang)
-                              .forEach(s => belegteSlots.add(`${s.startzeit}_${s.stand}`));
+                              .filter((s: any) => s.durchgang === maxDurchgang)
+                              .forEach((s: any) => belegteSlots.add(`${s.startzeit}_${s.stand}`));
                             
                             // Finde nächsten freien Stand zur Startzeit
                             let freierStand = null;
@@ -722,21 +725,21 @@ export function StartlistenToolV2Content() {
               <div className="overflow-x-auto">
                 <div className="space-y-1 max-h-[600px] overflow-y-auto">
                   {geminiResult.startliste
-                    .filter(starter => starter.name && starter.name !== 'EMPTY' && starter.name !== 'Leerer Stand')
-                    .sort((a, b) => {
+                    .filter((starter: any) => starter.name && starter.name !== 'EMPTY' && starter.name !== 'Leerer Stand')
+                    .sort((a: any, b: any) => {
                       if (a.durchgang !== b.durchgang) return (a.durchgang || 1) - (b.durchgang || 1);
                       const standA = parseInt(a.stand || '0');
                       const standB = parseInt(b.stand || '0');
                       if (standA !== standB) return standA - standB;
                       return (a.startzeit || '').localeCompare(b.startzeit || '');
                     })
-                    .map((starter, index, sortedArray) => {
+                    .map((starter: any, index: number, sortedArray: any) => {
                       const echteMeldung = meldungen.find(m => 
                         m.name === (starter.schuetzeName || starter.name) && 
                         m.disziplin === starter.disziplin
                       );
                       
-                      const hatKonflikt = geminiResult.startliste.some((other, otherIndex) => 
+                      const hatKonflikt = geminiResult.startliste.some((other: any, otherIndex: number) => 
                         otherIndex !== index && 
                         other.startzeit === starter.startzeit && 
                         other.stand === starter.stand
@@ -858,7 +861,7 @@ export function StartlistenToolV2Content() {
                                 const neueStartzeit = starter.startzeit;
                                 
                                 // Prüfe sofort auf Konflikte
-                                const konflikt = geminiResult.startliste.some(s => 
+                                const konflikt = geminiResult.startliste.some((s: any) => 
                                   s !== starter && s.startzeit === neueStartzeit && s.stand === neuerStand
                                 );
                                 
@@ -875,7 +878,7 @@ export function StartlistenToolV2Content() {
                                     // Finde automatisch freien Stand
                                     let freierStand = null;
                                     for (const stand of staende) {
-                                      const istFrei = !geminiResult.startliste.some(s => 
+                                      const istFrei = !geminiResult.startliste.some((s: any) => 
                                         s !== starter && s.startzeit === neueStartzeit && s.stand === stand.toString()
                                       );
                                       if (istFrei) {
@@ -887,7 +890,7 @@ export function StartlistenToolV2Content() {
                                     const finalerStand = freierStand || neuerStand;
                                     const neuerDurchgang = Math.floor((parseInt(finalerStand) - 1) / staende.length) + 1;
                                     
-                                    const updatedStartliste = geminiResult.startliste.map(s => 
+                                    const updatedStartliste = geminiResult.startliste.map((s: any) => 
                                       s === starter ? {...s, stand: finalerStand, durchgang: neuerDurchgang} : s
                                     );
                                     setGeminiResult({...geminiResult, startliste: updatedStartliste});
@@ -903,7 +906,7 @@ export function StartlistenToolV2Content() {
                                 
                                 // Kein Konflikt - normale Verarbeitung
                                 const neuerDurchgang = Math.floor((parseInt(neuerStand) - 1) / staende.length) + 1;
-                                const updatedStartliste = geminiResult.startliste.map(s => 
+                                const updatedStartliste = geminiResult.startliste.map((s: any) => 
                                   s === starter ? {...s, stand: neuerStand, durchgang: neuerDurchgang} : s
                                 );
                                 setGeminiResult({...geminiResult, startliste: updatedStartliste});
@@ -914,7 +917,7 @@ export function StartlistenToolV2Content() {
                             >
                               {staende.map(stand => {
                                 // Zeige ob Stand zur aktuellen Zeit belegt ist
-                                const istBelegt = geminiResult.startliste.some(s => 
+                                const istBelegt = geminiResult.startliste.some((s: any) => 
                                   s !== starter && s.startzeit === starter.startzeit && s.stand === stand.toString()
                                 );
                                 return (
@@ -934,7 +937,6 @@ export function StartlistenToolV2Content() {
                               value={starter.startzeit}
                               onChange={(e) => {
                                 const neueStartzeit = e.target.value;
-                                const aktuellerStand = parseInt(starter.stand);
                                 
                                 // Berechne Durchgang basierend auf Zeitdifferenz zur Startzeit
                                 const [startStunden, startMinuten] = startzeit.split(':').map(Number);
@@ -949,7 +951,7 @@ export function StartlistenToolV2Content() {
                                 let neuerDurchgang = Math.max(1, Math.floor(zeitDifferenz / durchgangIntervall) + 1);
                                 
                                 // Prüfe Konflikte: Wenn Stand bereits zur neuen Zeit belegt
-                                const konflikt = geminiResult.startliste.some(s => 
+                                const konflikt = geminiResult.startliste.some((s: any) => 
                                   s !== starter && s.startzeit === neueStartzeit && s.stand === starter.stand
                                 );
                                 
@@ -957,7 +959,7 @@ export function StartlistenToolV2Content() {
                                   // Finde nächsten freien Stand zur gleichen Zeit
                                   let freierStand = null;
                                   for (const stand of staende) {
-                                    const istBelegt = geminiResult.startliste.some(s => 
+                                    const istBelegt = geminiResult.startliste.some((s: any) => 
                                       s !== starter && s.startzeit === neueStartzeit && s.stand === stand.toString()
                                     );
                                     if (!istBelegt) {
@@ -966,7 +968,7 @@ export function StartlistenToolV2Content() {
                                     }
                                   }
                                   
-                                  const updatedStartliste = geminiResult.startliste.map(s => 
+                                  const updatedStartliste = geminiResult.startliste.map((s: any) => 
                                     s === starter ? {
                                       ...s, 
                                       startzeit: neueStartzeit, 
@@ -983,7 +985,7 @@ export function StartlistenToolV2Content() {
                                     }, 100);
                                   }
                                 } else {
-                                  const updatedStartliste = geminiResult.startliste.map(s => 
+                                  const updatedStartliste = geminiResult.startliste.map((s: any) => 
                                     s === starter ? {...s, startzeit: neueStartzeit, durchgang: neuerDurchgang} : s
                                   );
                                   setGeminiResult({...geminiResult, startliste: updatedStartliste});
@@ -997,7 +999,7 @@ export function StartlistenToolV2Content() {
                               type="number"
                               value={starter.durchgang}
                               onChange={(e) => {
-                                const updatedStartliste = geminiResult.startliste.map(s => 
+                                const updatedStartliste = geminiResult.startliste.map((s: any) => 
                                   s === starter ? {...s, durchgang: parseInt(e.target.value) || 1} : s
                                 );
                                 setGeminiResult({...geminiResult, startliste: updatedStartliste});
@@ -1012,7 +1014,7 @@ export function StartlistenToolV2Content() {
                                 type="text"
                                 value={echteMeldung?.anmerkung || ''}
                                 onChange={(e) => {
-                                  const updatedStartliste = geminiResult.startliste.map(s => 
+                                  const updatedStartliste = geminiResult.startliste.map((s: any) => 
                                     s === starter ? {...s, anmerkung: e.target.value} : s
                                   );
                                   setGeminiResult({...geminiResult, startliste: updatedStartliste});
@@ -1024,7 +1026,7 @@ export function StartlistenToolV2Content() {
                                 type="checkbox"
                                 checked={starter.lmTeilnahme === true || echteMeldung?.lmTeilnahme === true}
                                 onChange={(e) => {
-                                  const updatedStartliste = geminiResult.startliste.map(s => 
+                                  const updatedStartliste = geminiResult.startliste.map((s: any) => 
                                     s === starter ? {...s, lmTeilnahme: e.target.checked} : s
                                   );
                                   setGeminiResult({...geminiResult, startliste: updatedStartliste});
@@ -1039,7 +1041,7 @@ export function StartlistenToolV2Content() {
                             <button
                               onClick={() => {
                                 if (confirm(`${starter.name || starter.schuetzeName} aus der Startliste entfernen?`)) {
-                                  const updatedStartliste = geminiResult.startliste.filter(s => s !== starter);
+                                  const updatedStartliste = geminiResult.startliste.filter((s: any) => s !== starter);
                                   setGeminiResult({...geminiResult, startliste: updatedStartliste});
                                 }
                               }}
@@ -1133,14 +1135,14 @@ export function StartlistenToolV2Content() {
                     });
                     
                     // Weise Durchgänge neu zu
-                    const zeitGruppen = {};
-                    optimierteStartliste.forEach(starter => {
+                    const zeitGruppen: Record<string, any> = {};
+                    optimierteStartliste.forEach((starter: any) => {
                       if (!zeitGruppen[starter.startzeit]) zeitGruppen[starter.startzeit] = [];
                       zeitGruppen[starter.startzeit].push(starter);
                     });
                     
                     Object.values(zeitGruppen).forEach((gruppe: any[]) => {
-                      gruppe.forEach((starter, index) => {
+                      gruppe.forEach((starter: any, index: number) => {
                         starter.durchgang = Math.floor(index / staendeProDurchgang) + 1;
                       });
                     });
@@ -1181,11 +1183,11 @@ export function StartlistenToolV2Content() {
                   onClick={() => {
                     // Drag & Drop Simulation: Verschiebe Starter automatisch bei Konflikten
                     const optimierteStartliste = [...geminiResult.startliste];
-                    const konflikte = [];
+                    const konflikte: any[] = [];
                     
-                    optimierteStartliste.forEach((starter, index) => {
+                    optimierteStartliste.forEach((starter: any, index: number) => {
                       // Finde Konflikte
-                      const konfliktStarter = optimierteStartliste.find((other, otherIndex) => 
+                      const konfliktStarter = optimierteStartliste.find((other: any, otherIndex: number) => 
                         otherIndex !== index && 
                         other.startzeit === starter.startzeit && 
                         other.stand === starter.stand
@@ -1199,7 +1201,7 @@ export function StartlistenToolV2Content() {
                         
                         // Probiere andere Stände zur gleichen Zeit
                         for (const stand of staende) {
-                          const istFrei = !optimierteStartliste.some(s => 
+                          const istFrei = !optimierteStartliste.some((s: any) => 
                             s !== starter && s.startzeit === neueZeit && s.stand === stand.toString()
                           );
                           if (istFrei) {
@@ -1242,26 +1244,26 @@ export function StartlistenToolV2Content() {
                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm"
                   onClick={() => {
                     // Zeige Empfehlungen für bessere Verteilung
-                    const empfehlungen = [];
-                    const zeitGruppen = {};
+                    const empfehlungen: any[] = [];
+                    const zeitGruppen: Record<string, any> = {};
                     
-                    geminiResult.startliste.forEach(starter => {
+                    geminiResult.startliste.forEach((starter: any) => {
                       if (!zeitGruppen[starter.startzeit]) zeitGruppen[starter.startzeit] = [];
                       zeitGruppen[starter.startzeit].push(starter);
                     });
                     
-                    Object.entries(zeitGruppen).forEach(([zeit, gruppe]: [string, any[]]) => {
+                    Object.entries(zeitGruppen).forEach(([zeit, gruppe]: [string, any]) => {
                       if (gruppe.length > staende.length) {
                         empfehlungen.push(`⏰ ${zeit}: ${gruppe.length} Starter, aber nur ${staende.length} Stände verfügbar`);
                       }
                       
                       // Prüfe Stand-Verteilung
-                      const standVerteilung = {};
-                      gruppe.forEach(s => {
+                      const standVerteilung: Record<string, any> = {};
+                      gruppe.forEach((s: any) => {
                         standVerteilung[s.stand] = (standVerteilung[s.stand] || 0) + 1;
                       });
                       
-                      Object.entries(standVerteilung).forEach(([stand, anzahl]: [string, number]) => {
+                      Object.entries(standVerteilung).forEach(([stand, anzahl]: [string, any]) => {
                         if (anzahl > 1) {
                           empfehlungen.push(`🎯 Stand ${stand} um ${zeit}: ${anzahl} Starter (Konflikt!)`);
                         }
@@ -1285,21 +1287,20 @@ export function StartlistenToolV2Content() {
                       const { default: autoTable } = await import('jspdf-autotable');
                       
                       // Lade Mannschaften und Disziplinen für E/M Erkennung und SPO-Nummern
-                      const [schuetzenRes, mannschaftenRes, disziplinenRes, kmMeldungenRes] = await Promise.all([
-                        fetch('/api/shooters'),
+                      const [schuetzenRes, mannschaftenRes, disziplinenRes] = await Promise.all([
+                        authFetch('/api/shooters'),
                         fetch('/api/km/mannschaften'),
                         fetch('/api/km/disziplinen'),
-                        fetch('/api/km/meldungen')
+                        authFetch('/api/km/meldungen')
                       ]);
                       
                       const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
                       const mannschaftenData = mannschaftenRes.ok ? (await mannschaftenRes.json()).data || [] : [];
                       const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
-                      const kmMeldungenData = kmMeldungenRes.ok ? (await kmMeldungenRes.json()).data || [] : [];
                       
                       // Schützen-Map für PDF Export
-                      const schuetzenMapPDF = {};
-                      schuetzenData.forEach(data => {
+                      const schuetzenMapPDF: Record<string, any> = {};
+                      schuetzenData.forEach((data: any) => {
                         schuetzenMapPDF[data.name] = {
                           id: data.id,
                           birthYear: data.birthYear,
@@ -1348,7 +1349,7 @@ export function StartlistenToolV2Content() {
                       const gefilterteStartliste = geminiResult?.startliste || [];
                       
                       // Gruppiere nur nach Startzeiten
-                      const nachStartzeit = gefilterteStartliste.reduce((acc: Record<string, any[]>, s) => {
+                      const nachStartzeit = gefilterteStartliste.reduce((acc: Record<string, any[]>, s: any) => {
                         const zeit = s.startzeit || startzeit || '14:00';
                         if (!acc[zeit]) acc[zeit] = [];
                         acc[zeit].push(s);
@@ -1366,9 +1367,9 @@ export function StartlistenToolV2Content() {
                       let isFirstStart = true;
                       let currentY = 35;
                       
-                      Object.entries(nachStartzeit)
+                      (Object.entries(nachStartzeit) as [string, any[]][])
                         .sort(([zeitA], [zeitB]) => zeitA.localeCompare(zeitB)) // Sortiere Uhrzeiten korrekt
-                        .forEach(([startzeit, starterGruppe]: [string, any[]], startzeitIndex) => {
+                        .forEach(([startzeit, starterGruppe]: [string, any[]], _startzeitIndex: number) => {
                         if (isFirstStart) {
                           doc.addPage();
                           isFirstStart = false;
@@ -1438,7 +1439,7 @@ export function StartlistenToolV2Content() {
                             // E/M: Prüfe ob Schütze in Mannschaft
                             let istMannschaft = false;
                             if (schuetze?.id) {
-                              mannschaftenData.forEach(mannschaftData => {
+                              mannschaftenData.forEach((mannschaftData: any) => {
                                 if (mannschaftData.schuetzenIds?.includes(schuetze.id)) {
                                   istMannschaft = true;
                                 }
@@ -1450,37 +1451,14 @@ export function StartlistenToolV2Content() {
                             const originalMeldung = meldungen.find(m => m.name === (s.name || s.schuetzeName) && m.disziplin === s.disziplin);
                             const lmTeilnahme = originalMeldung?.lmTeilnahme === true;
                             
-                            // Altersklasse berechnen
-                            let korrekteAltersklasse = 'Unbekannt';
-                            if (schuetze?.birthYear) {
-                              const age = (new Date().getFullYear()) - schuetze.birthYear;
-                              const isAuflage = s.disziplin?.toLowerCase().includes('auflage');
-                              const isMale = schuetze.gender === 'male';
-                              
-                              if (age <= 14) korrekteAltersklasse = 'Schüler';
-                              else if (age <= 16) korrekteAltersklasse = 'Jugend';
-                              else if (age <= 18) korrekteAltersklasse = `Junioren II ${isMale ? 'm' : 'w'}`;
-                              else if (age <= 20) korrekteAltersklasse = `Junioren I ${isMale ? 'm' : 'w'}`;
-                              else if (isAuflage) {
-                                if (age <= 40) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
-                                else if (age <= 50) korrekteAltersklasse = isMale ? 'Senioren 0 m' : 'Seniorinnen 0';
-                                else if (age <= 60) korrekteAltersklasse = isMale ? 'Senioren I m' : 'Seniorinnen I';
-                                else if (age <= 65) korrekteAltersklasse = isMale ? 'Senioren II m' : 'Seniorinnen II';
-                                else if (age <= 70) korrekteAltersklasse = isMale ? 'Senioren III m' : 'Seniorinnen III';
-                                else if (age <= 75) korrekteAltersklasse = isMale ? 'Senioren IV m' : 'Seniorinnen IV';
-                                else if (age <= 80) korrekteAltersklasse = isMale ? 'Senioren V m' : 'Seniorinnen V';
-                                else korrekteAltersklasse = isMale ? 'Senioren VI m' : 'Seniorinnen VI';
-                              } else {
-                                if (age <= 40) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
-                                else if (age <= 50) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} II`;
-                                else if (age <= 60) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} III`;
-                                else if (age <= 70) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} IV`;
-                                else korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} V`;
-                              }
-                            }
+                            // Altersklasse: bevorzugt die bei der Meldung gespeicherte
+                            // (Single Source of Truth), sonst die in der Startliste
+                            // hinterlegte. Keine erneute Berechnung mit falschem Jahr.
+                            const korrekteAltersklasse =
+                              originalMeldung?.altersklasse || s.altersklasse || 'Unbekannt';
                             
                             // Hole SPO-Nummer
-                            const disziplinDoc = disziplinenData.find(d => d.name === s.disziplin);
+                            const disziplinDoc = disziplinenData.find((d: any) => d.name === s.disziplin);
                             const spoNummer = disziplinDoc?.spoNummer || '1.41';
                             
                             return [
@@ -1507,8 +1485,7 @@ export function StartlistenToolV2Content() {
                               fillColor: [255, 255, 255],
                               valign: 'middle',
                               halign: 'center',
-                              minCellHeight: 16,
-                              cellHeight: 16
+                              minCellHeight: 16
                             },
                             headStyles: { 
                               fillColor: [220, 220, 220],
@@ -1583,7 +1560,7 @@ export function StartlistenToolV2Content() {
                       );
                       
                       // Finde die neueste Startliste für diese Saison
-                      let neuesteStartliste = null;
+                      let neuesteStartliste: any = null;
                       snapshot.docs.forEach(doc => {
                         const data = doc.data();
                         if (!neuesteStartliste || 
@@ -1602,7 +1579,7 @@ export function StartlistenToolV2Content() {
                     const startlisteData = {
                       configId: configId || null,
                       saison: selectedSaison || null,
-                      startliste: geminiResult.startliste.map(s => {
+                      startliste: geminiResult.startliste.map((s: any) => {
                         const echteMeldung = meldungen.find(m => 
                           m.name === (s.schuetzeName || s.name) && m.disziplin === s.disziplin
                         );

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,20 +7,18 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckSquare, PlusCircle, Trash2, Loader, AlertCircle, ToggleLeft, ToggleRight, CheckCircle, Camera, Zap, AlertTriangle } from 'lucide-react';
 import { HandzettelOCR, type OCRMatchResult } from '@/components/ui/handzettel-ocr-simple';
-import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { BackButton } from '@/components/ui/back-button';
 import { createProgressToast } from '@/components/ui/progress-toast';
 import { Checkbox } from "@/components/ui/checkbox";
-import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry, FirestoreLeagueSpecificDiscipline, LeagueUpdateEntry } from '@/types/rwk';
+import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry } from '@/types/rwk';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { plausibilityService } from '@/lib/services/plausibility-service';
 import Link from 'next/link';
-import { collection, getDocs, getDoc, query, where, orderBy, writeBatch, serverTimestamp, doc, Timestamp, updateDoc, addDoc } from 'firebase/firestore';
+import { collection, getDocs, getDoc, query, where, orderBy, writeBatch, serverTimestamp, doc, Timestamp } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 const SEASONS_COLLECTION = "seasons";
@@ -68,20 +66,11 @@ export default function SharedResultsPage({
   const [isLoadingLeagues, setIsLoadingLeagues] = useState(false);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
   const [isLoadingShooters, setIsLoadingShooters] = useState(false);
-  const [isLoadingExistingScores, setIsLoadingExistingScores] = useState(false);
   const [isSubmittingScores, setIsSubmittingScores] = useState(false);
   const [editMode, setEditMode] = useState(userRole === 'admin');
   const [showOCR, setShowOCR] = useState(false);
   const [handzettelFiles, setHandzettelFiles] = useState<File[]>([]);
   const [attachOnly, setAttachOnly] = useState(false);
-
-  const canAccessTeam = (teamClubId: string) => {
-    if (userRole === 'admin') return true;
-    if (clubId && teamClubId === clubId) return true;
-    return false;
-  };
-
-  const canEdit = userRole === 'admin';
 
   const fetchMasterData = useCallback(async () => {
     setIsLoadingMasterData(true);
@@ -438,12 +427,12 @@ export default function SharedResultsPage({
       shooterGender: 'unknown',
       durchgang: parseInt(selectedRound),
       totalRinge: result.score,
-      scoreInputType: (existingScoresForTeamAndRound.length > 0 ? 'post' : 'regular') as const,
+      scoreInputType: (existingScoresForTeamAndRound.length > 0 ? 'post' : 'regular'),
       competitionYear: currentSeason.competitionYear,
       isOCRGenerated: true,
       ocrConfidence: result.confidence,
       ocrSource: result.ocrSource
-    }));
+    } as PendingScoreEntry));
 
     setPendingScores(prev => [...prev, ...newPendingEntries]);
     setShowOCR(false);
@@ -778,7 +767,7 @@ export default function SharedResultsPage({
               logError('E-Mail-Benachrichtigung Fehler:', emailError);
             }
           } catch (updateError) {
-            logWarn('League update failed:', updateError);
+            logWarn('League update failed:', updateError instanceof Error ? updateError.message : String(updateError));
             // Fehler ignorieren - Hauptfunktion funktioniert trotzdem
           }
           break; // Nur einmal pro Liga senden
@@ -893,7 +882,7 @@ export default function SharedResultsPage({
             }
           );
         } catch (auditError) {
-          logWarn('Audit log failed:', auditError);
+          logWarn('Audit log failed:', auditError instanceof Error ? auditError.message : String(auditError));
           // Audit-Fehler nicht an Benutzer weiterleiten
         }
       }
@@ -916,7 +905,7 @@ export default function SharedResultsPage({
             const refreshedTeams = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team)).filter(t => t.id);
             setAllTeamsInSelectedLeague(refreshedTeams);
           } catch (error) {
-            logWarn('Team refresh failed:', error);
+            logWarn('Team refresh failed:', error instanceof Error ? error.message : String(error));
           }
         }
       }

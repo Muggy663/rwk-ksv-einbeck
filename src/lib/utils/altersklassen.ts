@@ -14,6 +14,144 @@ export interface AltersklassenParams {
   jahr?: number;
 }
 
+// ============================================================================
+// DATENGETRIEBENE Altersklassen-Ermittlung (Single Source of Truth)
+// Liest die Altersgrenzen aus der km_altersklassen-Collection (gepflegt über
+// /km-orga/altersklassen) statt aus hartcodierten if-age-Blöcken.
+// Auflage/Freihand-Trennung erfolgt über die Klassennamen-Reihe + disziplin.auflage.
+// ============================================================================
+
+/** Eine Altersklasse aus der km_altersklassen-Collection. */
+export interface KmAltersklasse {
+  id?: string;
+  klassenId?: number;
+  name: string;
+  minAlter: number;
+  maxAlter: number;
+  geschlecht: number; // 0 = weiblich, 1 = männlich, 2 = gemischt
+}
+
+export interface ErmittleKlasseParams {
+  birthYear?: number;
+  gender?: 'male' | 'female' | 'unknown' | string;
+  /** true = Auflage-Disziplin, false = Freihand */
+  auflage: boolean;
+  /** SPO-Nummer der Disziplin (für kreisinterne Ausnahmen, z. B. 1.41 / 1.11) */
+  spoNummer?: string;
+  /** Jahr der Saison (Alter = saisonJahr - birthYear) */
+  saisonJahr: number;
+  /** Liste aller Altersklassen aus km_altersklassen */
+  altersklassen: KmAltersklasse[];
+  /**
+   * Altersgenehmigung: Erlaubt 10-/11-Jährigen das Schießen mit scharfem
+   * Luftgewehr (offiziell ab 12). Dann wird für die Klassenermittlung ein
+   * effektives Mindestalter von 12 angesetzt (→ Schülerklasse 12-14).
+   */
+  altersgenehmigung?: boolean;
+}
+
+// Offizielles Mindestalter für scharfes Gewehr/Pistole (unter 12 nur Lichtgewehr).
+const MINDESTALTER_SCHARF = 12;
+
+// Klassennamen der jungen Klassen (gelten für Auflage UND Freihand)
+const JUNGE_KLASSEN_REGEX = /^(sch(ü|ue)ler|jugend|junior)/i;
+// Auflage-Reihe
+const AUFLAGE_KLASSEN_REGEX = /^(senior|seniorin)/i;
+// Freihand-Reihe
+const FREIHAND_KLASSEN_REGEX = /^(herren|damen)/i;
+
+function passtGeschlecht(klasseGeschlecht: number, isMale: boolean): boolean {
+  if (klasseGeschlecht === 2) return true;      // gemischt
+  if (klasseGeschlecht === 1) return isMale;    // männlich
+  if (klasseGeschlecht === 0) return !isMale;   // weiblich
+  return false;
+}
+
+/**
+ * Ermittelt die Einzel-Wettkampfklasse eines Schützen strikt datengetrieben
+ * aus km_altersklassen. Auflage vs. Freihand entscheidet, welche Klassen-Reihe
+ * gilt. Kreisinterne Ausnahme: Bei Auflage-Disziplinen 1.41 / 1.11 dürfen
+ * 21- bis 40-Jährige in der Herren-/Damen-I-Klasse (Freihand-Reihe) starten.
+ *
+ * @returns Klassenname oder null, wenn keine passende/startberechtigte Klasse existiert.
+ */
+export function ermittleEinzelklasse(params: ErmittleKlasseParams): string | null {
+  const { birthYear, gender, auflage, spoNummer, saisonJahr, altersklassen, altersgenehmigung } = params;
+
+  if (!birthYear || !gender || gender === 'unknown') return null;
+  if (!Array.isArray(altersklassen) || altersklassen.length === 0) return null;
+
+  const echtesAlter = saisonJahr - birthYear;
+  // Mit Altersgenehmigung wird ein 10-/11-Jähriger für die Klassenermittlung
+  // wie ein 12-Jähriger behandelt (darf scharfes Luftgewehr schießen).
+  const alter =
+    altersgenehmigung && echtesAlter < MINDESTALTER_SCHARF
+      ? MINDESTALTER_SCHARF
+      : echtesAlter;
+  const isMale = gender === 'male';
+
+  // Kandidaten: passendes Alter + Geschlecht
+  const passendeAlter = altersklassen.filter(
+    (k) => alter >= k.minAlter && alter <= k.maxAlter && passtGeschlecht(k.geschlecht, isMale)
+  );
+  if (passendeAlter.length === 0) return null;
+
+  const istJung = (name: string) => JUNGE_KLASSEN_REGEX.test(name.trim());
+  const istAuflageKlasse = (name: string) => AUFLAGE_KLASSEN_REGEX.test(name.trim());
+  const istFreihandKlasse = (name: string) => FREIHAND_KLASSEN_REGEX.test(name.trim());
+
+  // Junge Klassen (Schüler/Jugend/Junioren) gelten für beide Disziplin-Arten.
+  const jungeTreffer = passendeAlter.find((k) => istJung(k.name));
+
+  // Kreisinterne Ausnahme: Auflage 1.41 / 1.11, Alter 21-40 -> Herren/Damen I.
+  const istKreisinterneAuflage =
+    auflage && (spoNummer === '1.41' || spoNummer === '1.11');
+
+  if (auflage) {
+    // Junge Schützen zuerst (Schüler/Jugend/Junioren)
+    if (jungeTreffer) return jungeTreffer.name;
+
+    if (istKreisinterneAuflage) {
+      // 21-40 dürfen als Herren/Damen I (Freihand-Reihe) starten
+      const freihandTreffer = passendeAlter.find((k) => istFreihandKlasse(k.name));
+      if (alter >= 21 && alter <= 40 && freihandTreffer) return freihandTreffer.name;
+    }
+
+    // Reguläre Auflage-Klasse (Senioren/Seniorinnen)
+    const auflageTreffer = passendeAlter.find((k) => istAuflageKlasse(k.name));
+    if (auflageTreffer) return auflageTreffer.name;
+
+    // Keine startberechtigte Auflage-Klasse (z. B. 21-40 ohne kreisinterne Ausnahme)
+    return null;
+  }
+
+  // Freihand
+  if (jungeTreffer) return jungeTreffer.name;
+  const freihandTreffer = passendeAlter.find((k) => istFreihandKlasse(k.name));
+  if (freihandTreffer) return freihandTreffer.name;
+
+  return null;
+}
+
+/**
+ * Ermittelt die Mannschafts-Gruppierung einer Einzelklasse anhand der
+ * konfigurierten altersklassenKombinationen (system_config/mannschaftsregeln).
+ * Gibt den Kombinations-Namen zurück, in dem die Einzelklasse enthalten ist,
+ * sonst die Einzelklasse selbst (eigene Gruppe).
+ */
+export function ermittleMannschaftsgruppe(
+  einzelklasse: string,
+  altersklassenKombinationen: Record<string, string[]> | undefined | null
+): string {
+  if (!altersklassenKombinationen) return einzelklasse;
+  for (const [gruppenName, klassen] of Object.entries(altersklassenKombinationen)) {
+    if (Array.isArray(klassen) && klassen.includes(einzelklasse)) {
+      return gruppenName;
+    }
+  }
+  return einzelklasse;
+}
+
 /**
  * Berechnet die Altersklasse basierend auf Geburtsjahr, Geschlecht und Disziplin
  * Berücksichtigt Auflage vs. Freihand Unterscheidung

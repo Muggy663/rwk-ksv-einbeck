@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const snapshot = await adminDb.collection('clubs').get();
     const clubs = snapshot.docs.map(doc => ({

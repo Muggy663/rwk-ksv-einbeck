@@ -39,7 +39,6 @@ export default function ExcelImport() {
         if (!row || row.every(cell => !cell)) continue;
         
         // Spalten: A=0(Nr), B=1(Mitgliedsnr), C=2(Verein), D=3(Name), E=4(Vorname), F=5(Geburt)
-        const nr = row[0]?.toString() || '';
         const mitgliedsnummer = row[1]?.toString() || '';
         const verein = row[2]?.toString() || '';
         const name = row[3]?.toString() || '';

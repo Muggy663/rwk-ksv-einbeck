@@ -6,10 +6,7 @@ import {
   query, 
   where, 
   writeBatch, 
-  doc, 
-  deleteDoc,
-  updateDoc,
-  documentId 
+  doc
 } from 'firebase/firestore';
 
 export interface CleanupDiagnosis {
@@ -125,8 +122,8 @@ export async function diagnoseDatabaseInconsistencies(clubId: string): Promise<C
       
       const hasInconsistency = 
         arrayIds.length !== actualRelations.length ||
-        !arrayIds.every(id => relationSet.has(id)) ||
-        !actualRelations.every(id => arraySet.has(id));
+        !arrayIds.every((id: string) => relationSet.has(id)) ||
+        !actualRelations.every((id: string) => arraySet.has(id));
       
       if (hasInconsistency) {
         diagnosis.inconsistentShooterArrays.push({
@@ -148,7 +145,7 @@ export async function diagnoseDatabaseInconsistencies(clubId: string): Promise<C
 /**
  * Führt eine umfassende Bereinigung basierend auf der Diagnose durch
  */
-export async function performAdvancedCleanup(clubId: string, diagnosis: CleanupDiagnosis): Promise<CleanupResult> {
+export async function performAdvancedCleanup(_clubId: string, diagnosis: CleanupDiagnosis): Promise<CleanupResult> {
   const result: CleanupResult = {
     orphanedTeamShootersFixed: 0,
     duplicateAssignmentsFixed: 0,
@@ -186,7 +183,7 @@ export async function performAdvancedCleanup(clubId: string, diagnosis: CleanupD
       
       // Sortiere nach Erstellungsdatum und behalte nur die neueste
       const relations = relationsSnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .map(doc => ({ id: doc.id, ...doc.data() } as { id: string; createdAt?: { toMillis: () => number } }))
         .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
       
       // Lösche alle außer der neuesten

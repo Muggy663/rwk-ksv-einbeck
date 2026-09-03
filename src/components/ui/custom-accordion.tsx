@@ -14,7 +14,7 @@ const CustomAccordion = React.forwardRef<
   <AccordionPrimitive.Root
     ref={ref}
     className={cn(className)}
-    {...props}
+    {...(props as any)}
     collapsible
   />
 ))

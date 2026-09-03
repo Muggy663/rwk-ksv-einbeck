@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     secureLogger.info('Email API called', 'send-email-api');
     
     if (!resend) {
-      secureLogger.error('RESEND_API_KEY missing', 'send-email-api');
+      secureLogger.error('RESEND_API_KEY missing', undefined, 'send-email-api');
       return NextResponse.json({ 
         success: false, 
         message: 'E-Mail-Service nicht konfiguriert. RESEND_API_KEY fehlt.' 
@@ -120,8 +120,8 @@ ${signature}`.trim();
     const results = [];
     const errors = [];
     
-    for (let i = 0; i < recipients.length; i += batchSize) {
-      const batch = recipients.slice(i, i + batchSize);
+    for (let i = 0; i < validRecipients.length; i += batchSize) {
+      const batch = validRecipients.slice(i, i + batchSize);
       
       try {
         const emailData = {
@@ -148,7 +148,7 @@ ${signature}`.trim();
         });
         
       } catch (error) {
-        secureLogger.error('Email batch failed', 'send-email-api');
+        secureLogger.error('Email batch failed', error instanceof Error ? error : undefined, 'send-email-api');
         errors.push({
           batchNumber: Math.floor(i/batchSize) + 1,
           recipients: batch.length,
@@ -158,7 +158,7 @@ ${signature}`.trim();
     }
 
     const successfulRecipients = results.reduce((sum, batch) => sum + batch.recipients, 0);
-    const failedRecipients = errors.reduce((sum, batch) => sum + batch.recipients.length, 0);
+    const failedRecipients = errors.reduce((sum, batch) => sum + batch.recipients, 0);
     
     return NextResponse.json({
       success: errors.length === 0,
@@ -166,7 +166,7 @@ ${signature}`.trim();
         ? `E-Mail erfolgreich an ${successfulRecipients} Empfänger gesendet.`
         : `${successfulRecipients} erfolgreich, ${failedRecipients} fehlgeschlagen.`,
       details: {
-        totalRecipients: recipients.length,
+        totalRecipients: validRecipients.length,
         successful: successfulRecipients,
         failed: failedRecipients,
         batches: results.length,
@@ -175,7 +175,7 @@ ${signature}`.trim();
     });
     
   } catch (error) {
-    secureLogger.error('Email API error', 'send-email-api');
+    secureLogger.error('Email API error', error instanceof Error ? error : undefined, 'send-email-api');
     return NextResponse.json({
       success: false,
       message: 'E-Mail konnte nicht versendet werden. Bitte versuchen Sie es später erneut.'

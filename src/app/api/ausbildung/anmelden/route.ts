@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     if (!kursSnap.exists) {
       return NextResponse.json({ success: false, error: 'Kurs nicht gefunden' }, { status: 404 });
     }
-    const kurs = kursSnap.data();
+    const kurs = kursSnap.data() as any;
 
     // Anmeldeschluss prüfen
     if (kurs.anmeldeschluss && new Date(kurs.anmeldeschluss) < new Date()) {

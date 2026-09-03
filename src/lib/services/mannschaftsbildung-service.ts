@@ -2,8 +2,8 @@
 export class MannschaftsbildungService {
   
   /**
-   * LÃ¤dt die aktuellen Mannschaftsregeln
-   * @throws {Error} Wenn das Laden der Regeln fehlschlÃ¤gt
+   * Lädt die aktuellen Mannschaftsregeln
+   * @throws {Error} Wenn das Laden der Regeln fehlschlägt
    */
   static async loadRegeln() {
     try {
@@ -20,9 +20,9 @@ export class MannschaftsbildungService {
   }
 
   /**
-   * PrÃ¼ft ob zwei SchÃ¼tzen in einer Mannschaft zusammen dÃ¼rfen
-   * @param schuetze1 - Erster SchÃ¼tze
-   * @param schuetze2 - Zweiter SchÃ¼tze
+   * Prüft ob zwei Schützen in einer Mannschaft zusammen dürfen
+   * @param schuetze1 - Erster Schütze
+   * @param schuetze2 - Zweiter Schütze
    * @param disziplin - Disziplin (z.B. 'LG', 'LP')
    * @returns Promise<boolean> - true wenn Kombination erlaubt ist
    */
@@ -33,7 +33,7 @@ export class MannschaftsbildungService {
 
   /**
    * Validiert eine komplette Mannschaft
-   * @param schuetzen - Array von SchÃ¼tzen
+   * @param schuetzen - Array von Schützen
    * @param disziplin - Disziplin
    * @param regeln - Optional: Bereits geladene Regeln
    * @returns Promise mit Validierungsergebnis
@@ -47,19 +47,19 @@ export class MannschaftsbildungService {
     }
 
     if (schuetzen.length !== loadedRegeln.mannschaftsgroesse) {
-      errors.push(`Mannschaft muss ${loadedRegeln.mannschaftsgroesse} SchÃ¼tzen haben`);
+      errors.push(`Mannschaft muss ${loadedRegeln.mannschaftsgroesse} Schützen haben`);
     }
 
     const disziplinRegel = loadedRegeln.disziplinRegeln?.[disziplin];
     if (!disziplinRegel || !disziplinRegel.aktiv) {
-      errors.push('FÃ¼r diese Disziplin sind keine Mannschaften erlaubt');
+      errors.push('Für diese Disziplin sind keine Mannschaften erlaubt');
       return { valid: false, errors };
     }
 
     for (let i = 0; i < schuetzen.length; i++) {
       for (let j = i + 1; j < schuetzen.length; j++) {
         if (!this.isValidShooterCombination(schuetzen[i], schuetzen[j], disziplin, loadedRegeln)) {
-          errors.push(`${schuetzen[i].altersklasse} und ${schuetzen[j].altersklasse} dÃ¼rfen nicht zusammen`);
+          errors.push(`${schuetzen[i].altersklasse} und ${schuetzen[j].altersklasse} dürfen nicht zusammen`);
         }
       }
     }
@@ -88,7 +88,7 @@ export class MannschaftsbildungService {
   }
 
   /**
-   * Gibt alle mÃ¶glichen Mannschaftskombinationen fÃ¼r eine Disziplin zurÃ¼ck
+   * Gibt alle möglichen Mannschaftskombinationen für eine Disziplin zurück
    */
   static async getMoeglicheMannschaften(schuetzen: any[], disziplin: string) {
     const regeln = await this.loadRegeln();
@@ -114,7 +114,7 @@ export class MannschaftsbildungService {
   }
 
   /**
-   * Synchrone Validierung einer Mannschaft (fÃ¼r Performance)
+   * Synchrone Validierung einer Mannschaft (für Performance)
    */
   private static validateMannschaftSync(schuetzen: any[], disziplin: string, regeln: any) {
     const errors: string[] = [];
@@ -124,19 +124,19 @@ export class MannschaftsbildungService {
     }
 
     if (schuetzen.length !== regeln.mannschaftsgroesse) {
-      errors.push(`Mannschaft muss ${regeln.mannschaftsgroesse} SchÃ¼tzen haben`);
+      errors.push(`Mannschaft muss ${regeln.mannschaftsgroesse} Schützen haben`);
     }
 
     const disziplinRegel = regeln.disziplinRegeln?.[disziplin];
     if (!disziplinRegel || !disziplinRegel.aktiv) {
-      errors.push('FÃ¼r diese Disziplin sind keine Mannschaften erlaubt');
+      errors.push('Für diese Disziplin sind keine Mannschaften erlaubt');
       return { valid: false, errors };
     }
 
     for (let i = 0; i < schuetzen.length; i++) {
       for (let j = i + 1; j < schuetzen.length; j++) {
         if (!this.isValidShooterCombination(schuetzen[i], schuetzen[j], disziplin, regeln)) {
-          errors.push(`${schuetzen[i].altersklasse} und ${schuetzen[j].altersklasse} dÃ¼rfen nicht zusammen`);
+          errors.push(`${schuetzen[i].altersklasse} und ${schuetzen[j].altersklasse} dürfen nicht zusammen`);
         }
       }
     }
@@ -148,7 +148,7 @@ export class MannschaftsbildungService {
   }
 
   /**
-   * Hilfsfunktion: Generiert alle mÃ¶glichen Kombinationen
+   * Hilfsfunktion: Generiert alle möglichen Kombinationen
    */
   private static generateKombinationen(array: any[], size: number): any[][] {
     if (size > array.length) return [];

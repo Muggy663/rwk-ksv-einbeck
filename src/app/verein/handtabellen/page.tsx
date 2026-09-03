@@ -1,11 +1,8 @@
 // src/app/verein/handtabellen/page.tsx
 "use client";
 import { HandzettelGenerator } from '@/components/handzettel/HandzettelGenerator';
-import { useVereinAuth } from '../layout';
 
 export default function VereinHandtabellenPage() {
-  const { assignedClubId } = useVereinAuth();
-
   return (
     <HandzettelGenerator 
       showContactData={true}

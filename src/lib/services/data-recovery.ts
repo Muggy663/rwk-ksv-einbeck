@@ -6,7 +6,6 @@ import {
   where, 
   writeBatch, 
   doc,
-  addDoc,
   Timestamp
 } from 'firebase/firestore';
 

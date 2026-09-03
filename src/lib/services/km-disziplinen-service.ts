@@ -212,7 +212,7 @@ export async function getAllDisziplinen() {
   }));
   
   // Nach SpO-Nummer sortieren
-  return disziplinen.sort((a, b) => {
+  return disziplinen.sort((a: any, b: any) => {
     const aNum = parseFloat(a.spoNummer);
     const bNum = parseFloat(b.spoNummer);
     return aNum - bNum;

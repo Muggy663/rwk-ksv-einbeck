@@ -39,7 +39,7 @@ export async function cleanupDuplicatesForClub(clubId: string) {
     const mitgliederCollection = `clubs/${clubId}/mitglieder`;
     const snapshot = await getDocs(collection(db, mitgliederCollection));
     
-    logDebug('Gefunden:', snapshot.docs.length, 'Mitglieder');
+    logDebug(`Gefunden: ${snapshot.docs.length} Mitglieder`);
     
     // Gruppiere nach originalShooterId
     const membersByShooterId = new Map();
@@ -69,7 +69,7 @@ export async function cleanupDuplicatesForClub(clubId: string) {
       }
     }
     
-    logDebug('Duplikat-Bereinigung abgeschlossen:', deleted, 'Duplikate gelöscht');
+    logDebug(`Duplikat-Bereinigung abgeschlossen: ${deleted} Duplikate gelöscht`);
     return { deleted, remaining: snapshot.docs.length - deleted };
     
   } catch (error) {

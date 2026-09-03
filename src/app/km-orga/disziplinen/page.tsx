@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Plus, Edit, Save, X, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { authFetch } from '@/lib/auth/authFetch';
 
 interface Disziplin {
   id: string;
@@ -70,7 +71,7 @@ export default function DisziplinenVerwaltung() {
 
   const saveEdit = async () => {
     try {
-      const response = await fetch(`/api/km/disziplinen/${editingId}`, {
+      const response = await authFetch(`/api/km/disziplinen/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editData)
@@ -86,45 +87,9 @@ export default function DisziplinenVerwaltung() {
     }
   };
 
-  const generateKennziffern = async () => {
-    const updatedDisziplinen = disziplinen.map(disziplin => {
-      const updatedSchusszahlen = disziplin.schusszahlen?.map(schuss => {
-        const entfernungCode = '1'; // 10m
-        const sanitizedSpoNummer = String(disziplin.spoNummer || '').replace(/[^0-9.]/g, '');
-        const regelNummer = sanitizedSpoNummer.replace('.', '').padStart(4, '0');
-        const schussCode = Math.abs(parseInt(String(schuss.schusszahl)) || 0).toString().padStart(3, '0');
-        const kennziffer = `${entfernungCode}${regelNummer}${schussCode}`;
-        
-        return {
-          ...schuss,
-          kennziffer
-        };
-      });
-      
-      return {
-        ...disziplin,
-        schusszahlen: updatedSchusszahlen
-      };
-    });
-    
-    try {
-      for (const disziplin of updatedDisziplinen) {
-        await fetch(`/api/km/disziplinen/${disziplin.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(disziplin)
-        });
-      }
-      setDisziplinen(updatedDisziplinen);
-      toast({ title: '✅ Gespeichert', description: 'Kennziffern für alle Disziplinen generiert und gespeichert' });
-    } catch (error) {
-      toast({ title: 'Fehler', description: 'Speichern fehlgeschlagen', variant: 'destructive' });
-    }
-  };
-
   const addNewDisziplin = async () => {
     try {
-      const response = await fetch('/api/km/disziplinen', {
+      const response = await authFetch('/api/km/disziplinen', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -156,7 +121,7 @@ export default function DisziplinenVerwaltung() {
     if (!confirm(`Disziplin "${name}" wirklich löschen?`)) return;
     
     try {
-      const response = await fetch(`/api/km/disziplinen/${id}`, {
+      const response = await authFetch(`/api/km/disziplinen/${id}`, {
         method: 'DELETE'
       });
       if (response.ok) {
@@ -257,7 +222,7 @@ export default function DisziplinenVerwaltung() {
                 </div>
                 
                 <div className="space-y-2">
-                  {(editingId === disziplin.id ? editData.schusszahlen : disziplin.schusszahlen)?.map((schuss, index) => (
+                  {(editingId === disziplin.id ? editData.schusszahlen : disziplin.schusszahlen)?.map((schuss: any, index: number) => (
                     <div key={index} className="bg-gray-50 p-3 rounded">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
@@ -376,7 +341,7 @@ export default function DisziplinenVerwaltung() {
                             schiesszeit_zuganlagen: 60,
                             kennziffer: ''
                           }];
-                          setEditData(prev => ({...prev, schusszahlen: newSchusszahlen}));
+                          setEditData((prev: any) => ({...prev, schusszahlen: newSchusszahlen}));
                         }}
                       >
                         + Schusszahl hinzufügen

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { NativeSelect } from '@/components/ui/native-select';
 import { BackButton } from '@/components/ui/back-button';
 import { useKMAuth } from '@/hooks/useKMAuth';
-import { CalendarDays, Plus, Settings, Edit } from 'lucide-react';
+import { CalendarDays, Plus, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { authFetch } from '@/lib/auth/authFetch';
 
 type DisziplinTyp = 'KK' | 'LD' | 'KKP';
 
@@ -72,7 +73,7 @@ export default function KMJahreVerwaltung() {
 
   const createSaison = async () => {
     try {
-      const response = await fetch('/api/km/jahre', {
+      const response = await authFetch('/api/km/jahre', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -107,7 +108,7 @@ export default function KMJahreVerwaltung() {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      const response = await fetch(`/api/km/jahre/${id}`, {
+      const response = await authFetch(`/api/km/jahre/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -127,7 +128,7 @@ export default function KMJahreVerwaltung() {
 
   const updateSaison = async (id: string) => {
     try {
-      const response = await fetch(`/api/km/jahre/${id}`, {
+      const response = await authFetch(`/api/km/jahre/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

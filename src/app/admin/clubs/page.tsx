@@ -1,7 +1,7 @@
 
 // src/app/admin/clubs/page.tsx
 "use client";
-import React, { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,17 +36,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Club } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, where, documentId, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, where, documentId } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 const CLUBS_COLLECTION = "clubs";
 
+type ClubWithNumber = Club & { clubNumber?: string };
+
 export default function AdminClubsPage() {
-  const [clubs, setClubs] = useState<Club[]>([]);
+  const [clubs, setClubs] = useState<ClubWithNumber[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentClub, setCurrentClub] = useState<Partial<Club> & { id?: string } | null>(null);
+  const [currentClub, setCurrentClub] = useState<Partial<ClubWithNumber> & { id?: string } | null>(null);
   const [formMode, setFormMode] = useState<'new' | 'edit'>('new');
   
   const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -60,9 +62,9 @@ export default function AdminClubsPage() {
       const clubsCollectionRef = collection(db, CLUBS_COLLECTION);
       const q = query(clubsCollectionRef, orderBy("clubNumber", "asc"), orderBy("name", "asc"));
       const querySnapshot = await getDocs(q);
-      const fetchedClubs: Club[] = [];
+      const fetchedClubs: ClubWithNumber[] = [];
       querySnapshot.forEach((doc) => {
-        fetchedClubs.push({ id: doc.id, ...doc.data() } as Club);
+        fetchedClubs.push({ id: doc.id, ...doc.data() } as ClubWithNumber);
       });
       setClubs(fetchedClubs);
     } catch (error) {
@@ -131,7 +133,7 @@ export default function AdminClubsPage() {
       
       await fetchClubs(); 
     } catch (error) {
-      logError("--- handleDeleteClub: Error during delete operation: ---", clubId, error);
+      logError(`--- handleDeleteClub: Error during delete operation for clubId ${clubId}: --- ${error instanceof Error ? error.message : String(error)}`);
       toast({
         title: "Fehler beim Löschen",
         description: (error as Error).message || `Der Verein "${clubName}" konnte nicht gelöscht werden.`,
@@ -152,7 +154,7 @@ export default function AdminClubsPage() {
       return;
     }
 
-    const clubDataToSave: Omit<Club, 'id'> = {
+    const clubDataToSave: Omit<ClubWithNumber, 'id'> = {
       name: currentClub.name.trim(),
       shortName: currentClub.shortName?.trim() || '',
       clubNumber: currentClub.clubNumber?.trim() || '',
@@ -211,7 +213,7 @@ export default function AdminClubsPage() {
     }
   };
 
-  const handleFormInputChange = (field: keyof Pick<Club, 'name' | 'shortName' | 'clubNumber'>, value: string) => {
+  const handleFormInputChange = (field: keyof Pick<ClubWithNumber, 'name' | 'shortName' | 'clubNumber'>, value: string) => {
     setCurrentClub(prev => prev ? ({ ...prev, [field]: value }) : null);
   };
 

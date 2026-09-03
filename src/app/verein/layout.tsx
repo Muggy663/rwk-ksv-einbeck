@@ -1,10 +1,12 @@
 "use client";
-import React, { type ReactNode, createContext, useContext, useState, useEffect, useMemo } from 'react'; // Added useMemo
+import { type ReactNode, createContext, useContext, useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, AlertTriangle, ShieldAlert, UserCog, FileDown, CalendarDays, User, HelpCircle, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, UserCircle, ListChecks, ArrowLeft, LogOut, Building, Loader2, ShieldAlert, UserCog, CalendarDays, FileText } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import { useClubContext } from '@/contexts/ClubContext';
+import { deriveUserClubIds } from '@/lib/clubs/userClubs';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -13,7 +15,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { PasswordChangePrompt } from '@/components/auth/PasswordChangePrompt';
-import { LogoutButton } from '@/components/auth/LogoutButton';
 
 const ADMIN_EMAIL = "admin@rwk-einbeck.de";
 
@@ -34,8 +35,7 @@ interface VereinLayoutProps {
 const vereinNavItems = [
   { href: '/verein/dashboard', label: 'Übersicht', icon: LayoutDashboard },
   { href: '/verein/mannschaften', label: 'Meine Mannschaften', icon: Users },
-  { href: '/verein/schuetzen', label: 'Meine Schützen', icon: UserCircle },
-  { href: '/verein/mitglieder-import', label: 'Mitcom-Import', icon: FileDown },
+  { href: '/mitglieder', label: 'Mitglieder', icon: UserCircle },
   { href: '/verein/ergebnisse', label: 'Ergebnisse erfassen', icon: ListChecks },
   { href: '/verein/handtabellen', label: 'Handtabellen', icon: FileText },
   { href: '/termine', label: 'Terminkalender', icon: CalendarDays },
@@ -53,8 +53,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
     userAppPermissions,
     loadingAppPermissions,
     appPermissionsError: authProviderPermissionError,
-    signOut,
-    resetInactivityTimer
+    signOut
   } = useAuth();
 
   // State for derived permission error specific to this layout's logic
@@ -64,8 +63,8 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
   const [userPermissionForContext, setUserPermissionForContext] = useState<UserPermission | null | false>(false);
   // State for the array of club IDs the user is assigned to
   const [assignedClubIdArray, setAssignedClubIdArray] = useState<string[]>([]);
-  // State for currently active club
-  const [currentClubId, setCurrentClubId] = useState<string | null>(null);
+  // Aktiver Verein kommt aus dem gemeinsamen ClubContext (Single Source of Truth).
+  const { activeClubId: currentClubId, setActiveClubId: setCurrentClubId } = useClubContext();
   // Combined loading state
   const [combinedLoading, setCombinedLoading] = useState(true);
 
@@ -179,7 +178,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
       setUserPermissionForContext(null);
       setAssignedClubIdArray([]);
     } else {
-      const { role, clubId, representedClubs } = userAppPermissions;
+      const { role } = userAppPermissions;
 
       // Direkte Prüfung für SPORTLEITER
       const isSportleiter = userAppPermissions.clubRoles && 
@@ -192,43 +191,28 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
                           role === 'vereinsvertreter' || role === 'mannschaftsfuehrer';
       
       if (hasValidRole) {
-        // Multi-Verein-Support: representedClubs hat Priorität, dann clubRoles, dann clubId
-        let clubIds: string[] = [];
-        
-        if (representedClubs && representedClubs.length > 0) {
-          clubIds = representedClubs;
-        } else if (userAppPermissions.clubRoles && Object.keys(userAppPermissions.clubRoles).length > 0) {
-          clubIds = Object.keys(userAppPermissions.clubRoles);
-        } else if (clubId && typeof clubId === 'string' && clubId.trim() !== '') {
-          clubIds = [clubId];
-        }
+        // Multi-Verein-Support: zentrale, einheitliche Ableitung
+        const clubIds = deriveUserClubIds(userAppPermissions);
           
         if (clubIds.length > 0) {
 
-          setUserPermissionForContext(userAppPermissions);
+          setUserPermissionForContext(userAppPermissions as unknown as UserPermission);
           setAssignedClubIdArray(clubIds);
           
-          // Multi-Verein: Weiterleitung zur Club-Auswahl
-
+          // Multi-Verein: aktiver Verein kommt aus dem gemeinsamen ClubContext.
+          // Ist noch kein gültiger aktiver Verein gesetzt, zur Club-Auswahl leiten.
           if (clubIds.length > 1) {
-            const savedClubId = typeof window !== 'undefined' ? localStorage.getItem('currentClubId') : null;
-
-            if (savedClubId && clubIds.includes(savedClubId)) {
-
-              setCurrentClubId(savedClubId);
-            } else {
-              // Nur weiterleiten wenn nicht bereits auf club-selection
+            const hasValidActive = currentClubId && clubIds.includes(currentClubId);
+            if (!hasValidActive) {
               const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
               if (currentPath !== '/verein/club-selection') {
-
                 if (typeof window !== 'undefined') {
                   window.location.href = '/verein/club-selection';
                 }
                 return;
               }
             }
-          } else {
-
+          } else if (currentClubId !== clubIds[0]) {
             setCurrentClubId(clubIds[0]);
           }
           
@@ -236,7 +220,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
         } else {
           // Role is valid, but no valid clubs assigned
           setDerivedPermissionError("Benutzer hat Rolle, aber keinen gültigen Verein zugewiesen.");
-          setUserPermissionForContext(userAppPermissions);
+          setUserPermissionForContext(userAppPermissions as unknown as UserPermission);
           setAssignedClubIdArray([]);
         }
       } else {
@@ -244,12 +228,12 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
         const roleInfo = role || (userAppPermissions.clubRoles ? Object.values(userAppPermissions.clubRoles).join(', ') : 'Keine Rollen gefunden');
 
         setDerivedPermissionError(`Benutzer hat keine gültige Rolle für den Vereinsbereich. Benötigt: SPORTLEITER, VORSTAND oder Legacy-Rollen. Aktuelle Rollen: ${roleInfo}`);
-        setUserPermissionForContext(userAppPermissions); // Store for potential role display in error
+        setUserPermissionForContext(userAppPermissions as unknown as UserPermission); // Store for potential role display in error
         setAssignedClubIdArray([]);
       }
     }
 
-  }, [user, authLoading, userAppPermissions, loadingAppPermissions, authProviderPermissionError, router, derivedPermissionError]); // Added derivedPermissionError to dependencies
+  }, [user, authLoading, userAppPermissions, loadingAppPermissions, authProviderPermissionError, router, derivedPermissionError, currentClubId, setCurrentClubId]);
 
   const contextValue: VereinContextType = useMemo(() => ({
     userPermission: userPermissionForContext === false ? null : userPermissionForContext,
@@ -258,19 +242,15 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
     assignedClubId: assignedClubIdArray.length > 0 ? assignedClubIdArray[0] : null,
     currentClubId,
     switchClub: (clubId: string) => {
-
       if (assignedClubIdArray.includes(clubId)) {
-
+        // Delegiert an den gemeinsamen ClubContext (persistiert selbst).
         setCurrentClubId(clubId);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('currentClubId', clubId);
-        }
       } else {
         logWarn('VereinLayout: clubId not in assignedClubIdArray:', clubId);
       }
     },
     assignedClubIdArray: assignedClubIdArray,
-  }), [userPermissionForContext, combinedLoading, derivedPermissionError, assignedClubIdArray, currentClubId]);
+  }), [userPermissionForContext, combinedLoading, derivedPermissionError, assignedClubIdArray, currentClubId, setCurrentClubId]);
 
 
 

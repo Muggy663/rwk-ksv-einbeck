@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
 import { logError } from '@/lib/utils/secure-logger';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 const defaultData = [
   { klassenId: 10, name: 'Herren I', minAlter: 21, maxAlter: 40, geschlecht: 1 },
@@ -51,24 +52,28 @@ export async function GET() {
     return NextResponse.json({ success: true, data });
   } catch (error) {
     logError('GET error:', error);
-    return NextResponse.json({ success: false, error: error?.message || 'Fehler' }, { status: 500 });
+    return NextResponse.json({ success: false, error: (error as any)?.message || 'Fehler' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
     const body = await request.json();
     const { id, ...dataToSave } = body;
     const docRef = await adminDb.collection('km_altersklassen').add(dataToSave);
     return NextResponse.json({ success: true, id: docRef.id });
   } catch (error) {
     logError('POST error:', error);
-    return NextResponse.json({ success: false, error: error?.message || 'Fehler' }, { status: 500 });
+    return NextResponse.json({ success: false, error: (error as any)?.message || 'Fehler' }, { status: 500 });
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
     const body = await request.json();
     const { id, ...data } = body;
     if (!id) throw new Error('ID fehlt');
@@ -76,12 +81,14 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     logError('PUT error:', error);
-    return NextResponse.json({ success: false, error: error?.message || 'Fehler' }, { status: 500 });
+    return NextResponse.json({ success: false, error: (error as any)?.message || 'Fehler' }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) throw new Error('ID fehlt');
@@ -89,6 +96,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     logError('DELETE error:', error);
-    return NextResponse.json({ success: false, error: error?.message || 'Fehler' }, { status: 500 });
+    return NextResponse.json({ success: false, error: (error as any)?.message || 'Fehler' }, { status: 500 });
   }
 }

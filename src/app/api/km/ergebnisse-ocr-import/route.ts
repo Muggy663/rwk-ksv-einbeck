@@ -4,11 +4,16 @@ import { GoogleGenAI } from '@google/genai';
 import { secureLogger } from '@/lib/utils/secure-logger';
 import { validateImageUpload } from '@/lib/utils/input-validator';
 import { adminDb } from '@/lib/firebase/admin';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
     if (!process.env.GEMINI_API_KEY) {
       return NextResponse.json({ error: 'OCR service not configured' }, { status: 500 });
     }
@@ -70,11 +75,11 @@ Gib JSON zurück:
       }]
     });
 
-    const text = response.text;
+    const text = response.text || '';
     let jsonText = text;
     if (text.includes('```json')) {
       const match = text.match(/```json\s*([\s\S]*?)\s*```/);
-      if (match) jsonText = match[1];
+      if (match) jsonText = match[1] || '';
     }
 
     const parsedResults = JSON.parse(jsonText);
@@ -120,7 +125,7 @@ Gib JSON zurück:
     });
 
   } catch (error) {
-    secureLogger.error('KM OCR Import Error:', error);
+    secureLogger.error('KM OCR Import Error:', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Import fehlgeschlagen' }, { status: 500 });
   }
 }

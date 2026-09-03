@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   
   try {
     if (!process.env.GEMINI_API_KEY) {
-      secureLogger.error('GEMINI_API_KEY missing', 'gemini-ocr');
+      secureLogger.error('GEMINI_API_KEY missing', undefined, 'gemini-ocr');
       return NextResponse.json({ 
         error: 'OCR service not configured'
       }, { status: 500 });
@@ -43,11 +43,11 @@ export async function POST(request: NextRequest) {
             contents: [{ role: 'user', parts: [{ text: prompt }] }]
           });
           
-          const text = response.text;
+          const text = response.text || '';
           let jsonText = text;
           if (text.includes('```json')) {
             const match = text.match(/```json\s*([\s\S]*?)\s*```/);
-            if (match) jsonText = match[1];
+            if (match) jsonText = match[1] || '';
           }
           
           const parsedResults = JSON.parse(jsonText);
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
           });
         }
       } catch (jsonError) {
-        secureLogger.error('JSON processing failed', 'gemini-ocr');
+        secureLogger.error('JSON processing failed', undefined, 'gemini-ocr');
         return NextResponse.json({ 
           error: 'Invalid JSON request'
         }, { status: 400 });
@@ -69,7 +69,6 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const image = formData.get('image') as File;
     const contextRaw = formData.get('context') as string;
-    const availableTeamsRaw = formData.get('availableTeams') as string;
     
     if (!image) {
       secureLogger.warn('No image provided', 'gemini-ocr');
@@ -108,7 +107,7 @@ export async function POST(request: NextRequest) {
         throw new Error('Invalid image data');
       }
     } catch (conversionError) {
-      secureLogger.error('Image conversion failed', 'gemini-ocr');
+      secureLogger.error('Image conversion failed', undefined, 'gemini-ocr');
       return NextResponse.json({ 
         error: 'Failed to process image data'
       }, { status: 400 });
@@ -188,7 +187,7 @@ Format: [{"shooterName": "Max Mustermann", "teamName": "Team A", "score": 285, "
       }
     }
 
-    const text = response.text;
+    const text = response!.text || '';
     const processingTime = Date.now() - startTime;
     
     if (isMobileRequest) {
@@ -200,7 +199,7 @@ Format: [{"shooterName": "Max Mustermann", "teamName": "Team A", "score": 285, "
       if (text.includes('```json')) {
         const match = text.match(/```json\s*([\s\S]*?)\s*```/);
         if (match) {
-          jsonText = match[1];
+          jsonText = match[1] || '';
         }
       }
       
@@ -226,7 +225,7 @@ Format: [{"shooterName": "Max Mustermann", "teamName": "Team A", "score": 285, "
       });
       
     } catch (parseError) {
-      secureLogger.error('Failed to parse Gemini response', 'gemini-ocr');
+      secureLogger.error('Failed to parse Gemini response', undefined, 'gemini-ocr');
       
       // Für Mobile: Detailliertere Fehlermeldung
       const errorDetails = isMobileRequest 
@@ -242,7 +241,7 @@ Format: [{"shooterName": "Max Mustermann", "teamName": "Team A", "score": 285, "
   } catch (error) {
     const processingTime = Date.now() - startTime;
     
-    secureLogger.error(`Gemini OCR processing failed after ${processingTime}ms`, 'gemini-ocr');
+    secureLogger.error(`Gemini OCR processing failed after ${processingTime}ms`, undefined, 'gemini-ocr');
     
     // Mobile-spezifische Fehlermeldungen
     let errorMessage = 'OCR processing failed';

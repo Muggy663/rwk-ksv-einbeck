@@ -1,8 +1,8 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, BarChart3, Target, Loader } from 'lucide-react';
+import { BarChart3, Target, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface GeminiInsightsProps {

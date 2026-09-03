@@ -1,12 +1,12 @@
 // src/app/verein/dashboard/page.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, FileText, BarChart3, Calendar, Key, Play, Sparkles, Target, Trophy, Shield, HelpCircle, FileSpreadsheet } from 'lucide-react';
+import { Users, FileText, BarChart3, Calendar, Key, Play, Sparkles, Target, Trophy, Shield, HelpCircle } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 import Link from 'next/link';
@@ -22,7 +22,7 @@ export default function VereinDashboardPage() {
   const { userPermission, currentClubId, assignedClubId } = useVereinAuth();
   const { userAppPermissions } = useAuthContext();
   const [showGuide, setShowGuide] = useState(false);
-  const [allClubsGlobal, setAllClubsGlobal] = useState([]);
+  const [allClubsGlobal, setAllClubsGlobal] = useState<Array<{ id: string; name?: string; [key: string]: any }>>([]);
 
   const onboardingSteps = [
     {
@@ -211,39 +211,6 @@ export default function VereinDashboardPage() {
                   <span className="truncate">Mannschaften verwalten</span>
                 </Link>
               </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Schützen - Nur für Sportleiter/Vorstand */}
-        {(userPermission?.clubRoles && (Object.values(userPermission.clubRoles).includes('SPORTLEITER') || Object.values(userPermission.clubRoles).includes('VORSTAND')) || userPermission?.role === 'vereinsvertreter' || user?.email === 'admin@rwk-einbeck.de') && (
-          <Card className="shadow-lg hover:shadow-xl transition-shadow border-l-4 border-l-blue-500">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Users className="h-6 w-6 text-blue-600" />
-                </div>
-                <Badge variant="secondary">Wichtig</Badge>
-              </div>
-              <CardTitle className="text-xl">Schützen</CardTitle>
-              <CardDescription className="text-base">
-                Füge neue Schützen hinzu und bearbeite deren Stammdaten
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-2">
-                <Button asChild className="w-full h-12 text-sm font-semibold">
-                  <Link href="/verein/schuetzen">
-                    <span className="truncate">Schützen verwalten</span>
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full text-sm">
-                  <Link href="/verein/mitglieder-import">
-                    <FileSpreadsheet className="mr-2 h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">Mitcom-Import</span>
-                  </Link>
-                </Button>
-              </div>
             </CardContent>
           </Card>
         )}

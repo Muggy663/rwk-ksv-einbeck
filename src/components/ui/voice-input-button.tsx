@@ -1,9 +1,8 @@
 // src/components/ui/voice-input-button.tsx
 "use client";
 
-import React from 'react';
 import { Button } from './button';
-import { Mic, MicOff, Loader2 } from 'lucide-react';
+import { Mic, MicOff } from 'lucide-react';
 import { useVoiceInput } from '@/hooks/use-voice-input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';

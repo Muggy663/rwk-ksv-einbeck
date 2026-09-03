@@ -8,10 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SchießnachweisService } from '@/lib/services/schiessnachweis-service';
-import { UnifiedTrainingService } from '@/lib/services/unified-training-service';
 import { SchießEintrag } from '@/types/schiessnachweis';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Plus, Calendar, Target, MapPin, Edit, Trash2, Eye, Users, Filter } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, Target, MapPin, Edit, Trash2, Eye, Filter } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -20,7 +19,6 @@ function EintraegeContent() {
   const { toast } = useToast();
   const [einträge, setEinträge] = useState<SchießEintrag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [needsSync, setNeedsSync] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>('alle');
   const [selectedMonth, setSelectedMonth] = useState<string>('alle');
   const [selectedDisziplin, setSelectedDisziplin] = useState<string>('alle');
@@ -38,7 +36,6 @@ function EintraegeContent() {
     if (mounted) {
       // Direkt laden ohne Cache-Invalidierung
       loadEinträge();
-      checkSyncStatus();
     }
   }, [mounted]);
   
@@ -58,33 +55,6 @@ function EintraegeContent() {
       logInfo('Loaded entries:', { data: data.length }); // Debug log
     } catch (error) {
       logError('Fehler beim Laden der Einträge:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const checkSyncStatus = () => {
-    const lastSync = localStorage.getItem('last_cloud_sync');
-    const today = new Date().toDateString();
-    setNeedsSync(lastSync !== today);
-  };
-
-  const handleCloudSync = async () => {
-    setIsLoading(true);
-    try {
-      await UnifiedTrainingService.syncAllData();
-      toast({
-        title: "Synchronisation erfolgreich",
-        description: "Alle Trainingsdaten wurden synchronisiert"
-      });
-      setNeedsSync(false);
-      loadEinträge();
-    } catch (error) {
-      toast({
-        title: "Synchronisation fehlgeschlagen", 
-        description: "Fehler beim Laden der Daten",
-        variant: "destructive"
-      });
     } finally {
       setIsLoading(false);
     }

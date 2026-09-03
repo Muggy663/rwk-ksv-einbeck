@@ -23,7 +23,6 @@ export function SiteFooter() {
           <div className="flex flex-col items-center md:items-end gap-3 py-2">
             <div>
               <p className="whitespace-nowrap">Web-Version {APP_VERSION.web}</p>
-              <p className="text-xs mt-1 whitespace-nowrap">App-Version {APP_VERSION.android}</p>
               <p className="text-xs mt-2 text-center md:text-right">
                 <Link href="/impressum" className="text-muted-foreground hover:text-primary underline">
                   Impressum

@@ -38,7 +38,7 @@ export class SimpleOCRService {
         rawText: data.rawText
       };
     } catch (error) {
-      secureLogger.error('OCR processing failed', 'simple-ocr', { error });
+      secureLogger.error('OCR processing failed', error instanceof Error ? error : new Error(String(error)), 'simple-ocr');
       throw error;
     }
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { useKMAuth } from '@/hooks/useKMAuth';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { db } from '@/lib/firebase/config';
+import { authFetch } from '@/lib/auth/authFetch';
 import { collection, getDocs } from 'firebase/firestore';
 
 interface WettkampfStatus {
@@ -35,7 +36,7 @@ export default function WettkampfDashboardPage() {
       try {
         // Lade Daten über API und Firebase
         const [meldungenRes] = await Promise.all([
-          fetch('/api/km/meldungen?jahr=2026')
+          authFetch('/api/km/meldungen?jahr=2026')
         ]);
         
         const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
@@ -53,19 +54,19 @@ export default function WettkampfDashboardPage() {
         // Lade Disziplinen und Schützen über API
         const [disziplinenRes, schuetzenRes] = await Promise.all([
           fetch('/api/km/disziplinen'),
-          fetch('/api/shooters')
+          authFetch('/api/shooters')
         ]);
         
         const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
         const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
         
         const disziplinenMap = new Map();
-        disziplinenData.forEach(disziplin => {
+        disziplinenData.forEach((disziplin: any) => {
           disziplinenMap.set(disziplin.id, disziplin.name);
         });
         
         const schuetzenMap = new Map();
-        schuetzenData.forEach(schuetze => {
+        schuetzenData.forEach((schuetze: any) => {
           const name = schuetze.firstName && schuetze.lastName 
             ? `${schuetze.firstName} ${schuetze.lastName}` 
             : schuetze.name || 'Unbekannt';
@@ -79,7 +80,7 @@ export default function WettkampfDashboardPage() {
           fehlendStarter: string[];
         }>();
         
-        meldungenData.forEach(meldung => {
+        meldungenData.forEach((meldung: any) => {
           const disziplinName = disziplinenMap.get(meldung.disziplinId) || 'Unbekannt';
           const schuetzeName = schuetzenMap.get(meldung.schuetzeId) || 'Unbekannt';
           

@@ -7,9 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, Download, Mail, Printer, BarChart3 } from 'lucide-react';
+import { FileText, Download, Printer, BarChart3 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useToast } from '@/hooks/use-toast';
@@ -38,8 +36,8 @@ export default function HandzettelPage() {
     }
   });
   
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [einzelschuetzen, setEinzelschuetzen] = useState<any[]>([]);
+  const [teams, setTeams] = useState<Array<Team & { shooters?: any[] }>>([]);
+  const [, setEinzelschuetzen] = useState<any[]>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
 
   useEffect(() => {
@@ -155,31 +153,6 @@ export default function HandzettelPage() {
     
     loadTeams();
   }, [selectedSeasonId, selectedLeagueId, toast]);
-
-  const generateHandzettel = async () => {
-    if (!selectedSeasonId) {
-      toast({
-        title: 'Saison fehlt',
-        description: 'Bitte wählen Sie eine Saison aus.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    try {
-      toast({
-        title: 'Handzettel erstellt',
-        description: 'Der Handzettel wurde erfolgreich generiert.'
-      });
-    } catch (error) {
-      logError('Fehler beim Generieren:', error);
-      toast({
-        title: 'Fehler',
-        description: 'Handzettel konnte nicht erstellt werden.',
-        variant: 'destructive'
-      });
-    }
-  };
 
   const availableLeagues = leagues.filter(league => 
     !selectedSeasonId || league.seasonId === selectedSeasonId
@@ -397,7 +370,7 @@ export default function HandzettelPage() {
                             return 0;
                           })
                           .slice(0, 10)
-                          .map((team, teamIndex) => {
+                          .map((team, _teamIndex) => {
                             const isEinzelTeam = team.name.toLowerCase().includes('einzel');
                             const shooterCount = isEinzelTeam ? (team.shooters?.length || 1) : 3;
                             const rowSpan = shooterCount + 1;
@@ -454,7 +427,6 @@ export default function HandzettelPage() {
                       const imgData = canvas.toDataURL('image/png');
                       const pdf = new jsPDF('p', 'mm', 'a4');
                       const imgWidth = 210;
-                      const pageHeight = 297;
                       const imgHeight = (canvas.height * imgWidth) / canvas.width;
                       
                       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);

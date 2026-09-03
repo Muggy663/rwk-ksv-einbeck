@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Substitution nicht gefunden' }, { status: 404 });
       }
 
-      const substitution = { id: substitutionDoc.id, ...substitutionDoc.data() };
+      const substitution = { id: substitutionDoc.id, ...substitutionDoc.data() } as { id: string; [key: string]: any };
 
       const teamDoc = await adminDb.collection('rwk_teams').doc(teamId).get();
       
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Team nicht gefunden' }, { status: 404 });
       }
 
-      const team = { id: teamDoc.id, ...teamDoc.data() };
+      const team = { id: teamDoc.id, ...teamDoc.data() } as { id: string; [key: string]: any };
 
       // RWK-Ordnung §12: Neuer Schütze übernimmt bisherige Ergebnisse
       const originalScoresQuery = adminDb.collection('rwk_scores')

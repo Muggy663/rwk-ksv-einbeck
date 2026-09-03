@@ -12,7 +12,7 @@ export function ServiceWorkerRegistration() {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js')
-          .then(registration => {
+          .then(_registration => {
 
           })
           .catch(error => {

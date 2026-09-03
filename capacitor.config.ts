@@ -1,5 +1,6 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+// appVersion ist kein Standard-CapacitorConfig-Feld -> Cast, damit Wert erhalten bleibt
 const config: CapacitorConfig = {
   appId: 'de.rwk.einbeck',
   appName: 'RWK Einbeck',
@@ -28,6 +29,6 @@ const config: CapacitorConfig = {
     // Bessere Performance
     // hardwareAccelerated: true - entfernt
   }
-};
+} as CapacitorConfig & { appVersion?: string };
 
 export default config;

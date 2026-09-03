@@ -116,12 +116,11 @@ export default function UnifiedLoginPage() {
         
         // user_permissions erstellen
         try {
-          const response = await fetch('/api/create-individual-user', {
+          const { authFetch } = await import('@/lib/auth/authFetch');
+          const response = await authFetch('/api/create-individual-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              uid: user.uid,
-              email: user.email,
               displayName: displayName || null
             })
           });

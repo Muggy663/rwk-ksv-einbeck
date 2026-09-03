@@ -1,23 +1,21 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Loader2, ArrowUpDown, Calendar } from 'lucide-react';
+import { Loader2, ArrowUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, AlertCircle, ArrowUp, ArrowDown, Download } from 'lucide-react';
 import Link from 'next/link';
-import { IntelligentAdminRecommendations } from '@/components/ui/intelligent-admin-recommendations';
-import { calculateLeagueStandings, generatePromotionRelegationSuggestions, createNewSeason, applyPromotionRelegation } from '@/lib/services/season-transition-service';
+import { calculateLeagueStandings, generatePromotionRelegationSuggestions, applyPromotionRelegation } from '@/lib/services/season-transition-service';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -62,7 +60,7 @@ export default function SeasonTransitionPage() {
   const { user } = useAuth();
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [selectedSourceSeason, setSelectedSourceSeason] = useState<string>('');
-  const [selectedTargetSeason, setSelectedTargetSeason] = useState<string>('');
+  const [selectedTargetSeason] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [leagues, setLeagues] = useState<League[]>([]);
@@ -74,7 +72,7 @@ export default function SeasonTransitionPage() {
   const [allLeagueSuggestions, setAllLeagueSuggestions] = useState<Map<string, PromotionRelegationSuggestion[]>>(new Map());
   const [showAllLeagues, setShowAllLeagues] = useState(false);
   const [teamStandings, setTeamStandings] = useState<Map<string, any>>(new Map());
-  const [notRegisteredTeams, setNotRegisteredTeams] = useState<string[]>([]);
+
 
   useEffect(() => {
     const fetchSeasons = async () => {
@@ -139,59 +137,6 @@ export default function SeasonTransitionPage() {
 
     fetchLeagues();
   }, [selectedSourceSeason, seasons, toast]);
-
-  const handleCreateNewSeason = async () => {
-    if (!user || user.email !== 'admin@rwk-einbeck.de') {
-      toast({
-        title: 'Nicht autorisiert',
-        description: 'Sie müssen als Administrator angemeldet sein, um diese Funktion zu nutzen.',
-        variant: 'destructive'
-      });
-      return;
-    }
-    
-    if (!selectedSourceSeason || selectedTargetSeason !== 'new') {
-      toast({
-        title: 'Fehlende Auswahl',
-        description: 'Bitte wählen Sie eine Quell-Saison und "Neue Saison erstellen" aus.',
-        variant: 'destructive'
-      });
-      return;
-    }
-    
-    setIsProcessing(true);
-    try {
-      const sourceSeason = seasons.find(s => s.id === selectedSourceSeason);
-      if (!sourceSeason) throw new Error('Quell-Saison nicht gefunden');
-      
-      const targetYear = sourceSeason.competitionYear + 1;
-      const newSeasonId = await createNewSeason(selectedSourceSeason, targetYear, sourceSeason.type as 'KK' | 'LD');
-      
-      toast({
-        title: 'Neue Saison erstellt',
-        description: `Saison ${targetYear} wurde erfolgreich basierend auf ${sourceSeason.name} erstellt.`,
-      });
-      
-      // Saisons neu laden
-      const seasonsQuery = query(collection(db, 'seasons'), orderBy('competitionYear', 'desc'));
-      const snapshot = await getDocs(seasonsQuery);
-      const fetchedSeasons = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Season[];
-      setSeasons(fetchedSeasons);
-      
-    } catch (error: any) {
-      logError('Error creating new season:', error);
-      toast({
-        title: 'Fehler',
-        description: error.message || 'Bei der Erstellung der neuen Saison ist ein Fehler aufgetreten.',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const generateSuggestions = async () => {
     if (!selectedSourceSeason || !selectedLeague) {
@@ -411,7 +356,7 @@ export default function SeasonTransitionPage() {
     try {
       doc.addImage('/images/logo2.png', 'PNG', 240, 10, 30, 30);
     } catch (error) {
-      logDebug('Logo konnte nicht geladen werden:', error);
+      logDebug('Logo konnte nicht geladen werden:', error instanceof Error ? error.message : String(error));
     }
     
     // Header

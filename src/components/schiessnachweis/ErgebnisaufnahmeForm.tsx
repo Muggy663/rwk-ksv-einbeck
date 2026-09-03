@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Minus, RotateCcw, Calculator } from "lucide-react";
-import { ZehnerSerie, Schuss, getDisziplinConfig, DisziplinName } from "@/types/schiessnachweis";
+import { Plus } from "lucide-react";
+import { ZehnerSerie, getDisziplinConfig } from "@/types/schiessnachweis";
 
 interface ErgebnisaufnahmeFormProps {
-  disziplin: DisziplinName;
+  // Bewusst als string: SchießEintrag.disziplin ist string; getDisziplinConfig
+  // verträgt beliebige Werte (liefert undefined bei unbekannter Disziplin).
+  disziplin: string;
   onSerienChange: (serien: ZehnerSerie[]) => void;
   initialSerien?: ZehnerSerie[];
   schussAnzahl?: number;
@@ -124,10 +125,6 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
     setSerien(neueSerien);
   };
 
-  const getGesamtErgebnis = () => {
-    return serien.reduce((sum, serie) => sum + serie.summe, 0);
-  };
-
   const applySeriensumme = (e?: React.FormEvent) => {
     if (e) e.preventDefault(); // Verhindere Form-Submit
     if (!disziplinConfig || !seriensummeInput) return;
@@ -143,16 +140,6 @@ export function ErgebnisaufnahmeForm({ disziplin, onSerienChange, initialSerien 
     
     setSerien(neueSerien);
     setSeriensummeInput('');
-  };
-
-  const getSchnellwerte = () => {
-    if (!disziplinConfig) return [];
-    
-    if (disziplinConfig.kommastellen) {
-      return [0, 8.0, 9.0, 9.5, 10.0, 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8, 10.9];
-    } else {
-      return Array.from({ length: disziplinConfig.maxRinge + 1 }, (_, i) => i);
-    }
   };
 
   if (!disziplinConfig) {

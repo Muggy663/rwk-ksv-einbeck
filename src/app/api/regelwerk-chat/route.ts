@@ -43,7 +43,7 @@ Max 100 Wörter, ehrlich bei Unsicherheit.`;
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
-    const answer = response.text.trim();
+    const answer = (response.text || '').trim();
     
     return NextResponse.json({ 
       success: true, 
@@ -51,7 +51,7 @@ Max 100 Wörter, ehrlich bei Unsicherheit.`;
     });
 
   } catch (error) {
-    secureLogger.error('Regelwerk chat failed', 'regelwerk-chat');
+    secureLogger.error('Regelwerk chat failed', undefined, 'regelwerk-chat');
     return NextResponse.json({ 
       error: 'Chat failed',
       answer: 'Entschuldigung, ich kann diese Frage gerade nicht beantworten. Bitte versuchen Sie es später erneut.'

@@ -1,4 +1,4 @@
-﻿function getShooterClubId(s: any): string | null { return s?.clubId || s?.rwkClubId || s?.kmClubId || null; }
+﻿function getShooterClubId(s: any): string | null { return s?.clubId || s?.kmClubId || null; }
 // src/lib/services/km-startrechte-service.ts
 
 export const DISZIPLIN_GRUPPEN = {
@@ -25,7 +25,7 @@ export function getStartVereinForDisziplin(schuetze: any, disziplin: any): strin
     return getShooterClubId(schuetze);
   }
   
-  // PrÃ¼fe spezifische KM-Startrechte
+  // Prüfe spezifische KM-Startrechte
   if (schuetze.kmStartrechte) {
     const gruppe = getDisziplinGruppe(disziplin.spoNummer);
     const startrecht = schuetze.kmStartrechte[gruppe];
@@ -40,7 +40,7 @@ export const STARTRECHT_LABELS = {
   'luftwaffen': 'Luftwaffen (LG/LP)',
   'kleinkaliber_gewehr': 'Kleinkaliber Gewehr',
   'kleinkaliber_pistole': 'Kleinkaliber Pistole', 
-  'grosskaliber': 'GroÃŸkaliber',
+  'grosskaliber': 'Großkaliber',
   'armbrust': 'Armbrust',
   'laufende_scheibe': 'Laufende Scheibe',
   'sonderdisziplinen': 'Sonderdisziplinen'

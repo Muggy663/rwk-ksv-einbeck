@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 const KM_MANNSCHAFTEN_COLLECTION = 'km_mannschaften';
 
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     const saison = request.nextUrl.searchParams.get('saison');
     
-    let query = adminDb.collection(KM_MANNSCHAFTEN_COLLECTION);
+    let query: FirebaseFirestore.Query = adminDb.collection(KM_MANNSCHAFTEN_COLLECTION);
     if (saison) {
       query = query.where('saison', '==', saison);
     }
@@ -38,6 +39,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
     const body = await request.json();
     const { vereinId, disziplinId, wettkampfklassen, schuetzenIds, name, saison } = body;
 

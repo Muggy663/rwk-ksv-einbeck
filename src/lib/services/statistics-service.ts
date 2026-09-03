@@ -32,12 +32,14 @@ export interface GenderDistributionData {
 const AVAILABLE_COLLECTIONS = [
   'rwk_scores_2025_KK',
   'rwk_scores_2025_KKP',
+  'rwk_scores_2026_KK',
+  'rwk_scores_2026_KKP',
   'rwk_scores_2026_LD'
 ];
 
 async function findWorkingCollection(competitionYear: number, leagueType: string): Promise<string | null> {
   // Erst gewünschte Collection versuchen
-  const preferredCollection = getSeasonSpecificScoresCollection(competitionYear, leagueType);
+  const preferredCollection = getSeasonSpecificScoresCollection(competitionYear, leagueType as any);
   
   const collectionsToTry = [preferredCollection, ...AVAILABLE_COLLECTIONS];
   

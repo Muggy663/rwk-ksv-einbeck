@@ -44,6 +44,7 @@ export async function getAllDocumentsFromMongo(): Promise<Document[]> {
 export async function getActiveDocumentsFromMongo(): Promise<Document[]> {
   try {
     const db = await getMongoDb();
+    if (!db) return []; // MongoDB nicht verfügbar - stille Rückgabe
     const collection = db.collection(COLLECTION_NAME);
     
     const documents = await collection.find({ active: true }).toArray();
@@ -58,6 +59,7 @@ export async function getActiveDocumentsFromMongo(): Promise<Document[]> {
 export async function getDocumentsByCategoryFromMongo(category: string): Promise<Document[]> {
   try {
     const db = await getMongoDb();
+    if (!db) return [];
     const collection = db.collection(COLLECTION_NAME);
     
     const documents = await collection.find({ category, active: true }).toArray();
@@ -72,6 +74,7 @@ export async function getDocumentsByCategoryFromMongo(category: string): Promise
 export async function getDocumentByIdFromMongo(id: string): Promise<Document | null> {
   try {
     const db = await getMongoDb();
+    if (!db) return null;
     const collection = db.collection(COLLECTION_NAME);
     
     const document = await collection.findOne({ _id: new ObjectId(id) });
@@ -86,6 +89,7 @@ export async function getDocumentByIdFromMongo(id: string): Promise<Document | n
 export async function addDocumentToMongo(document: DocumentFormData): Promise<Document | null> {
   try {
     const db = await getMongoDb();
+    if (!db) return null;
     const collection = db.collection(COLLECTION_NAME);
     
     const result = await collection.insertOne({
@@ -112,6 +116,7 @@ export async function addDocumentToMongo(document: DocumentFormData): Promise<Do
 export async function updateDocumentInMongo(id: string, document: Partial<DocumentFormData>): Promise<Document | null> {
   try {
     const db = await getMongoDb();
+    if (!db) return null;
     const collection = db.collection(COLLECTION_NAME);
     
     const result = await collection.findOneAndUpdate(
@@ -136,6 +141,7 @@ export async function updateDocumentInMongo(id: string, document: Partial<Docume
 export async function deleteDocumentFromMongo(id: string): Promise<boolean> {
   try {
     const db = await getMongoDb();
+    if (!db) return false;
     const collection = db.collection(COLLECTION_NAME);
     
     const result = await collection.deleteOne({ _id: new ObjectId(id) });
@@ -155,6 +161,7 @@ export async function toggleDocumentActiveInMongo(id: string, active: boolean): 
 export async function migrateDocumentsToMongo(documents: Document[]): Promise<boolean> {
   try {
     const db = await getMongoDb();
+    if (!db) return false;
     const collection = db.collection(COLLECTION_NAME);
     
     // Lösche alle vorhandenen Dokumente

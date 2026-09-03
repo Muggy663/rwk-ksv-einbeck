@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { getErrorMessage } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -198,7 +198,7 @@ export default function ImportBirthdaysPage() {
             )}
             
             <div className="flex gap-2">
-              <a href="/km/mitglieder">
+              <a href="/mitglieder">
                 <Button variant="outline">
                   Zur Mitgliederverwaltung
                 </Button>

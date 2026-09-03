@@ -23,14 +23,14 @@ export async function POST(request: NextRequest) {
 Du bist ein Experte für Schießsport-Startlisten. Erstelle eine optimale Startliste basierend auf folgenden Daten:
 
 MELDUNGEN (${meldungen.length} Starter):
-${meldungen.map((m, i) => `${i+1}. ${m.schuetzeName} (${m.verein}) - ${m.disziplin} - ${m.wettkampfklasse}${m.gewehrSharing ? ' [GEWEHR GETEILT]' : ''}`).join('\n')}
+${meldungen.map((m: any, i: number) => `${i+1}. ${m.schuetzeName} (${m.verein}) - ${m.disziplin} - ${m.wettkampfklasse}${m.gewehrSharing ? ' [GEWEHR GETEILT]' : ''}`).join('\n')}
 
 KONFIGURATION:
 - Verfügbare Stände: ${config.verfuegbareStaende?.join(', ') || 'Nicht definiert'} (${config.verfuegbareStaende?.length || 0} Stände)
 - Startzeit: ${config.startUhrzeit || 'Nicht definiert'}
 - Durchgangsdauer: ${config.durchgangsDauer || 30} Minuten
 - Wechselzeit: ${config.wechselzeit || 10} Minuten
-- Pausen: ${config.pausen?.map(p => `${p.nach} Durchgängen: ${p.dauer} Min`).join(', ') || 'Keine'}
+- Pausen: ${config.pausen?.map((p: any) => `${p.nach} Durchgängen: ${p.dauer} Min`).join(', ') || 'Keine'}
 
 WICHTIGE REGELN:
 1. **ALLE VERFÜGBAREN STÄNDE NUTZEN**: Nutze ALLE ${config.verfuegbareStaende?.length || 0} verfügbaren Stände pro Durchgang für minimale Durchgangsanzahl
@@ -79,7 +79,7 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen.`;
 Du bist ein Experte für Schießsport-Startlisten. Analysiere die bestehende Startliste und schlage Verbesserungen vor:
 
 AKTUELLE STARTLISTE:
-${meldungen.map((m, i) => `${i+1}. ${m.name} - Stand ${m.stand} - ${m.startzeit} - ${m.verein}`).join('\n')}
+${meldungen.map((m: any, i: number) => `${i+1}. ${m.name} - Stand ${m.stand} - ${m.startzeit} - ${m.verein}`).join('\n')}
 
 Analysiere auf:
 1. Stand-Zeit-Konflikte (mehrere Starter gleicher Stand zur gleichen Zeit)
@@ -116,7 +116,7 @@ Antworte mit JSON:
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
-    const text = response.text.trim();
+    const text = (response.text || '').trim();
     
     // Versuche JSON zu parsen
     try {

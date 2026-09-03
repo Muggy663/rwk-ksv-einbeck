@@ -48,7 +48,7 @@ export async function sendResultNotificationEmail(data: EmailNotificationData): 
         const token = await auth.currentUser.getIdToken();
         authHeaders = { 'Authorization': `Bearer ${token}` };
       } catch (tokenError) {
-        logWarn('Konnte Firebase-Token nicht laden:', tokenError);
+        logWarn('Konnte Firebase-Token nicht laden:', tokenError instanceof Error ? tokenError.message : String(tokenError));
       }
     }
 
@@ -240,7 +240,7 @@ export async function sendKMMeldungNotificationEmail(data: KMMeldungNotification
         const token = await auth.currentUser.getIdToken();
         authHeaders = { 'Authorization': `Bearer ${token}` };
       } catch (tokenError) {
-        logWarn('Konnte Firebase-Token nicht laden:', tokenError);
+        logWarn('Konnte Firebase-Token nicht laden:', tokenError instanceof Error ? tokenError.message : String(tokenError));
       }
     }
 

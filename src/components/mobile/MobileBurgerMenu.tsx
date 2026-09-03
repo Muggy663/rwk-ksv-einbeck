@@ -26,8 +26,8 @@ const mainNavItems: NavItem[] = [
   { href: '/dokumente', icon: FileText, label: 'Dokumente' },
 ]
 
-// Beta Features - wird dynamisch in der Komponente gesetzt
-const getBetaNavItems = (user: any): NavItem[] => [
+// Zusatz-Feature (kein Kern-RWK/KM) – im Menü bewusst abgesetzt
+const extraNavItems: NavItem[] = [
   { href: '/schiessnachweis', icon: Target, label: 'Schießnachweis' },
 ]
 
@@ -56,7 +56,7 @@ export function MobileBurgerMenu() {
   })
 
   const filteredMainItems = filterItems(mainNavItems)
-  const filteredBetaItems = filterItems(getBetaNavItems(user))
+  const filteredExtraItems = filterItems(extraNavItems)
   const filteredHelpItems = filterItems(helpNavItems)
   const filteredUserItems = filterItems(userNavItems)
 
@@ -118,11 +118,14 @@ export function MobileBurgerMenu() {
                 </div>
               </div>
 
-              {/* Beta Features */}
-              <div>
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-3">Beta Features</h3>
+              {/* Extra – abgesetztes Zusatz-Feature */}
+              <div className="border-t pt-3">
+                <h3 className="mb-2 flex items-center gap-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Extra
+                  <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium normal-case text-primary-foreground">Bonus</span>
+                </h3>
                 <div className="space-y-1">
-                  {filteredBetaItems.map((item) => {
+                  {filteredExtraItems.map((item) => {
                     const Icon = item.icon
                     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
                     return (
@@ -132,8 +135,6 @@ export function MobileBurgerMenu() {
                       >
                         <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-primary-foreground dark:text-white" : "text-muted-foreground")} />
                         <span className="truncate">{item.label}</span>
-
-                        {(item.href === '/social' || item.href === '/social/welcome') && <span className="text-xs text-green-600 dark:text-green-400 font-semibold ml-1">NEU</span>}
                       </Link>
                     )
                   })}

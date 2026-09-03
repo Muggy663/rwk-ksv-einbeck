@@ -1,7 +1,7 @@
 /**
  * Utility-Funktionen für die Memoization von Komponenten und Funktionen
  */
-import { useMemo, useCallback, DependencyList } from 'react';
+import React, { useMemo, useCallback, DependencyList } from 'react';
 
 /**
  * Memoize eine Funktion mit expliziten Typen

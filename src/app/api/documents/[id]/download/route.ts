@@ -4,13 +4,13 @@ import { getMongoDb } from '@/lib/db/mongodb';
 import { ObjectId } from 'mongodb';
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     const db = await getMongoDb();
-    const collection = db.collection('documents');
+    const collection = db!.collection('documents');
     
     await collection.updateOne(
       { _id: new ObjectId(id) },

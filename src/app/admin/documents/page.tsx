@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { 
   Card, 
@@ -191,7 +191,9 @@ export default function DocumentsAdminPage() {
                           <FileText className="h-4 w-4 mr-2 text-primary" />
                           {doc.title}
                           {doc.restricted && (
-                            <Lock className="h-4 w-4 ml-2 text-amber-500" title="Nur für Vereinsvertreter/Mannschaftsführer" />
+                            <span title="Nur für Vereinsvertreter/Mannschaftsführer" className="inline-flex">
+                              <Lock className="h-4 w-4 ml-2 text-amber-500" />
+                            </span>
                           )}
                         </div>
                       </TableCell>

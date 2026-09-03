@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     });
   
     // 4. Filtere und verarbeite Scores
-    const exportData = [];
+    const exportData: any[] = [];
     scoresSnapshot.docs.forEach(doc => {
       const score = doc.data();
       const team = teams.get(score.teamId);

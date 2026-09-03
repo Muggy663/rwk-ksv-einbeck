@@ -1,11 +1,11 @@
 // src/components/onboarding/InteractiveGuide.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { X, ArrowRight, ArrowLeft, CheckCircle, Users, Target, Trophy, Shield, HelpCircle } from 'lucide-react';
+import { X, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 
 interface GuideStep {
   id: string;

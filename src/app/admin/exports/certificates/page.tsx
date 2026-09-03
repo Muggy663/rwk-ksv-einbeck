@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,6 @@ export default function CertificatesPage() {
   const [numTopShooters, setNumTopShooters] = useState<number>(3);
   const [numTopTeams, setNumTopTeams] = useState<number>(2);
   const [includeAkCertificates, setIncludeAkCertificates] = useState<boolean>(true);
-  const [generateOverallBest, setGenerateOverallBest] = useState<boolean>(false);
   const [selectedDiscipline, setSelectedDiscipline] = useState<string>('ALL');
   const [ceremonyDate, setCeremonyDate] = useState<string>('');
   const [ceremonyLocation, setCeremonyLocation] = useState<string>('Einbeck');
@@ -276,7 +275,7 @@ export default function CertificatesPage() {
       const seasonSnap = await getDoc(seasonRef);
       if (!seasonSnap.exists()) throw new Error('Saison nicht gefunden');
       const seasonName = seasonSnap.data().name.replace('RWK ', '');
-      const certificates = [];
+      const certificates: any[] = [];
 
       let ligaGroups: { ids: string[]; discipline: string }[];
       if (selectedDiscipline === 'ALL') {

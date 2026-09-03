@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Edit, Save, X, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { authFetch } from '@/lib/auth/authFetch';
 import { useKMAuth } from '@/hooks/useKMAuth';
 
 interface Altersklasse {
@@ -76,7 +77,7 @@ export default function AltersklassenVerwaltung() {
         } else {
           setKlassen(initialKlassen);
           for (const klasse of initialKlassen) {
-            await fetch('/api/km/altersklassen', {
+            await authFetch('/api/km/altersklassen', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(klasse)
@@ -103,7 +104,7 @@ export default function AltersklassenVerwaltung() {
 
   const saveEdit = async () => {
     try {
-      await fetch('/api/km/altersklassen', {
+      await authFetch('/api/km/altersklassen', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: editingId, ...editData })
@@ -127,7 +128,7 @@ export default function AltersklassenVerwaltung() {
         maxAlter: 255,
         geschlecht: 2
       };
-      const response = await fetch('/api/km/altersklassen', {
+      const response = await authFetch('/api/km/altersklassen', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newKlasse)
@@ -146,7 +147,7 @@ export default function AltersklassenVerwaltung() {
   const deleteKlasse = async (id: string) => {
     if (confirm('Altersklasse wirklich löschen?')) {
       try {
-        await fetch(`/api/km/altersklassen?id=${id}`, { method: 'DELETE' });
+        await authFetch(`/api/km/altersklassen?id=${id}`, { method: 'DELETE' });
         setKlassen(prev => prev.filter(k => k.id !== id));
         toast({ title: '✅ Gelöscht', description: 'Altersklasse wurde entfernt' });
       } catch (error) {

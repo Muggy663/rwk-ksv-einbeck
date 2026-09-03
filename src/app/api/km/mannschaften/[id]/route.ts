@@ -2,12 +2,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
     const { id } = await params;
     const body = await request.json();
     const { schuetzenIds } = body;
@@ -43,6 +48,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
     const { id } = await params;
 
     if (!id) {

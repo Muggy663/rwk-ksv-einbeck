@@ -334,7 +334,7 @@ export default function GesamtergebnislisteGeneratorPage() {
                         })
                         .map((team) => {
                         const isEinzelTeam = team.name.toLowerCase().includes('einzel');
-                        const shooterCount = isEinzelTeam ? (team.shooters?.length || 1) : 3;
+                        const shooterCount = isEinzelTeam ? ((team as any).shooters?.length || 1) : 3;
                         const rowSpan = shooterCount + 2;
                         
                         return (
@@ -347,7 +347,7 @@ export default function GesamtergebnislisteGeneratorPage() {
                                   </td>
                                 )}
                                 <td className="border p-1 text-xs">
-                                  {(() => { const s = team.shooters?.[shooterIndex]; if (!s) return `Schütze ${shooterIndex + 1}`; return (s.firstName && s.lastName) ? `${s.firstName} ${s.lastName}` : s.name || `Schütze ${shooterIndex + 1}`; })()}
+                                  {(() => { const s = (team as any).shooters?.[shooterIndex]; if (!s) return `Schütze ${shooterIndex + 1}`; return (s.firstName && s.lastName) ? `${s.firstName} ${s.lastName}` : s.name || `Schütze ${shooterIndex + 1}`; })()}
                                 </td>
                                 <td className="border p-1"></td>
                                 <td className="border p-1"></td>

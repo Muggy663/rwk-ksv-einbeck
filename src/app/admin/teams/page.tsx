@@ -1,6 +1,6 @@
 // src/app/admin/teams/page.tsx
 "use client";
-import React, { useState, useEffect, FormEvent, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,14 +35,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription as UiAlertDescription } from "@/components/ui/alert";
 import { useAuth } from '@/hooks/use-auth';
 import type { Season, League, Club, Team, Shooter, TeamValidationInfo, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
-import { MAX_SHOOTERS_PER_TEAM, getDisciplineCategory } from '@/types/rwk';
+import { MAX_SHOOTERS_PER_TEAM } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import {
-  collection, getDocs, doc, updateDoc, deleteDoc, query,
+  collection, getDocs, doc, updateDoc, query,
   where, orderBy, documentId, writeBatch, getDoc as getFirestoreDoc, arrayUnion, arrayRemove, setDoc
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -57,7 +56,6 @@ function getShooterClubId(shooter: Shooter): string | null {
 export default function AdminTeamsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const router = useRouter();
 
   const [allSeasons, setAllSeasons] = useState<Season[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
@@ -83,7 +81,7 @@ export default function AdminTeamsPage() {
   const [formMode, setFormMode] = useState<'new' | 'edit'>('new');
   
   const [allClubShootersForDialog, setAllClubShootersForDialog] = useState<Shooter[]>([]);
-  const [allTeamsForValidation, setAllTeamsForValidation] = useState<TeamValidationInfo[]>([]);
+  const [, setAllTeamsForValidation] = useState<TeamValidationInfo[]>([]);
   const [isLoadingDialogData, setIsLoadingDialogData] = useState(false);
   
   const [persistedShooterIdsForTeam, setPersistedShooterIdsForTeam] = useState<string[]>([]);
@@ -100,8 +98,6 @@ export default function AdminTeamsPage() {
 
   // Altersübersicht
   const [ageStats, setAgeStats] = useState<{ u21: number; a21: number; a41: number; unknown: number; total: number; meldungen: number } | null>(null);
-
-  const isAdmin = user?.email === 'admin@rwk-einbeck.de';
 
   // Lade Basisdaten
   const fetchInitialData = useCallback(async () => {
@@ -144,7 +140,7 @@ export default function AdminTeamsPage() {
   // Lade Mannschaften basierend auf Filtern
   const handleSearchTeams = useCallback(async () => {
     if (!selectedSeasonId) {
-      toast({ title: "Saison fehlt", description: "Bitte wählen Sie eine Saison aus.", variant: "warning" });
+      toast({ title: "Saison fehlt", description: "Bitte wählen Sie eine Saison aus.", variant: "destructive" });
       setTeamsForDisplay([]);
       return;
     }
@@ -273,7 +269,6 @@ export default function AdminTeamsPage() {
 
   // Dialog data fetching - nur bei clubId oder Dialog-Öffnung neu laden, nicht bei jedem Feld
   const [dialogClubId, setDialogClubId] = useState<string>('');
-  const [dialogCompYear, setDialogCompYear] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (isFormOpen && currentTeam?.clubId && currentTeam.clubId !== dialogClubId) {
@@ -383,7 +378,7 @@ export default function AdminTeamsPage() {
 
     if (isChecked) { 
       if (selectedShooterIdsInForm.length >= MAX_SHOOTERS_PER_TEAM) {
-          toast({ title: "Maximale Schützenzahl erreicht", description: `Eine Mannschaft darf maximal ${MAX_SHOOTERS_PER_TEAM} Schützen haben.`, variant: "warning" });
+          toast({ title: "Maximale Schützenzahl erreicht", description: `Eine Mannschaft darf maximal ${MAX_SHOOTERS_PER_TEAM} Schützen haben.`, variant: "destructive" });
           return; 
       }
     } 
@@ -476,7 +471,7 @@ export default function AdminTeamsPage() {
               lastName: 'gefunden',
               gender: 'unknown',
               birthYear: null
-            } as Shooter;
+            } as unknown as Shooter;
           });
           
           const shooters = await Promise.all(shooterPromises);
@@ -509,7 +504,6 @@ export default function AdminTeamsPage() {
           <h1 className="text-2xl font-semibold text-primary">Admin Mannschaftsverwaltung</h1>
           <HelpTooltip 
             text="Hier können Sie alle Mannschaften verwalten - für alle Vereine." 
-            side="right" 
             className="ml-2"
           />
         </div>
@@ -570,7 +564,7 @@ export default function AdminTeamsPage() {
         <Button
             onClick={() => {
               if (!selectedSeasonId) {
-                toast({ title: "Saison fehlt", description: "Bitte zuerst eine Saison auswählen.", variant: "warning" });
+                toast({ title: "Saison fehlt", description: "Bitte zuerst eine Saison auswählen.", variant: "destructive" });
                 return;
               }
               const season = allSeasons.find(s => s.id === selectedSeasonId);

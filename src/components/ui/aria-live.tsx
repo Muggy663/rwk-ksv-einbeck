@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface AriaLiveProps {
@@ -28,6 +28,7 @@ export function AriaLive({
 
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [message, clearAfter]);
 
   return (

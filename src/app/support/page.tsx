@@ -6,14 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { HelpCircle, Send, Loader2, Upload, CheckCircle, Trash2, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { HelpCircle, Send, Loader2, Upload, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { BackButton } from '@/components/ui/back-button';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import type { SupportTicket } from '@/types/rwk';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
 

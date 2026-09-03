@@ -1,15 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
 import { useKMAuth } from '@/hooks/useKMAuth';
 
 export default function KMMannschaftsregeln() {
-  const { toast } = useToast();
   const { hasFullAccess, loading: authLoading } = useKMAuth();
   const [loading, setLoading] = useState(true);
   const [expandedDisziplinen, setExpandedDisziplinen] = useState<string[]>([]);

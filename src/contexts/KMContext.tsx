@@ -1,7 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+// src/contexts/KMContext.tsx
+// KM-spezifischer Context – der aktive Verein wird jetzt aus dem gemeinsamen
+// ClubContext (Single Source of Truth) bezogen, statt eigenem State/localStorage.
+// userClubIds/userRole kommen weiterhin aus der KM-Rollenermittlung (useKMAuth).
+
+import React, { createContext, useContext, useEffect, ReactNode } from 'react';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { useClubContext } from '@/contexts/ClubContext';
 
 interface KMContextType {
   currentClubId: string | null;
@@ -26,25 +32,29 @@ interface KMProviderProps {
 
 export const KMProvider: React.FC<KMProviderProps> = ({ children }) => {
   const { userClubIds, userRole } = useKMAuth();
-  const [currentClubId, setCurrentClubId] = useState<string | null>(null);
+  const { activeClubId, setActiveClubId } = useClubContext();
 
+  // Sicherstellen, dass der gemeinsame aktive Verein zu den KM-Vereinen passt.
+  // Zeigt er auf einen Verein außerhalb der KM-Zuordnung (oder ist leer),
+  // auf den ersten KM-Verein setzen.
   useEffect(() => {
-    if (userClubIds.length > 0) {
-      const savedClubId = localStorage.getItem('kmCurrentClubId');
-      if (savedClubId && userClubIds.includes(savedClubId)) {
-        setCurrentClubId(savedClubId);
-      } else {
-        setCurrentClubId(userClubIds[0]);
-      }
+    if (userClubIds.length === 0) return;
+    if (!activeClubId || !userClubIds.includes(activeClubId)) {
+      setActiveClubId(userClubIds[0]);
     }
-  }, [userClubIds]);
+  }, [userClubIds, activeClubId, setActiveClubId]);
 
   const switchClub = (clubId: string) => {
     if (userClubIds.includes(clubId)) {
-      setCurrentClubId(clubId);
-      localStorage.setItem('kmCurrentClubId', clubId);
+      setActiveClubId(clubId);
     }
   };
+
+  // Effektiver aktiver KM-Verein: nur, wenn er zu den KM-Vereinen gehört.
+  const currentClubId =
+    activeClubId && userClubIds.includes(activeClubId)
+      ? activeClubId
+      : userClubIds[0] ?? null;
 
   return (
     <KMContext.Provider value={{ currentClubId, switchClub, userClubIds, userRole }}>

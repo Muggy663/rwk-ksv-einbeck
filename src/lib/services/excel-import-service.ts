@@ -2,8 +2,10 @@ import { db } from '@/lib/firebase/config';
 import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 
+// Einheitliche Priorität wie zentral in altersklassen.ts: clubId > kmClubId
+// (rwkClubId existiert real nicht mehr in den Daten).
 function getShooterClubId(shooter: any): string | null {
-  return shooter?.clubId || shooter?.rwkClubId || shooter?.kmClubId || null;
+  return shooter?.clubId || shooter?.kmClubId || null;
 }
 
 const MALE_NAMES = [
@@ -95,7 +97,6 @@ export async function importMembersFromExcel(members: ExcelMember[]) {
         lastName: member.name,
         name: shooterName,
         clubId,
-        kmClubId: clubId,
         birthYear,
         gender,
         mitgliedsnummer: member.mitgliedsnummer,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,9 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trophy, AlertTriangle, CheckCircle, Filter, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { validateQualifications } from '@/lib/services/startlisten-ki-service';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { authFetch } from '@/lib/auth/authFetch';
 
 interface VMMeldung {
   id: string;
@@ -87,7 +87,7 @@ export default function VMUebersichtPage() {
         const data = await response.json();
         const saisonsList = data.data || [];
         
-        const sortedSaisons = saisonsList.sort((a, b) => {
+        const sortedSaisons = saisonsList.sort((a: any, b: any) => {
           if (a.name?.includes('Luftdruck') && !b.name?.includes('Luftdruck')) return -1;
           if (!a.name?.includes('Luftdruck') && b.name?.includes('Luftdruck')) return 1;
           const yearA = a.jahr || 0;
@@ -111,7 +111,7 @@ export default function VMUebersichtPage() {
       const { db } = await import('@/lib/firebase/config');
       
       const [meldungenRes, shootersSnapshot, disziplinenRes, clubsRes] = await Promise.all([
-        fetch(`/api/km/meldungen?saison=${selectedSaison}`),
+        authFetch(`/api/km/meldungen?saison=${selectedSaison}`),
         getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
         fetch('/api/km/disziplinen'),
         fetch('/api/clubs')
@@ -146,6 +146,7 @@ export default function VMUebersichtPage() {
             schuetzeName: schuetze ? `${schuetze.firstName || schuetze.vorname || ''} ${schuetze.lastName || schuetze.nachname || ''}`.trim() : 'Unbekannt',
             verein: club?.name || 'Unbekannt',
             disziplin: disziplin?.name || 'Unbekannt',
+            gender: schuetze?.gender,
             vmErgebnis: m.vmErgebnis,
             lmTeilnahme: m.lmTeilnahme,
             nurVereinsmeisterschaft: m.nurVereinsmeisterschaft
@@ -160,7 +161,7 @@ export default function VMUebersichtPage() {
         setMeldungen(processedMeldungen);
         
         // Unique Disziplinen extrahieren
-        const uniqueDisziplinen = [...new Set(processedMeldungen.map((m: VMMeldung) => m.disziplin))];
+        const uniqueDisziplinen = [...new Set(processedMeldungen.map((m: VMMeldung) => m.disziplin))] as string[];
         setDisziplinen(uniqueDisziplinen);
       }
     } catch (error) {
@@ -177,8 +178,8 @@ export default function VMUebersichtPage() {
     }
     
     if (meldung.lmTeilnahme && meldung.vmErgebnis) {
-      // Geschlecht aus Namen schätzen oder Default verwenden
-      const geschlecht = 'Herren'; // TODO: Echtes Geschlecht aus Schützendaten
+      // Geschlecht aus den Schützendaten (Limits sind nach Herren/Damen getrennt).
+      const geschlecht = meldung.gender === 'female' ? 'Damen' : 'Herren';
       const limitKey = `${meldung.disziplin} ${geschlecht}`;
       const limit = qualifikationsLimits[limitKey as keyof typeof qualifikationsLimits];
       

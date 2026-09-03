@@ -1,4 +1,4 @@
-import React from 'react';
+// React import removed (React 19 automatic JSX runtime)
 import { Document } from '@/lib/services/document-service';
 import { DocumentCard } from './DocumentCard';
 

@@ -1,6 +1,5 @@
 "use client";
 
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
@@ -36,17 +35,6 @@ export function TrendAnalysisCard({ shooters }: TrendAnalysisCardProps) {
         return <Minus className="h-4 w-4 text-amber-500" />;
       case 'falling':
         return <TrendingDown className="h-4 w-4 text-red-500" />;
-    }
-  };
-
-  const renderTrendText = (trend: 'rising' | 'stable' | 'falling') => {
-    switch (trend) {
-      case 'rising':
-        return <span className="text-green-600">Steigend</span>;
-      case 'stable':
-        return <span className="text-amber-600">Stabil</span>;
-      case 'falling':
-        return <span className="text-red-600">Fallend</span>;
     }
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
+import { authFetch } from '@/lib/auth/authFetch';
 
 export default function MannschaftsregelnAdmin() {
   const { toast } = useToast();
@@ -20,7 +21,7 @@ export default function MannschaftsregelnAdmin() {
     disziplinRegeln: Record<string, { altersklassenRegeln: string; aktiv: boolean }>;
     altersklassenKombinationen: Record<string, string[]>;
   } | null>(null);
-  const [disziplinen, setDisziplinen] = useState([]);
+  const [disziplinen, setDisziplinen] = useState<Array<{ id: string; name?: string; [key: string]: any }>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -65,7 +66,7 @@ export default function MannschaftsregelnAdmin() {
 
   const saveRegeln = async () => {
     try {
-      const response = await fetch('/api/admin/mannschaftsregeln', {
+      const response = await authFetch('/api/admin/mannschaftsregeln', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ regeln })
@@ -81,58 +82,71 @@ export default function MannschaftsregelnAdmin() {
     }
   };
 
-  const addDisziplinRegel = (disziplinId) => {
-    setRegeln(prev => ({
-      ...prev,
-      disziplinRegeln: {
-        ...prev.disziplinRegeln,
-        [disziplinId]: {
-          altersklassenRegeln: "auflage",
-          aktiv: true
+  const addDisziplinRegel = (disziplinId: string) => {
+    setRegeln(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        disziplinRegeln: {
+          ...prev.disziplinRegeln,
+          [disziplinId]: {
+            altersklassenRegeln: "auflage",
+            aktiv: true
+          }
         }
-      }
-    }));
+      };
+    });
   };
 
-  const updateDisziplinRegel = (disziplinId, field, value) => {
-    setRegeln(prev => ({
-      ...prev,
-      disziplinRegeln: {
-        ...prev.disziplinRegeln,
-        [disziplinId]: {
-          ...prev.disziplinRegeln[disziplinId],
-          [field]: value
+  const updateDisziplinRegel = (disziplinId: string, field: string, value: any) => {
+    setRegeln(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        disziplinRegeln: {
+          ...prev.disziplinRegeln,
+          [disziplinId]: {
+            ...prev.disziplinRegeln[disziplinId],
+            [field]: value
+          }
         }
-      }
-    }));
+      };
+    });
   };
 
   const addAltersklassenKombination = () => {
     const name = prompt('Name der neuen Kombination:');
     if (name) {
-      setRegeln(prev => ({
-        ...prev,
-        altersklassenKombinationen: {
-          ...prev.altersklassenKombinationen,
-          [name]: []
-        }
-      }));
+      setRegeln(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          altersklassenKombinationen: {
+            ...prev.altersklassenKombinationen,
+            [name]: []
+          }
+        };
+      });
     }
   };
 
-  const updateKombination = (name, klassen) => {
-    setRegeln(prev => ({
-      ...prev,
-      altersklassenKombinationen: {
-        ...prev.altersklassenKombinationen,
-        [name]: klassen
-      }
-    }));
+  const updateKombination = (name: string, klassen: string[]) => {
+    setRegeln(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        altersklassenKombinationen: {
+          ...prev.altersklassenKombinationen,
+          [name]: klassen
+        }
+      };
+    });
   };
 
-  const deleteKombination = (name) => {
+  const deleteKombination = (name: string) => {
     if (confirm(`Kombination "${name}" löschen?`)) {
       setRegeln(prev => {
+        if (!prev) return prev;
         const newKombinationen = { ...prev.altersklassenKombinationen };
         delete newKombinationen[name];
         return {
@@ -184,14 +198,14 @@ export default function MannschaftsregelnAdmin() {
                 <Input
                   type="number"
                   value={regeln?.mannschaftsgroesse || 3}
-                  onChange={(e) => setRegeln(prev => ({ ...prev, mannschaftsgroesse: parseInt(e.target.value) }))}
+                  onChange={(e) => setRegeln(prev => prev ? ({ ...prev, mannschaftsgroesse: parseInt(e.target.value) }) : prev)}
                 />
               </div>
               <div>
                 <Label>Version</Label>
                 <Input
                   value={regeln?.version || "1.0"}
-                  onChange={(e) => setRegeln(prev => ({ ...prev, version: e.target.value }))}
+                  onChange={(e) => setRegeln(prev => prev ? ({ ...prev, version: e.target.value }) : prev)}
                 />
               </div>
             </div>

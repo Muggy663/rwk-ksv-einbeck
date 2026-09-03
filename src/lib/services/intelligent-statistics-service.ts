@@ -36,7 +36,7 @@ class IntelligentStatisticsService {
   async generateInsights(
     seasonId: string,
     leagueId?: string,
-    clubId?: string
+    _clubId?: string
   ): Promise<StatisticsInsight[]> {
     const insights: StatisticsInsight[] = [];
     
@@ -209,7 +209,6 @@ class IntelligentStatisticsService {
     
     // Trend-Teams identifizieren
     const upwardTeams = leagueData.teams.filter(t => t.trend === 'up').length;
-    const downwardTeams = leagueData.teams.filter(t => t.trend === 'down').length;
     
     if (upwardTeams > leagueData.teams.length * 0.6) {
       insights.push({
@@ -228,7 +227,6 @@ class IntelligentStatisticsService {
     
     // Durchschnitts-Analyse
     const highPerformers = leagueData.teams.filter(t => t.averagePerRound > leagueData.averageScore * 1.1);
-    const lowPerformers = leagueData.teams.filter(t => t.averagePerRound < leagueData.averageScore * 0.9);
     
     if (highPerformers.length > 0) {
       const bestTeam = highPerformers[0];
@@ -243,7 +241,7 @@ class IntelligentStatisticsService {
     return insights;
   }
   
-  private async generateRoundInsights(seasonId: string, leagueId?: string): Promise<StatisticsInsight[]> {
+  private async generateRoundInsights(_seasonId: string, leagueId?: string): Promise<StatisticsInsight[]> {
     const insights: StatisticsInsight[] = [];
     
     try {

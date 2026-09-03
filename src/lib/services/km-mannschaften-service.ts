@@ -56,7 +56,7 @@ export async function generateMannschaftenForVerein(
     
     // Ermittle ob es eine Auflage-Disziplin ist
     const disziplinenSnapshot = await getDocs(collection(db, 'km_disziplinen'));
-    const disziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const disziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as { id: string; auflage?: boolean; spoNummer?: string }));
     const disziplin = disziplinen.find(d => d.id === disziplinId);
     const istAuflage = disziplin?.auflage || false;
     const spoNummer = disziplin?.spoNummer;
@@ -118,7 +118,7 @@ export async function generateMannschaftenForVerein(
   // Erstelle Mannschaften (3er-Teams)
   const mannschaften: KMMannschaft[] = [];
   
-  for (const [gruppenKey, gruppe] of klassenGruppen) {
+  for (const [, gruppe] of klassenGruppen) {
     const { schuetzen: gruppenSchuetzen, wettkampfklassen } = gruppe;
     
     // Prüfe ob Mannschaftsbildung erlaubt ist
@@ -129,8 +129,8 @@ export async function generateMannschaftenForVerein(
     
     // Sortiere Schützen nach VM-Ergebnissen (stärkste zuerst)
     const sortierteSchuetzen = gruppenSchuetzen.sort((a, b) => {
-      const aRinge = a.vmErgebnis?.ringe || 0;
-      const bRinge = b.vmErgebnis?.ringe || 0;
+      const aRinge = (a as any).vmErgebnis?.ringe || 0;
+      const bRinge = (b as any).vmErgebnis?.ringe || 0;
       return bRinge - aRinge; // Absteigend sortieren
     });
     

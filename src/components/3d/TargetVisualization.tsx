@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ export default function TargetVisualization({
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<any>(null);
   const rendererRef = useRef<any>(null);
-  const animationIdRef = useRef<number>();
+  const animationIdRef = useRef<number | undefined>(undefined);
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentShot, setCurrentShot] = useState(0);
 
@@ -55,7 +55,7 @@ export default function TargetVisualization({
         THREE = await import('three');
         setIsLoaded(true);
         
-        if (!mountRef.current) return;
+        if (!mountRef.current) return undefined;
 
         // Scene Setup
         const scene = new THREE.Scene();
@@ -177,6 +177,7 @@ export default function TargetVisualization({
       } catch (error) {
         logError('Fehler beim Laden von Three.js:', error);
       }
+      return undefined;
     };
 
     initThreeJS();
@@ -205,7 +206,7 @@ export default function TargetVisualization({
     shotsToRemove.forEach((shot: any) => sceneRef.current.remove(shot));
 
     // Füge neue Schüsse hinzu
-    displayShots.slice(0, currentShot + 1).forEach((shot, index) => {
+    displayShots.slice(0, currentShot + 1).forEach((shot, _index) => {
       const shotGeometry = new THREE.SphereGeometry(0.05, 16, 16);
       
       // Farbe basierend auf Ring-Wert (LG/KK Standard)

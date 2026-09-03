@@ -1,7 +1,6 @@
 // src/components/LoginBlocker.tsx
 "use client";
 
-import React from 'react';
 import { AlertTriangle, Calendar, Shield, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 

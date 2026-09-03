@@ -1,9 +1,9 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 export default function RwkTabellenPrintPage() {
-  const [params, setParams] = useState<{
+  const [, setParams] = useState<{
     leagueId: string | null,
     seasonId: string | null,
     view: string | null

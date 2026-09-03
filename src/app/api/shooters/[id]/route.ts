@@ -5,7 +5,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 
 // Authentifizierung und Berechtigung prüfen
-async function validateUserPermissions(request: NextRequest, shooterId: string) {
+async function validateUserPermissions(request: NextRequest, _shooterId: string) {
   const authHeader = request.headers.get('authorization');
   if (!authHeader?.startsWith('Bearer ')) {
     throw new Error('Keine gültige Authentifizierung');
@@ -61,7 +61,7 @@ export async function PATCH(
     await validateUserPermissions(request, id);
 
     const body = await request.json();
-    const { firstName, lastName, birthYear, gender, mitgliedsnummer, kmClubId } = body;
+    const { firstName, lastName, birthYear, gender, mitgliedsnummer, clubId, kmClubId } = body;
 
     const updateData: any = {};
     if (firstName !== undefined) updateData.firstName = firstName;
@@ -69,7 +69,9 @@ export async function PATCH(
     if (birthYear !== undefined) updateData.birthYear = birthYear;
     if (gender !== undefined) updateData.gender = gender;
     if (mitgliedsnummer !== undefined) updateData.mitgliedsnummer = mitgliedsnummer;
-    if (kmClubId !== undefined) updateData.kmClubId = kmClubId;
+    // Vereinszuordnung nur noch über clubId (kmClubId als Legacy-Fallback im Request).
+    const clubIdValue = clubId ?? kmClubId;
+    if (clubIdValue !== undefined) updateData.clubId = clubIdValue;
     
     updateData.updatedAt = FieldValue.serverTimestamp();
 
@@ -99,13 +101,9 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: 'Keine ID' }, { status: 400 });
     }
 
-    // Einfache Auth-Prüfung
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ success: false, error: 'Keine Auth' }, { status: 401 });
-    }
+    // Echte Auth: Token verifizieren + Berechtigung prüfen (wie bei PATCH).
+    await validateUserPermissions(request, id);
 
-    // Schütze einfach löschen
     await adminDb.collection('shooters').doc(id).delete();
 
     return NextResponse.json({
@@ -115,9 +113,11 @@ export async function DELETE(
 
   } catch (error: any) {
     logError('DELETE Error:', error);
+    const isAuth = error.message?.includes('Authentifizierung');
+    const isPerm = error.message?.includes('Berechtigung');
     return NextResponse.json({
       success: false,
       error: error.message || 'Fehler'
-    }, { status: 500 });
+    }, { status: isAuth ? 401 : isPerm ? 403 : 500 });
   }
 }

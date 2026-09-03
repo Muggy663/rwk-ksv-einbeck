@@ -1,6 +1,6 @@
 // src/app/admin/email-system/page.tsx
 "use client";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Mail, Users, FileText, Send, Plus, Trash2, Upload, Download, Edit, Save, X } from 'lucide-react';
+import { Mail, Users, FileText, Send, Plus, Trash2, Edit, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, addDoc, query, where, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -537,7 +537,7 @@ export default function EmailSystemPage() {
                     <Label className="col-span-2 text-sm font-medium text-right">An:</Label>
                     <div className="col-span-10 text-sm text-muted-foreground bg-muted px-3 py-2 rounded">
                       {(() => {
-                        let recipients = [];
+                        let recipients: any[] = [];
                         emailData.selectedGroups.forEach(groupId => {
                           recipients = [...recipients, ...getContactsByGroup(groupId)];
                         });

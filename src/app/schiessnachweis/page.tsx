@@ -1,23 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { logError, logWarn, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
-import { Target, Plus, Calendar, TrendingUp, FileText, Download, Upload, Crown, Users, User } from "lucide-react";
+import { logError } from '@/lib/utils/secure-logger';
+import { Target, Plus, Calendar, TrendingUp, FileText, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollToTopButton, usePullToRefresh } from "@/components/ui/mobile-enhancements";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
-import { SchießStatistik } from "@/types/schiessnachweis";
-import { CloudSyncStatus } from "@/components/schiessnachweis/CloudSyncStatus";
-import { useToast } from "@/hooks/use-toast";
+import { SchießStatistik, SchießEintrag } from "@/types/schiessnachweis";
 import Link from "next/link";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
 // Komponenten für neue Features
 function LetzteEinträgeCard() {
-  const [einträge, setEinträge] = useState([]);
+  const [einträge, setEinträge] = useState<SchießEintrag[]>([]);
   
   useEffect(() => {
     const loadEinträge = async () => {
@@ -44,7 +42,7 @@ function LetzteEinträgeCard() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {einträge.map((eintrag, index) => (
+          {einträge.map((eintrag) => (
             <div key={eintrag.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/30 to-muted/50 rounded-xl border">
               <div className="flex-1">
                 <div className="font-semibold text-base mb-1">{eintrag.disziplin}</div>
@@ -98,14 +96,12 @@ function TippDesTagesCard() {
 }
 
 export default function SchießnachweisPage() {
-  const { toast } = useToast();
   const [statistik, setStatistik] = useState<SchießStatistik | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   
-  const { isRefreshing } = usePullToRefresh(async () => {
-    loadStatistik();
-    await checkAndSyncFromCloud();
+  usePullToRefresh(async () => {
+    await loadStatistik();
   });
 
   useEffect(() => {
@@ -118,48 +114,10 @@ export default function SchießnachweisPage() {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     
-    // Automatische Datenwiederherstellung für Premium-Nutzer
-    const autoRestore = async () => {
-      try {
-        const localData = SchießnachweisService.getEinträge();
-        if (localData.length === 0) {
-          logDebug('🔄 Keine lokalen Daten - versuche Cloud-Wiederherstellung...');
-          const cloudData = await SchießnachweisService.loadFromCloudNow();
-          if (cloudData.length > 0) {
-            toast({
-              title: "☁️ Daten wiederhergestellt",
-              description: `${cloudData.length} Einträge aus der Cloud geladen.`,
-              className: "border-green-500 bg-green-50"
-            });
-            loadStatistik();
-          }
-        }
-      } catch (error) {
-        logDebug('Auto-Restore fehlgeschlagen:', error);
-      }
-    };
-    
     loadStatistik();
-    autoRestore();
     
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-  
-  const checkAndSyncFromCloud = async () => {
-    try {
-      // Prüfe ob eingeloggt
-      if (true) {
-        const cloudEinträge = await SchießnachweisService.loadFromCloudNow();
-        if (cloudEinträge.length > 0) {
-          logDebug('🔄 Automatisches Cloud-Sync:', cloudEinträge.length, 'Einträge');
-          // Erzwinge Reload der Seite um neue Daten anzuzeigen
-          window.location.reload();
-        }
-      }
-    } catch (error) {
-      logDebug('Cloud-Sync übersprungen:', getErrorMessage(error));
-    }
-  };
 
   const loadStatistik = async () => {
     setIsLoading(true);
@@ -173,287 +131,25 @@ export default function SchießnachweisPage() {
     }
   };
 
-  const handleExportExcel = async () => {
-    try {
-      const einträge = await SchießnachweisService.getEinträge();
-      logDebug('Exportiere Einträge:', einträge.length, einträge);
-      
-      if (einträge.length === 0) {
-        toast({
-          title: "Keine Daten",
-          description: "Es sind keine Einträge zum Exportieren vorhanden.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      const csvData = convertToCSV(einträge);
-      logDebug('CSV-Daten:', csvData);
-      
-      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `schiessnachweis_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      toast({
-        title: "Export erfolgreich",
-        description: `${einträge.length} Einträge exportiert.`,
-      });
-    } catch (error) {
-      logError('Excel-Export fehlgeschlagen:', error);
-      toast({
-        title: "Export fehlgeschlagen",
-        description: error instanceof Error ? getErrorMessage(error) : "Unbekannter Fehler",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleExportODS = async () => {
-    try {
-      const einträge = await SchießnachweisService.getEinträge();
-      const odsData = convertToODS(einträge);
-      const blob = new Blob([odsData], { type: 'application/vnd.oasis.opendocument.spreadsheet' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `schiessnachweis_${format(new Date(), 'yyyy-MM-dd')}.ods`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      logError('ODS-Export fehlgeschlagen:', error);
-    }
-  };
-
-  const convertToCSV = (einträge: any[]) => {
-    const headers = ['Datum', 'Typ', 'Disziplin', 'Schussanzahl', 'Ergebnis_Ganze_Ringe', 'Ergebnis_Zehntel_Ringe', 'Standort', 'Schiessstand', 'Wetter', 'Munition', 'Waffe', 'Notizen', 'Serien'];
-    const csvRows = [headers.join(';')];
-    
-    einträge.forEach(eintrag => {
-      logDebug('Verarbeite Eintrag:', eintrag);
-      
-      // Datum korrekt konvertieren
-      let datumStr = '';
-      try {
-        if (eintrag.datum) {
-          const datum = eintrag.datum instanceof Date ? eintrag.datum : new Date(eintrag.datum);
-          datumStr = format(datum, 'dd.MM.yyyy');
-        }
-      } catch (e) {
-        logWarn('Datum-Konvertierung fehlgeschlagen:', eintrag.datum);
-        datumStr = 'Ungültiges Datum';
-      }
-      
-      const serienData = eintrag.serien && eintrag.serien.length > 0 ? JSON.stringify(eintrag.serien) : '';
-      const row = [
-        datumStr,
-        eintrag.typ === 'training' ? 'Training' : 'Wettkampf',
-        eintrag.disziplin || '',
-        eintrag.schussAnzahl || 0,
-        eintrag.ergebnisGanzeRinge || '',
-        eintrag.ergebnis || '',
-        eintrag.standort || '',
-        eintrag.schiessstand || '',
-        eintrag.wetter || '',
-        eintrag.munition || '',
-        eintrag.waffe || '',
-        eintrag.notizen || '',
-        serienData
-      ];
-      csvRows.push(row.join(';'));
-    });
-    
-    return '\uFEFF' + csvRows.join('\n'); // BOM für UTF-8
-  };
-
-  const convertToODS = (einträge: any[]) => {
-    // Vereinfachte ODS-Struktur (CSV mit .ods Extension)
-    const csvData = convertToCSV(einträge);
-    return csvData;
-  };
-
-  const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const importedCount = await importFromCSV(text);
-      
-      toast({
-        title: "✅ Import erfolgreich",
-        description: `${importedCount} neue Einträge importiert.`,
-      });
-      
-      // Statistik neu laden
-      loadStatistik();
-      
-      // Daten sind bereits in der Datenbank gespeichert
-      toast({
-        title: "✅ Import erfolgreich",
-        description: "Daten wurden in der Datenbank gespeichert.",
-      });
-      
-      // Input zurücksetzen
-      event.target.value = '';
-    } catch (error) {
-      toast({
-        title: "Import fehlgeschlagen",
-        description: error instanceof Error ? getErrorMessage(error) : "Unbekannter Fehler",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleRefreshData = async () => {
-    try {
-      const { auth } = await import('@/lib/firebase/config');
-      if (!auth.currentUser) {
-        toast({
-          title: "❌ Nicht eingeloggt",
-          description: "Daten-Aktualisierung funktioniert nur mit Benutzer-Account.",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      const einträge = await SchießnachweisService.refreshData();
-      
-      toast({
-        title: "✅ Daten aktualisiert",
-        description: `${einträge.length} Einträge aus der Datenbank geladen.`,
-      });
-      
-      loadStatistik();
-    } catch (error) {
-      logError('Daten-Aktualisierung fehlgeschlagen:', error);
-      toast({
-        title: "Aktualisierung fehlgeschlagen",
-        description: error instanceof Error ? getErrorMessage(error) : "Unbekannter Fehler",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const importFromCSV = async (csvText: string): Promise<number> => {
-    const lines = csvText.split('\n').filter(line => line.trim());
-    if (lines.length < 2) throw new Error('CSV-Datei ist leer oder ungültig');
-    
-    // Header prüfen
-    const header = lines[0].split(';');
-    const requiredHeaders = ['Datum', 'Typ', 'Disziplin', 'Schussanzahl', 'Ergebnis'];
-    
-    if (!requiredHeaders.every(h => header.includes(h))) {
-      throw new Error('CSV-Format ungültig. Mindestens erforderlich: Datum;Typ;Disziplin;Schussanzahl;Ergebnis');
-    }
-    
-    const existingEinträge = await SchießnachweisService.getEinträge();
-    let importCount = 0;
-    
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(';');
-      if (values.length < 5) continue;
-      
-      try {
-        const datumStr = values[header.indexOf('Datum')];
-        const typStr = values[header.indexOf('Typ')];
-        const disziplin = values[header.indexOf('Disziplin')];
-        const schussAnzahlStr = values[header.indexOf('Schussanzahl')];
-        const ergebnisStr = values[header.indexOf('Ergebnis')];
-        const standort = values[header.indexOf('Standort')] || 'Unbekannt';
-        const schiessstand = values[header.indexOf('Schiessstand')] || '';
-        const wetter = values[header.indexOf('Wetter')] || '';
-        const munition = values[header.indexOf('Munition')] || '';
-        const waffe = values[header.indexOf('Waffe')] || '';
-        const notizen = values[header.indexOf('Notizen')] || values[header.indexOf('Bemerkung')] || '';
-        const serienStr = values[header.indexOf('Serien')] || '';
-        
-        // Datum parsen (DD.MM.YYYY)
-        const [day, month, year] = datumStr.split('.');
-        const datum = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-        
-        if (isNaN(datum.getTime())) {
-          logWarn(`Ungültiges Datum in Zeile ${i + 1}: ${datumStr}`);
-          continue;
-        }
-        
-        const typ = typStr.toLowerCase().includes('training') ? 'training' : 'wettkampf';
-        const schussAnzahl = parseInt(schussAnzahlStr);
-        const ergebnis = parseFloat(ergebnisStr.replace(',', '.'));
-        
-        if (isNaN(schussAnzahl) || isNaN(ergebnis)) {
-          logWarn(`Ungültige Zahlen in Zeile ${i + 1}`);
-          continue;
-        }
-        
-        // Serien parsen
-        let serien = undefined;
-        if (serienStr) {
-          try {
-            serien = JSON.parse(serienStr);
-          } catch (e) {
-            logWarn(`Ungültige Serien-Daten in Zeile ${i + 1}`);
-          }
-        }
-        
-        // Duplikat-Check
-        const exists = existingEinträge.some(existing => 
-          Math.abs(existing.datum.getTime() - datum.getTime()) < 24 * 60 * 60 * 1000 && // Gleicher Tag
-          existing.disziplin === disziplin &&
-          existing.ergebnis === ergebnis
-        );
-        
-        if (!exists) {
-          const neuerEintrag = {
-            datum,
-            typ: typ as 'training' | 'wettkampf',
-            disziplin,
-            schussAnzahl,
-            ergebnis,
-            standort,
-            schiessstand,
-            wetter,
-            munition,
-            waffe,
-            notizen: notizen.trim(),
-            serien
-          };
-          await SchießnachweisService.saveEintrag(neuerEintrag);
-          importCount++;
-        }
-      } catch (error) {
-        logWarn(`Fehler in Zeile ${i + 1}:`, error);
-      }
-    }
-    
-    return importCount;
-  };
-
   // Check if user is logged in via Schießnachweis auth
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<import('firebase/auth').User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
     const checkAuth = async () => {
       try {
         const { auth } = await import('@/lib/firebase/config');
-        const unsubscribe = auth.onAuthStateChanged((user) => {
+        unsubscribe = auth.onAuthStateChanged((user) => {
           setUser(user);
           setAuthLoading(false);
         });
-        return unsubscribe;
       } catch (error) {
         setAuthLoading(false);
       }
     };
     checkAuth();
+    return () => { if (unsubscribe) unsubscribe(); };
   }, []);
   
   // Show login prompt for non-authenticated users
@@ -483,7 +179,7 @@ export default function SchießnachweisPage() {
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 max-w-2xl mx-auto">
           <Card className="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Target className="h-6 w-6 text-blue-600" />

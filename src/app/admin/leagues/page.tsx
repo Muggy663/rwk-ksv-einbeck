@@ -1,6 +1,6 @@
 // src/app/admin/leagues/page.tsx
 "use client";
-import React, { useState, useEffect, FormEvent, useCallback, Suspense } from 'react';
+import { useState, useEffect, FormEvent, useCallback } from 'react';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,12 +42,6 @@ import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, documentId } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
-// Separate component for search params to be wrapped in Suspense
-function SearchParamsWrapper() {
-  const { useSearchParams } = require('next/navigation');
-  const searchParams = useSearchParams();
-  return searchParams;
-}
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -218,7 +212,7 @@ export default function AdminLeaguesPage() {
 
     if (!currentLeague || !currentLeague.name?.trim() || !currentLeague.seasonId || !currentLeague.type || currentLeague.competitionYear === undefined) {
       toast({ title: "Ungültige Eingabe", description: "Bitte alle erforderlichen Felder ausfüllen.", variant: "destructive" });
-      logWarn(">>> leagues/handleSubmit: Invalid form input.", currentLeague);
+      logWarn(`>>> leagues/handleSubmit: Invalid form input. ${JSON.stringify(currentLeague)}`);
       return;
     }
     
@@ -271,7 +265,7 @@ export default function AdminLeaguesPage() {
 
       if (formMode === 'new') {
 
-        const docRef = await addDoc(leaguesCollectionRef, leagueDataToSave);
+        await addDoc(leaguesCollectionRef, leagueDataToSave);
 
         toast({ title: "Liga erstellt", description: `"${leagueDataToSave.name}" wurde erfolgreich angelegt.` });
       } else if (formMode === 'edit' && currentLeague.id) {

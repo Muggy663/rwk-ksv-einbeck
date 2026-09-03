@@ -2,10 +2,10 @@
 // /app/verein/mannschaften/page.tsx
 "use client";
 import React, { useState, useEffect, FormEvent, useMemo, useCallback } from 'react';
-import { logError, logWarn } from '@/lib/utils/secure-logger';
+import { logError, logWarn, getErrorMessage } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, Users as TeamsIcon, Loader2, AlertTriangle, InfoIcon, ChevronDown, ChevronRight } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Loader2, AlertTriangle, InfoIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { BackButton } from '@/components/ui/back-button';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import {
@@ -18,17 +18,6 @@ import {
 } from "@/components/ui/mobile-table";
 import { NativeSelect } from '@/components/ui/native-select';
 import { GlobalResponsiveDialog } from '@/components/ui/global-responsive-dialog-wrapper';
-import { MobilePageWrapper } from '@/components/ui/mobile-page-wrapper';
-import { MobileFormWrapper } from '@/components/ui/mobile-form-wrapper';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription as DialogDescriptionComponent, // Renamed to avoid conflict
-  DialogFooter
-} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,16 +35,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription as UiAlertDescription } from "@/components/ui/alert"; // Renamed to avoid conflict
 import { useVereinAuth } from '@/app/verein/layout';
-import type { Season, League, Club, Team, Shooter, TeamValidationInfo, FirestoreLeagueSpecificDiscipline, UserPermission } from '@/types/rwk';
-import { GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES, leagueDisciplineOptions, MAX_SHOOTERS_PER_TEAM, getDisciplineCategory } from '@/types/rwk';
+import type { Season, League, Club, Team, Shooter, TeamValidationInfo, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
+import { MAX_SHOOTERS_PER_TEAM, getDisciplineCategory } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import {
-  collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query,
-  where, orderBy, documentId, writeBatch, getDoc as getFirestoreDoc, arrayUnion, arrayRemove, Timestamp, setDoc
+  collection, getDocs, doc, updateDoc, query,
+  where, orderBy, documentId, writeBatch, getDoc as getFirestoreDoc, arrayUnion, arrayRemove, setDoc
 } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 
 const SEASONS_COLLECTION = "seasons";
 const LEAGUES_COLLECTION = "rwk_leagues";
@@ -63,9 +51,7 @@ const CLUBS_COLLECTION = "clubs";
 const TEAMS_COLLECTION = "rwk_teams";
 const SHOOTERS_COLLECTION = "shooters";
 
-function getShooterClubId(shooter: Shooter): string | null {
-  return shooter.clubId || shooter.rwkClubId || shooter.kmClubId || null;
-}
+
 
 export default function VereinMannschaftenPage() {
   const {
@@ -76,7 +62,6 @@ export default function VereinMannschaftenPage() {
     currentClubId // Multi-Verein aktiver Club
   } = useVereinAuth();
   const { toast } = useToast();
-  const router = useRouter();
 
   const [activeClubId, setActiveClubId] = useState<string | null>(null);
   const [activeClubName, setActiveClubName] = useState<string | null>(null);
@@ -307,14 +292,14 @@ export default function VereinMannschaftenPage() {
     if (!activeClubId) return;
     
     try {
-      const [s1, s2, s3] = await Promise.all([
+      // Vereinszuordnung: clubId (aktuell) + kmClubId (Altdaten). rwkClubId existiert real nicht.
+      const [s1, s3] = await Promise.all([
         getDocs(query(collection(db, SHOOTERS_COLLECTION), where('clubId', '==', activeClubId))),
-        getDocs(query(collection(db, SHOOTERS_COLLECTION), where('rwkClubId', '==', activeClubId))),
         getDocs(query(collection(db, SHOOTERS_COLLECTION), where('kmClubId', '==', activeClubId)))
       ]);
 
       const uniqueShooters = new Map<string, Shooter>();
-      [s1, s2, s3].forEach(snapshot => {
+      [s1, s3].forEach(snapshot => {
         snapshot.docs.forEach(d => {
           if (!uniqueShooters.has(d.id)) {
             uniqueShooters.set(d.id, { id: d.id, ...d.data(), teamIds: d.data().teamIds || [] } as Shooter);
@@ -385,19 +370,17 @@ export default function VereinMannschaftenPage() {
 
     setIsLoadingDialogData(true);
     try {
-      const clubDoc = await getFirestoreDoc(doc(db, 'clubs', clubIdForDialog));
-      
       const teamsForYearQuery = query(collection(db, TEAMS_COLLECTION), where("competitionYear", "==", compYearForDialog));
 
-      const [s1, s2, s3, teamsForYearSnapshot] = await Promise.all([
+      // Vereinszuordnung: clubId (aktuell) + kmClubId (Altdaten). rwkClubId existiert real nicht.
+      const [s1, s3, teamsForYearSnapshot] = await Promise.all([
         getDocs(query(collection(db, SHOOTERS_COLLECTION), where('clubId', '==', clubIdForDialog))),
-        getDocs(query(collection(db, SHOOTERS_COLLECTION), where('rwkClubId', '==', clubIdForDialog))),
         getDocs(query(collection(db, SHOOTERS_COLLECTION), where('kmClubId', '==', clubIdForDialog))),
         getDocs(teamsForYearQuery)
       ]);
 
       const uniqueShooters = new Map<string, Shooter>();
-      [s1, s2, s3].forEach(snapshot => {
+      [s1, s3].forEach(snapshot => {
         snapshot.docs.forEach(d => {
           if (!uniqueShooters.has(d.id)) {
             uniqueShooters.set(d.id, { id: d.id, ...d.data(), teamIds: d.data().teamIds || [] } as Shooter);
@@ -460,7 +443,7 @@ export default function VereinMannschaftenPage() {
   const handleAddNewTeam = () => {
     if (!isVereinsvertreter) { toast({ title: "Keine Berechtigung", variant: "destructive" }); return; }
     if (!activeClubId || !selectedSeasonId) {
-      toast({ title: "Verein/Saison fehlt", description: "Bitte zuerst Verein und Saison auswählen.", variant: "warning" }); return;
+      toast({ title: "Verein/Saison fehlt", description: "Bitte zuerst Verein und Saison auswählen.", variant: "destructive" }); return;
     }
     const currentSeasonData = allSeasons.find(s => s.id === selectedSeasonId);
     if (!currentSeasonData) {
@@ -738,7 +721,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
             body: emailData
           });
         } catch (emailError) {
-          logWarn('E-Mail-Benachrichtigung fehlgeschlagen:', emailError);
+          logWarn('E-Mail-Benachrichtigung fehlgeschlagen:', getErrorMessage(emailError));
         }
         
         toast({ 
@@ -776,7 +759,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
             validShootersToAdd.push(shooterId);
           }
         } catch (error) {
-          logWarn(`Error checking shooter ${shooterId}:`, error);
+          logWarn(`Error checking shooter ${shooterId}:`, getErrorMessage(error));
         }
       }
       
@@ -789,7 +772,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
             validShootersToRemove.push(shooterId);
           }
         } catch (error) {
-          logWarn(`Error checking shooter ${shooterId}:`, error);
+          logWarn(`Error checking shooter ${shooterId}:`, getErrorMessage(error));
         }
       }
       
@@ -876,7 +859,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
 
     if (isChecked) { 
       if (selectedShooterIdsInForm.length >= MAX_SHOOTERS_PER_TEAM) {
-          toast({ title: "Maximale Schützenzahl erreicht", description: `Eine Mannschaft darf maximal ${MAX_SHOOTERS_PER_TEAM} Schützen haben.`, variant: "warning" });
+          toast({ title: "Maximale Schützenzahl erreicht", description: `Eine Mannschaft darf maximal ${MAX_SHOOTERS_PER_TEAM} Schützen haben.`, variant: "destructive" });
           return; 
       }
       // Disziplin-Konflikt-Prüfung
@@ -942,11 +925,6 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
     return type;
   };
 
-  const getClubName = (clubId?: string | null): string => {
-    if (!clubId) return 'N/A';
-    return allClubsGlobal.find(c => c.id === clubId)?.name || 'Unbek. Verein';
-  };
-
   const toggleTeamExpansion = async (teamId: string, shooterIds: string[]) => {
     const newExpanded = new Set(expandedTeams);
     
@@ -982,7 +960,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
               lastName: 'gefunden',
               gender: 'unknown',
               birthYear: null
-            } as Shooter;
+            } as unknown as Shooter;
           });
           
           const shooters = await Promise.all(shooterPromises);
@@ -1056,7 +1034,6 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
           <h1 className="text-2xl font-semibold text-primary">Meine Mannschaften</h1>
           <HelpTooltip 
             text="Hier können Sie Mannschaften für Ihren Verein anlegen und verwalten." 
-            side="right" 
             className="ml-2"
           />
         </div>
@@ -1277,7 +1254,7 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                                     isReadOnly || (!isAdmin && teamsWithResults.has(team.id)) ? 'opacity-50 cursor-not-allowed' : ''
                                   }`}
                                   onClick={() => handleDeleteConfirmation(team)} 
-                                  disabled={isSubmittingForm || isDeletingTeam || isReadOnly || (!isAdmin && (team.leagueId || teamsWithResults.has(team.id)))}
+                                  disabled={isSubmittingForm || isDeletingTeam || isReadOnly || (!isAdmin && (!!team.leagueId || teamsWithResults.has(team.id)))}
                                   title={isReadOnly ? "Saison läuft – nur Anzeige möglich" : !isAdmin && team.leagueId 
                                     ? "Löschen gesperrt - Liga zugewiesen (nur Admin)" 
                                     : !isAdmin && teamsWithResults.has(team.id) 
@@ -1600,8 +1577,8 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                       onChange={(e) => {
                         setShooterSearchQuery(e.target.value);
                         // Debounce: Warte 300ms bevor Filter angewendet wird
-                        clearTimeout(window.shooterSearchTimeout);
-                        window.shooterSearchTimeout = setTimeout(() => {
+                        clearTimeout((window as any).shooterSearchTimeout);
+                        (window as any).shooterSearchTimeout = setTimeout(() => {
                           // Filter wird nur alle 300ms angewendet, nicht bei jedem Tastendruck
                         }, 300);
                       }}
@@ -1636,7 +1613,6 @@ Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
                               
                               const teamBeingEdited = currentTeam;
                               const teamLeagueData = teamBeingEdited?.leagueId ? allLeagues.find(l => l.id === teamBeingEdited.leagueId) : null;
-                              const categoryOfCurrentTeam = getDisciplineCategory(teamLeagueData?.type);
                               const currentTeamCompYearForValidation = teamBeingEdited?.competitionYear || allSeasons.find(s => s.id === selectedSeasonId)?.competitionYear;
 
                               if (!isSelected && teamLeagueData && currentTeamCompYearForValidation !== undefined) {

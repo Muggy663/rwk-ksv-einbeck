@@ -1,6 +1,6 @@
 // src/components/ui/report-button.tsx
 "use client";
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -85,7 +85,7 @@ export function ReportButton({
       <DialogTrigger asChild>
         <Button 
           variant={variant} 
-          size={size}
+          size={size === 'md' ? 'default' : size}
           className="text-red-600 hover:text-red-700 hover:bg-red-50"
         >
           <Flag className="h-4 w-4 mr-1" />

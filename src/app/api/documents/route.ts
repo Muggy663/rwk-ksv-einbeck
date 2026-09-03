@@ -13,7 +13,7 @@ export async function GET() {
     const documents = await getAllDocumentsFromMongo();
     return NextResponse.json({ documents });
   } catch (error) {
-    secureLogger.error('Documents GET failed', 'documents-api');
+    secureLogger.error('Documents GET failed', undefined, 'documents-api');
     return NextResponse.json(
       { error: 'Fehler beim Lesen der Dokumente' },
       { status: 500 }
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const newDocument = await addDocumentToMongo(document);
+    const newDocument = await addDocumentToMongo(document as any);
     
     if (!newDocument) {
       return NextResponse.json(
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(newDocument);
   } catch (error) {
-    secureLogger.error('Document creation failed', 'documents-api');
+    secureLogger.error('Document creation failed', undefined, 'documents-api');
     return NextResponse.json(
       { error: 'Fehler beim Hinzufügen des Dokuments' },
       { status: 500 }

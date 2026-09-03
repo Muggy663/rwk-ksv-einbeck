@@ -3,6 +3,15 @@
 
 import { useState, useRef, useCallback } from 'react';
 
+// Web Speech API ist nicht in allen TS-DOM-Libs typisiert
+type SpeechRecognition = any;
+declare global {
+  interface Window {
+    SpeechRecognition?: any;
+    webkitSpeechRecognition?: any;
+  }
+}
+
 interface VoiceInputOptions {
   onResult: (text: string) => void;
   onError?: (error: string) => void;
@@ -43,7 +52,7 @@ export function useVoiceInput({
         setIsListening(true);
       };
 
-      recognition.onresult = (event) => {
+      recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         
         // Extrahiere Zahlen aus dem Text
@@ -72,7 +81,7 @@ export function useVoiceInput({
         }
       };
 
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: any) => {
         setIsListening(false);
         const errorMessage = event.error === 'no-speech' 
           ? 'Keine Sprache erkannt. Bitte versuchen Sie es erneut.'

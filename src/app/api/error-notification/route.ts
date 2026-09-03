@@ -4,18 +4,18 @@ import { secureLogger } from '@/lib/utils/secure-logger';
 
 export async function POST(request: NextRequest) {
   try {
-    const errorReport = await request.json();
+    await request.json();
     
     // Hier würde normalerweise eine E-Mail gesendet werden
     // Für jetzt loggen wir nur den kritischen Fehler
-    secureLogger.error('Critical error notification received', 'error-notification-api');
+    secureLogger.error('Critical error notification received', undefined, 'error-notification-api');
 
     // TODO: E-Mail-Service integrieren (z.B. Nodemailer, SendGrid, etc.)
     // await sendErrorEmail(errorReport);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    secureLogger.error('Error in error notification processing', 'error-notification-api');
+    secureLogger.error('Error in error notification processing', undefined, 'error-notification-api');
     return NextResponse.json(
       { error: 'Failed to process error notification' },
       { status: 500 }

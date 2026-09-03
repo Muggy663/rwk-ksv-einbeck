@@ -119,7 +119,7 @@ export async function safeDiagnoseDatabaseInconsistencies(clubId: string): Promi
 /**
  * Sichere Bereinigung - löscht nur wirklich verwaiste Daten
  */
-export async function performSafeCleanup(clubId: string, diagnosis: SafeCleanupDiagnosis): Promise<{deleted: number, warnings: string[]}> {
+export async function performSafeCleanup(_clubId: string, diagnosis: SafeCleanupDiagnosis): Promise<{deleted: number, warnings: string[]}> {
   if (!diagnosis.safeToDelete) {
     throw new Error('Bereinigung nicht sicher - bitte Warnungen prüfen');
   }

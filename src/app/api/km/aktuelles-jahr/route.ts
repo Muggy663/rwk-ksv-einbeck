@@ -4,7 +4,7 @@ import { adminDb } from '@/lib/firebase/admin';
 
 const KM_JAHRE_COLLECTION = 'km_jahre';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Hole das aktive Jahr
     const snapshot = await adminDb.collection(KM_JAHRE_COLLECTION)

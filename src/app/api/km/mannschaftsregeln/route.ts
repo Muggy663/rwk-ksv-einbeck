@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logError } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 export async function GET() {
   try {
@@ -38,6 +39,10 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
     const { regeln } = await request.json();
     
     regeln.lastUpdated = new Date().toISOString();

@@ -1,17 +1,13 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { MobileAdminNav } from '@/components/admin/MobileAdminNav';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { 
-  LayoutDashboard, Users, Trophy, ListChecks, Edit3, Settings, UserCog, 
-  MessagesSquare, FileUp, ArrowLeft, LogOut, History, FileText, Database, RefreshCw
+  LayoutDashboard, Users, Trophy, ListChecks, Edit3, UserCog, 
+  MessagesSquare, FileUp, History, FileText, Database, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
 
 export const adminNavItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -37,8 +33,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
 
   const isAdmin = user?.email === 'admin@rwk-einbeck.de';
 
@@ -51,11 +46,6 @@ export default function AdminLayout({
       }
     }
   }, [loading, user, isAdmin, router]);
-
-  const handleLogout = useCallback(async () => {
-    await signOut();
-    router.push('/');
-  }, [signOut, router]);
 
   if (loading || (!user) || (!isAdmin && !loading)) {
     return null;

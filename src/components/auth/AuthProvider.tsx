@@ -149,7 +149,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const hasClubRole = permissionData.clubRoles && Object.values(permissionData.clubRoles).some(role => 
             ['SPORTLEITER', 'VORSTAND', 'KASSENWART', 'SCHRIFTFUEHRER', 'MANNSCHAFTSFUEHRER'].includes(role)
           );
-          const hasKvRole = permissionData.kvRole && ['KV_WETTKAMPFLEITER', 'KV_KM_ORGA'].includes(permissionData.kvRole);
+          const hasKvRole = permissionData.kvRoles && Object.values(permissionData.kvRoles).some(role => 
+            ['KV_WETTKAMPFLEITER', 'KV_KM_ORGA'].includes(role)
+          );
           
           if (!hasLegacyRole && !hasClubRole && !hasKvRole) {
             setAppPermissionsError("Benutzer hat keine gültige Rolle (SPORTLEITER, VORSTAND, Vereinsvertreter oder Mannschaftsführer).");
@@ -180,9 +182,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged((firebaseUser) => {
-      setUser(firebaseUser);
+      const mappedUser = firebaseUser as unknown as FirebaseUser | null;
+      setUser(mappedUser);
       setLoading(false); // Auth loading finished
-      fetchUserAppPermissions(firebaseUser);
+      fetchUserAppPermissions(mappedUser);
     });
     return () => unsubscribe();
   }, [fetchUserAppPermissions]);
@@ -281,8 +284,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       toast({ 
         title: "Passwort geändert", 
-        description: "Ihr Passwort wurde erfolgreich aktualisiert.", 
-        variant: "success" 
+        description: "Ihr Passwort wurde erfolgreich aktualisiert." 
       });
     } catch (err: any) {
       setError(err);

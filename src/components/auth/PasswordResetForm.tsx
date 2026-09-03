@@ -13,7 +13,6 @@ import { KeyRound, AlertCircle, ArrowLeft, CheckIcon } from 'lucide-react';
 import { auth } from '@/lib/firebase/config';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { PasswordInput } from '@/components/ui/password-input';
 
 const resetSchema = z.object({
   email: z.string().email({ message: "Ungültige E-Mail-Adresse." }),
@@ -36,7 +35,6 @@ export function PasswordResetForm({ onBack }: PasswordResetFormProps) {
     register,
     handleSubmit,
     formState: { errors },
-    getValues,
   } = useForm<ResetFormInputs>({
     resolver: zodResolver(resetSchema),
   });

@@ -35,7 +35,7 @@ const MAX_CACHE_SIZE = 20; // Maximale Anzahl von PDFs im Cache
  */
 function generateCacheKey(type: string, params: Record<string, any>): string {
   // Erstelle einen deterministischen String aus den Parametern
-  const paramsString = JSON.stringify(params, (key, value) => {
+  const paramsString = JSON.stringify(params, (_key, value) => {
     // Spezielle Behandlung für Objekte mit ID
     if (value && typeof value === 'object' && value.id) {
       return { id: value.id };

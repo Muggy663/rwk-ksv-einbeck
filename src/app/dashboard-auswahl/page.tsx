@@ -1,11 +1,11 @@
 "use client";
 
-import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { getMemberPermissions } from '@/lib/permissions/memberPermissions';
 import Link from 'next/link';
 
 export default function DashboardAuswahl() {
@@ -40,13 +40,13 @@ export default function DashboardAuswahl() {
 
   const isRWKAdmin = userAppPermissions?.role === 'superadmin' || user?.email === 'admin@rwk-einbeck.de';
   // Legacy-Rollen für Rückwärtskompatibilität
-  const isLegacyVereinsvertreter = userAppPermissions?.role === 'vereinsvertreter' || userAppPermissions?.role === 'club_representative';
+  const isLegacyVereinsvertreter = userAppPermissions?.role === 'vereinsvertreter' || (userAppPermissions?.role as any) === 'club_representative';
   const isLegacyVereinsvorstand = userAppPermissions?.role === 'vereinsvorstand';
   const isLegacyMannschaftsfuehrer = userAppPermissions?.role === 'mannschaftsfuehrer';
   
   // Neue Club-Rollen
   const hasClubRoles = userAppPermissions?.clubRoles && Object.keys(userAppPermissions.clubRoles).length > 0;
-  const clubRolesList = hasClubRoles ? Object.values(userAppPermissions.clubRoles) : [];
+  const clubRolesList: string[] = hasClubRoles && userAppPermissions?.clubRoles ? Object.values(userAppPermissions.clubRoles) : [];
   const isSportleiter = clubRolesList.includes('SPORTLEITER');
   const isVorstand = clubRolesList.includes('VORSTAND');
   const isKassenwart = clubRolesList.includes('KASSENWART');
@@ -63,7 +63,7 @@ export default function DashboardAuswahl() {
   
   // Prüfe ob Benutzer nur Schießnachweis/Social Training Zugriff hat (INDIVIDUAL userType)
   // Wichtig: clubRoles ODER kvRoles ODER platformRole überschreiben INDIVIDUAL
-  const isIndividualUser = userAppPermissions?.userType === 'INDIVIDUAL' && 
+  const isIndividualUser = (userAppPermissions as any)?.userType === 'INDIVIDUAL' && 
                           !userAppPermissions?.clubRoles &&
                           !userAppPermissions?.kvRoles &&
                           !userAppPermissions?.platformRole;
@@ -188,6 +188,9 @@ export default function DashboardAuswahl() {
     if (isEhrenmitglied) return 'Vereinsgeschichte und Ehrungen';
     return 'Basis-Zugriff auf Vereinssoftware';
   };
+  // Reserviert für Phase-2-Vereinssoftware-Ansicht (aktuell nicht gerendert)
+  void getVereinssoftwareBereiche;
+  void getRollenBeschreibung;
   
   // Debug entfernt - verhindert Endlosschleife
   
@@ -195,6 +198,9 @@ export default function DashboardAuswahl() {
   if (!hasKMAccess) {
 
   }
+
+  // Zentrale Mitgliederverwaltung: nur für Sportleiter, KM-Orga und Admin sichtbar.
+  const memberPermissions = getMemberPermissions(userAppPermissions, user?.email);
 
   return (
     <div className="container py-8 max-w-6xl mx-auto">
@@ -209,7 +215,7 @@ export default function DashboardAuswahl() {
 
         {/* RWK Dashboard - Links oben */}
         {(isSportleiter || isVorstand || isMannschaftsfuehrer || isLegacyVereinsvertreter || isLegacyVereinsvorstand || isLegacyMannschaftsfuehrer || isRWKAdmin) && (
-          <Card className={`shadow-lg hover:shadow-xl transition-shadow ${isKMOrganisator && !isRWKAdmin && !isSportleiter && !isVorstand ? 'opacity-50 cursor-not-allowed' : ''}`}>
+          <Card className={`shadow-lg hover:shadow-xl transition-shadow h-full flex flex-col ${isKMOrganisator && !isRWKAdmin && !isSportleiter && !isVorstand ? 'opacity-50 cursor-not-allowed' : ''}`}>
           <CardHeader className="pb-4">
             <div>
               <CardTitle className="text-xl mb-2">
@@ -273,7 +279,7 @@ export default function DashboardAuswahl() {
 
         {/* KM Dashboard - Rechts oben */}
         {hasKMAccess && (
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow h-full flex flex-col">
           <CardHeader className="pb-4">
             <div>
               <CardTitle className="text-xl mb-2">
@@ -340,51 +346,75 @@ export default function DashboardAuswahl() {
         </Card>
         )}
 
-      </div>
-      
-      {/* Weitere Funktionen - Nach unten */}
-      <div className="mt-6">
-        <h2 className="text-xl font-semibold text-center mb-4 text-muted-foreground">🎯 Schießnachweis</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          
-          {/* Schießnachweis - Links unten */}
-          <Card className="shadow-lg hover:shadow-xl transition-shadow border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
-            <CardHeader className="pb-4">
-              <div>
-                <CardTitle className="text-xl mb-2">
-                  🎯 Schießnachweis
-                </CardTitle>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="outline">Cloud-Speicherung</Badge>
-                  <Badge variant="outline">PDF-Export</Badge>
+        {/* Zentrale Mitgliederliste - für RWK und KM gemeinsam */}
+        {memberPermissions.canViewMembers && (
+        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+          <CardHeader className="pb-4">
+            <div>
+              <CardTitle className="text-xl mb-2">👥 Mitglieder</CardTitle>
+              <div className="flex flex-wrap gap-1">
+                {memberPermissions.role === 'admin' && <Badge variant="default">Admin</Badge>}
+                {memberPermissions.role === 'km_orga' && <Badge variant="secondary">KM-Organisator</Badge>}
+                {memberPermissions.role === 'sportleiter' && <Badge variant="outline">Sportleiter</Badge>}
+              </div>
+            </div>
+            <CardDescription>
+              Eine zentrale Mitgliederliste für Rundenwettkampf und Kreismeisterschaft
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col">
+            <div className="flex flex-1 flex-col space-y-4">
+              <div className="bg-muted/50 border rounded-lg p-3">
+                <h4 className="font-semibold mb-2">Funktionen</h4>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div>• Gemeinsam für RWK und KM</div>
+                  <div>• Anlegen, bearbeiten, entfernen</div>
+                  <div>• Mitgliedsnummer & Altersklassen</div>
                 </div>
               </div>
-              <CardDescription>
-                Digitales Schießtagebuch für Sportschützen
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🆕 Features</h4>
-                  <div className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
-                    <div>• Training & Wettkampf erfassen</div>
-                    <div>• PDF-Export für Behörden</div>
-                    <div>• Cloud-Sync & Statistiken</div>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Link href="/schiessnachweis" className="flex-1">
-                    <Button className="w-full">
-                      Schießnachweis öffnen
-                    </Button>
-                  </Link>
+              <div className="mt-auto">
+                <Link href="/mitglieder" className="block">
+                  <Button className="w-full">Mitglieder verwalten</Button>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        )}
+
+        {/* Schießnachweis - Zusatz-Feature, aber im selben Raster */}
+        <Card className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+          <CardHeader className="pb-4">
+            <div>
+              <CardTitle className="text-xl mb-2">🎯 Schießnachweis</CardTitle>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant="outline">Extra</Badge>
+                <Badge variant="outline">PDF-Export</Badge>
+              </div>
+            </div>
+            <CardDescription>
+              Digitales Schießtagebuch für Sportschützen
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col">
+            <div className="flex flex-1 flex-col space-y-4">
+              <div className="bg-muted/50 border rounded-lg p-3">
+                <h4 className="font-semibold mb-2">Funktionen</h4>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div>• Training & Wettkampf erfassen</div>
+                  <div>• PDF-Export für Behörden</div>
+                  <div>• Cloud-Sync & Statistiken</div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <div className="mt-auto">
+                <Link href="/schiessnachweis" className="block">
+                  <Button className="w-full">Schießnachweis öffnen</Button>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
       </div>
 
       {/* Support-Bereich */}
@@ -401,11 +431,18 @@ export default function DashboardAuswahl() {
                 <p className="text-sm text-red-700 dark:text-red-300 mb-3">
                   Temporären Support-Zugang für das Support-Team generieren
                 </p>
-                <Link href="/support">
-                  <Button className="w-full bg-red-600 hover:bg-red-700">
-                    Support kontaktieren
-                  </Button>
-                </Link>
+                <div className="flex flex-col gap-2">
+                  <Link href="/support-zugang">
+                    <Button className="w-full bg-red-600 hover:bg-red-700">
+                      Support-Code generieren
+                    </Button>
+                  </Link>
+                  <Link href="/support">
+                    <Button variant="outline" className="w-full">
+                      Support kontaktieren
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           )}

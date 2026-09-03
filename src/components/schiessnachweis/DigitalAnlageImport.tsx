@@ -5,7 +5,7 @@ import { logError } from '@/lib/utils/secure-logger';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Zap, AlertCircle, Camera, Loader2, CheckCircle2, RotateCcw, Plus } from "lucide-react";
+import { Zap, Camera, Loader2, CheckCircle2, RotateCcw, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ZehnerSerie } from "@/types/schiessnachweis";
 

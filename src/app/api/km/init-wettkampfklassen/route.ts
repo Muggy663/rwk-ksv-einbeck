@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 const WETTKAMPFKLASSEN_2026 = [
   { name: 'Schüler I m', minAlter: 12, maxAlter: 14, geschlecht: 'male' },
@@ -39,24 +40,14 @@ const WETTKAMPFKLASSEN_2026 = [
   { name: 'Seniorinnen VI', minAlter: 80, maxAlter: 99, geschlecht: 'female' }
 ];
 
-async function generateWettkampfklassen2026() {
-  const collectionRef = collection(db, 'km_wettkampfklassen');
-  
-  for (const klasse of WETTKAMPFKLASSEN_2026) {
-    await addDoc(collectionRef, {
-      ...klasse,
-      saison: '2026',
-      createdAt: new Date()
-    });
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
-    // Debug: Auth-Token prüfen
-    const authHeader = request.headers.get('authorization');
-
     
+
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
 
     const collectionRef = collection(db, 'km_wettkampfklassen');
     

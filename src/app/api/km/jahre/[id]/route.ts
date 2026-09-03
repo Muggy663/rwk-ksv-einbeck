@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 const KM_SAISONS_COLLECTION = 'km_saisons';
 
@@ -9,8 +10,13 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let id: string | undefined;
   try {
-    const { id } = await params;
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+    ({ id } = await params);
     const body = await request.json();
     const { status, meldeschluss, beschreibung } = body;
 

@@ -38,7 +38,7 @@ export async function fixGenderForClub(clubId: string) {
     const mitgliederCollection = `clubs/${clubId}/mitglieder`;
     const mitgliederSnapshot = await getDocs(collection(db, mitgliederCollection));
     
-    logDebug('Gefunden:', mitgliederSnapshot.docs.length, 'Mitglieder');
+    logDebug(`Gefunden: ${mitgliederSnapshot.docs.length} Mitglieder`);
     
     let updated = 0;
     
@@ -69,7 +69,7 @@ export async function fixGenderForClub(clubId: string) {
       }
     }
     
-    logDebug('Gender-Korrektur abgeschlossen:', updated, 'Mitglieder aktualisiert');
+    logDebug(`Gender-Korrektur abgeschlossen: ${updated} Mitglieder aktualisiert`);
     return updated;
     
   } catch (error) {

@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Loader2, RefreshCw, AlertTriangle, CheckCircle, Activity, Database, XCircle } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle, Activity, Database, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase/config';
@@ -16,7 +16,7 @@ import Link from 'next/link';
 
 export default function RecoveryPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  useAuth();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [selectedClubId, setSelectedClubId] = useState<string>('global');
   const [isAuditing, setIsAuditing] = useState(false);
@@ -46,8 +46,8 @@ export default function RecoveryPage() {
   const handleAudit = async () => {
     setIsAuditing(true);
     try {
-      // Verwende null für globale Analyse statt leerer String
-      const clubIdForAudit = selectedClubId === 'global' ? null : selectedClubId;
+      // Verwende undefined für globale Analyse statt leerer String
+      const clubIdForAudit = selectedClubId === 'global' ? undefined : selectedClubId;
       const result = await auditDatabase(clubIdForAudit);
       setAuditResult(result);
       

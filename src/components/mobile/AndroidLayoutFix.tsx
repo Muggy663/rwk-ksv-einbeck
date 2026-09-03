@@ -1,7 +1,7 @@
 // src/components/mobile/AndroidLayoutFix.tsx
 "use client";
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useMobileDetection } from '@/hooks/use-mobile-detection';
 
 export function AndroidLayoutFix() {

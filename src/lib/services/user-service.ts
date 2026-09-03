@@ -31,7 +31,7 @@ export class UserService {
     const profiles: { [userId: string]: UserProfile } = {};
     
     try {
-      const { getDocsFromCache, getDocsFromServer } = await import('firebase/firestore');
+      const { getDocsFromServer } = await import('firebase/firestore');
       const { collection, query, where, documentId } = await import('firebase/firestore');
       
       if (userIds.length === 0) return profiles;

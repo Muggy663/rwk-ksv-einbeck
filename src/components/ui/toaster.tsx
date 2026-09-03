@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import {
   Toast,
   ToastClose,
@@ -8,10 +9,10 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
-import { useToast } from "@/hooks/use-toast"
+
 
 export function Toaster() {
-  const { toasts = [] } = { toasts: [] }; // Leeres Array als Fallback
+  const { toasts = [] }: { toasts: Array<{ id: string; title?: ReactNode; description?: ReactNode; action?: ReactNode }> } = { toasts: [] }; // Leeres Array als Fallback
 
   return (
     <ToastProvider>

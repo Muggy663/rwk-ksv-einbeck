@@ -16,6 +16,11 @@ import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names'
 import type { Season, League, Team } from '@/types/rwk';
 import Link from 'next/link';
 
+// Team angereichert mit aufgelösten Schützen-Objekten (zur Laufzeit in loadTeams befüllt)
+type TeamWithShooters = Team & {
+  shooters?: Array<{ id: string; name: string; [key: string]: unknown }>;
+};
+
 interface HandzettelGeneratorProps {
   showContactData: boolean;
   showGesamtTab?: boolean;
@@ -42,7 +47,7 @@ export function HandzettelGenerator({
     ort: ''
   });
   
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [teams, setTeams] = useState<TeamWithShooters[]>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
   const [loadResults, setLoadResults] = useState(false);
   const [results, setResults] = useState<any>({});
@@ -167,7 +172,7 @@ export function HandzettelGenerator({
       );
       
       const resultsSnapshot = await getDocs(resultsQuery);
-      const resultsData = {};
+      const resultsData: Record<string, string | number> = {};
       
       resultsSnapshot.docs.forEach(doc => {
         const data = doc.data();
@@ -236,8 +241,8 @@ export function HandzettelGenerator({
 
     if (isMobile()) {
       // Mobile: Direct print with better styles
-      const allElements = document.querySelectorAll('*');
-      const printArea = document.querySelector('.print-area');
+      const allElements = document.querySelectorAll<HTMLElement>('*');
+      const printArea = document.querySelector<HTMLElement>('.print-area');
       
       // Hide all elements except print area
       allElements.forEach(el => {
@@ -657,8 +662,8 @@ export function HandzettelGenerator({
 
                   if (isMobile()) {
                     // Mobile: Direct print with better element handling
-                    const allElements = document.querySelectorAll('*');
-                    const gesamtPrintArea = document.querySelector('.gesamt-print-area');
+                    const allElements = document.querySelectorAll<HTMLElement>('*');
+                    const gesamtPrintArea = document.querySelector<HTMLElement>('.gesamt-print-area');
                     
                     // Hide all elements except print area
                     allElements.forEach(el => {
@@ -827,7 +832,7 @@ export function HandzettelGenerator({
                                     const rings = results[resultKey] || '';
                                     
                                     // Berechne Gesamt nur wenn Ringe vorhanden
-                                    let gesamt = '';
+                                    let gesamt: number | string = '';
                                     if (rings) {
                                       let sum = 0;
                                       for (let r = 1; r <= round; r++) {
@@ -853,14 +858,14 @@ export function HandzettelGenerator({
                               <tr>
                                 <td className="border p-1 font-bold text-xs bg-yellow-100">Total</td>
                                 {[1, 2, 3, 4, 5].map(round => {
-                                  const teamRoundTotal = team.shooters?.reduce((sum, shooter, idx) => {
+                                  const teamRoundTotal = team.shooters?.reduce((sum, shooter) => {
                                     const resultKey = `${team.id}-${shooter.id}-${round}`;
                                     const rings = parseInt(results[resultKey]) || 0;
                                     return sum + rings;
                                   }, 0) || 0;
                                   
                                   // Berechne Team-Gesamt nur wenn Team-Ringe vorhanden
-                                  let teamGesamt = '';
+                                  let teamGesamt: number | string = '';
                                   if (teamRoundTotal > 0) {
                                     let sum = 0;
                                     for (let r = 1; r <= round; r++) {

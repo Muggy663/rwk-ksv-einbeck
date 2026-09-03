@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,12 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
-import { Save, Calendar, Clock, MapPin, Target, Users } from 'lucide-react';
+import { Save, Clock, MapPin, Target } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
+import { authFetch } from '@/lib/auth/authFetch';
 import { ALTERSKLASSEN, getSchiesszeit } from '@/lib/constants/km-constants';
 
 interface StartlistConfig {
@@ -22,7 +22,7 @@ interface StartlistConfig {
   verfuegbareStaende: string[];
   startDatum: string;
   startUhrzeit: string;
-  durchgangsDauer: number;
+  durchgangsDauer: number | string;
   wechselzeit: number;
   disziplinen: string[];
   anlagensystem: 'zuganlagen' | 'andere';
@@ -36,7 +36,7 @@ interface StartlistConfig {
 export default function StartlistenPage() {
   const { toast } = useToast();
   const [vereine, setVereine] = useState<Array<{id: string, name: string}>>([]);
-  const [disziplinen, setDisziplinen] = useState<Array<{spoNummer: number, name: string}>>([]);
+  const [disziplinen, setDisziplinen] = useState<Array<{ id?: string; spoNummer?: any; name?: string; schiesszeit_minuten?: number; schiesszeit_zuganlagen?: number; schiesszeit_andere?: number; schusszahlen?: any; auflage?: boolean; [key: string]: any }>>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('luftdruck');
@@ -137,11 +137,11 @@ export default function StartlistenPage() {
         const disziplinenResponse = await fetch('/api/km/disziplinen');
         const disziplinenResult = await disziplinenResponse.json();
         logDebug('Loaded disziplinen from API:', disziplinenResult.data?.length || 0);
-        const disziplin141 = disziplinenResult.data?.find(d => d.spoNummer === '1.41');
+        const disziplin141 = disziplinenResult.data?.find((d: any) => d.spoNummer === '1.41');
         logDebug('Found 1.41:', disziplin141);
         if (disziplinenResult.success && disziplinenResult.data) {
           const disziplinenData = disziplinenResult.data
-            .map(d => ({
+            .map((d: any) => ({
               id: d.id,
               spoNummer: d.spoNummer,
               name: d.name,
@@ -151,7 +151,7 @@ export default function StartlistenPage() {
               schusszahlen: d.schusszahlen,
               auflage: d.auflage || false
             }))
-            .sort((a, b) => {
+            .sort((a: any, b: any) => {
               const aNum = parseFloat(a.spoNummer) || 0;
               const bNum = parseFloat(b.spoNummer) || 0;
               return aNum - bNum;
@@ -175,7 +175,7 @@ export default function StartlistenPage() {
       
       try {
         logDebug('Loading KM-Meldungen für Saison:', selectedSaison);
-        const response = await fetch(`/api/km/meldungen?saison=${selectedSaison}`);
+        const response = await authFetch(`/api/km/meldungen?saison=${selectedSaison}`);
         
         if (response.ok) {
           const data = await response.json();
@@ -192,14 +192,14 @@ export default function StartlistenPage() {
           }
           
           // Filter nach Disziplinen (match by name)
-          const gefiltert = allMeldungen.filter(meldung => {
-            const disziplin = disziplinenData.find(d => d.id === meldung.disziplinId);
+          const gefiltert = allMeldungen.filter((meldung: any) => {
+            const disziplin = disziplinenData.find((d: any) => d.id === meldung.disziplinId);
             const disziplinName = disziplin?.name;
-            logDebug('Checking meldung disziplin:', disziplinName, 'against config:', config.disziplinen);
+            logDebug(`Checking meldung disziplin: ${disziplinName} against config: ${JSON.stringify(config.disziplinen)}`);
             return disziplinName && config.disziplinen.includes(disziplinName);
           });
           
-          logDebug('Gefilterte Meldungen:', gefiltert.length, 'von', allMeldungen.length);
+          logDebug(`Gefilterte Meldungen: ${gefiltert.length} von ${allMeldungen.length}`);
           setMeldungen(gefiltert);
         }
       } catch (error) {
@@ -276,7 +276,7 @@ export default function StartlistenPage() {
   };
 
   const calculateNextStart = (startTime: string, durchgang: number, customDuration?: number) => {
-    const duration = customDuration || config.durchgangsDauer;
+    const duration = Number(customDuration || config.durchgangsDauer);
     const [hours, minutes] = startTime.split(':').map(Number);
     const totalMinutes = hours * 60 + minutes + (durchgang * (duration + config.wechselzeit));
     const newHours = Math.floor(totalMinutes / 60);
@@ -286,7 +286,7 @@ export default function StartlistenPage() {
 
   const getAverageDisziplinTime = () => {
     if (config.disziplinen.length === 0 || config.altersklassen.length === 0) return config.durchgangsDauer;
-    const selectedDisziplinen = disziplinen.filter(d => config.disziplinen.includes(d.name));
+    const selectedDisziplinen = disziplinen.filter(d => config.disziplinen.includes(d.name || ''));
     
     let totalTime = 0;
     let count = 0;
@@ -492,9 +492,6 @@ export default function StartlistenPage() {
                 <tbody>
                   {disziplinen
                     .filter(d => {
-                      const spoStr = d.spoNummer?.toString() || '';
-                      const firstDigit = parseInt(spoStr.charAt(0)) || 0;
-                      
                       const disziplinName = d.name?.toLowerCase() || '';
                       
                       switch(activeTab) {
@@ -518,13 +515,13 @@ export default function StartlistenPage() {
                       
                       return (
                         <tr key={disziplin.name} className={`border-b hover:bg-gray-50 ${
-                          config.disziplinen.includes(disziplin.name) ? 'bg-blue-50' : ''
+                          config.disziplinen.includes(disziplin.name || '') ? 'bg-blue-50' : ''
                         }`}>
                           <td className="p-2">
                             <Checkbox
                               id={disziplin.name}
-                              checked={config.disziplinen.includes(disziplin.name)}
-                              onCheckedChange={(checked) => handleDisziplinChange(disziplin.name, checked as boolean)}
+                              checked={config.disziplinen.includes(disziplin.name || '')}
+                              onCheckedChange={(checked) => handleDisziplinChange(disziplin.name || '', checked as boolean)}
                             />
                           </td>
                           <td className="p-2 font-mono font-medium">
@@ -566,8 +563,8 @@ export default function StartlistenPage() {
                   <strong>{config.disziplinen.length}</strong> Disziplin{config.disziplinen.length !== 1 ? 'en' : ''} ausgewählt
                 </p>
                 <div className="text-xs text-green-600 mt-1">
-                  Auflage: {disziplinen.filter(d => config.disziplinen.includes(d.name) && d.auflage).length} • 
-                  Freihand: {disziplinen.filter(d => config.disziplinen.includes(d.name) && !d.auflage).length}
+                  Auflage: {disziplinen.filter(d => config.disziplinen.includes(d.name || '') && d.auflage).length} • 
+                  Freihand: {disziplinen.filter(d => config.disziplinen.includes(d.name || '') && !d.auflage).length}
                 </div>
               </div>
             )}
@@ -622,7 +619,7 @@ export default function StartlistenPage() {
                 <Label htmlFor="anlagensystem">Anlagensystem</Label>
                 <NativeSelect
                   value={config.anlagensystem}
-                  onValueChange={(value: 'zuganlagen' | 'andere') => setConfig(prev => ({...prev, anlagensystem: value}))}
+                  onValueChange={(value: string) => setConfig(prev => ({...prev, anlagensystem: value as 'zuganlagen' | 'andere'}))}
                   options={[
                     { value: "zuganlagen", label: "Zuganlagen (längere Schießzeiten)" },
                     { value: "andere", label: "Elektronische Anlagen (Disag, Meyton)" }

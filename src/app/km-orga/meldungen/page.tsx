@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logInfo, logDebug } from '@/lib/utils/secure-logger';
-import { getShooterClubId, berechneAltersklasse } from '@/lib/utils/altersklassen';
+import { getShooterClubId, ermittleEinzelklasse, type KmAltersklasse } from '@/lib/utils/altersklassen';
+import { authFetch } from '@/lib/auth/authFetch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -23,6 +24,7 @@ export default function KMAdminMeldungen() {
   const [schuetzen, setSchuetzen] = useState<any[]>([]);
   const [disziplinen, setDisziplinen] = useState<any[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
+  const [altersklassenListe, setAltersklassenListe] = useState<KmAltersklasse[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSaison, setSelectedSaison] = useState('');
   const [saisons, setSaisons] = useState<any[]>([]);
@@ -67,7 +69,7 @@ export default function KMAdminMeldungen() {
         const saisonsList = data.data || [];
         
         // Sortiere Saisons: Neueste zuerst (LD 2026 > KKP 2026 > KK 2026)
-        const sortedSaisons = saisonsList.sort((a, b) => {
+        const sortedSaisons = saisonsList.sort((a: any, b: any) => {
           // Priorisiere LD (Luftdruck) als neueste Saison
           if (a.name?.includes('Luftdruck') && !b.name?.includes('Luftdruck')) return -1;
           if (!a.name?.includes('Luftdruck') && b.name?.includes('Luftdruck')) return 1;
@@ -91,11 +93,17 @@ export default function KMAdminMeldungen() {
 
   const loadData = async () => {
     try {
-      const [meldungenRes, disziplinenRes, clubsRes] = await Promise.all([
-        fetch(`/api/km/meldungen?saison=${selectedSaison}`),
+      const [meldungenRes, disziplinenRes, clubsRes, altersklassenRes] = await Promise.all([
+        authFetch(`/api/km/meldungen?saison=${selectedSaison}`),
         fetch('/api/km/disziplinen'),
-        fetch('/api/clubs')
+        fetch('/api/clubs'),
+        fetch('/api/km/altersklassen')
       ]);
+
+      if (altersklassenRes.ok) {
+        const akData = await altersklassenRes.json();
+        setAltersklassenListe(akData.data || []);
+      }
       
       // Lade Schützen direkt aus Firebase
       const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
@@ -171,7 +179,7 @@ export default function KMAdminMeldungen() {
             gemeldeteVon: 'km-orga'
           };
 
-          const response = await fetch('/api/km/meldungen', {
+          const response = await authFetch('/api/km/meldungen', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(meldungData)
@@ -234,7 +242,7 @@ export default function KMAdminMeldungen() {
 
   const updateMeldung = async (meldungId: string) => {
     try {
-      const response = await fetch(`/api/km/meldungen/${meldungId}`, {
+      const response = await authFetch(`/api/km/meldungen/${meldungId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -260,7 +268,7 @@ export default function KMAdminMeldungen() {
     if (!confirm('Meldung wirklich löschen?')) return;
     
     try {
-      const response = await fetch(`/api/km/meldungen/${meldungId}`, {
+      const response = await authFetch(`/api/km/meldungen/${meldungId}`, {
         method: 'DELETE'
       });
       
@@ -304,7 +312,7 @@ export default function KMAdminMeldungen() {
         nachCollectionName = 'km_meldungen_2026_kk';
       }
       
-      const response = await fetch('/api/km/meldungen/verschieben', {
+      const response = await authFetch('/api/km/meldungen/verschieben', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -619,34 +627,16 @@ export default function KMAdminMeldungen() {
                       </h3>
                       <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
                         {(() => {
-                          if (!schuetze?.birthYear) return 'Unbekannt';
-                          
                           const currentSaison = saisons.find(s => s.id === selectedSaison);
-                          const age = (currentSaison?.jahr || 2026) - schuetze.birthYear;
-                          const isAuflage = disziplin?.name?.toLowerCase().includes('auflage');
-                          const isMale = schuetze.gender === 'male';
-                          
-                          if (age <= 14) return 'Schüler';
-                          if (age <= 16) return 'Jugend';
-                          if (age <= 18) return `Junioren II ${isMale ? 'm' : 'w'}`;
-                          if (age <= 20) return `Junioren I ${isMale ? 'm' : 'w'}`;
-                          
-                          if (isAuflage) {
-                            if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
-                            if (age <= 50) return 'Senioren 0';
-                            if (age <= 60) return isMale ? 'Senioren I m' : 'Seniorinnen I';
-                            if (age <= 65) return isMale ? 'Senioren II m' : 'Seniorinnen II';
-                            if (age <= 70) return isMale ? 'Senioren III m' : 'Seniorinnen III';
-                            if (age <= 75) return isMale ? 'Senioren IV m' : 'Seniorinnen IV';
-                            if (age <= 80) return isMale ? 'Senioren V m' : 'Seniorinnen V';
-                            return isMale ? 'Senioren VI m' : 'Seniorinnen VI';
-                          } else {
-                            if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
-                            if (age <= 50) return `${isMale ? 'Herren' : 'Damen'} II`;
-                            if (age <= 60) return `${isMale ? 'Herren' : 'Damen'} III`;
-                            if (age <= 70) return `${isMale ? 'Herren' : 'Damen'} IV`;
-                            return `${isMale ? 'Herren' : 'Damen'} V`;
-                          }
+                          return ermittleEinzelklasse({
+                            birthYear: schuetze?.birthYear,
+                            gender: schuetze?.gender,
+                            auflage: !!disziplin?.auflage,
+                            spoNummer: disziplin?.spoNummer,
+                            saisonJahr: currentSaison?.jahr || new Date().getFullYear(),
+                            altersklassen: altersklassenListe,
+                            altersgenehmigung: !!schuetze?.sondergenehmigung
+                          }) || 'Unbekannt';
                         })()
                         }
                       </span>
@@ -658,7 +648,7 @@ export default function KMAdminMeldungen() {
                           {editingMeldung === meldung.id ? (
                             <select
                               value={editData.disziplinId || meldung.disziplinId}
-                              onChange={(e) => setEditData(prev => ({...prev, disziplinId: e.target.value}))}
+                              onChange={(e) => setEditData((prev: any) => ({...prev, disziplinId: e.target.value}))}
                               className="w-full p-1 border rounded text-sm mt-1"
                             >
                               {disziplinen.map(d => (
@@ -681,7 +671,7 @@ export default function KMAdminMeldungen() {
                             <input
                               type="checkbox"
                               checked={editData.lmTeilnahme || false}
-                              onChange={(e) => setEditData(prev => ({...prev, lmTeilnahme: e.target.checked}))}
+                              onChange={(e) => setEditData((prev: any) => ({...prev, lmTeilnahme: e.target.checked}))}
                               className="w-4 h-4 ml-2"
                             />
                           ) : (
@@ -701,7 +691,7 @@ export default function KMAdminMeldungen() {
                               type="number"
                               step="0.1"
                               value={editData.vmRinge || ''}
-                              onChange={(e) => setEditData(prev => ({...prev, vmRinge: e.target.value}))}
+                              onChange={(e) => setEditData((prev: any) => ({...prev, vmRinge: e.target.value}))}
                               className="w-20 p-1 border rounded text-sm ml-2"
                               placeholder="Ringe"
                             />
@@ -860,7 +850,7 @@ export default function KMAdminMeldungen() {
                         {editingMeldung === meldung.id ? (
                           <select
                             value={editData.disziplinId || meldung.disziplinId}
-                            onChange={(e) => setEditData(prev => ({...prev, disziplinId: e.target.value}))}
+                            onChange={(e) => setEditData((prev: any) => ({...prev, disziplinId: e.target.value}))}
                             className="w-full p-1 border rounded text-sm"
                           >
                             {disziplinen.map(d => (
@@ -879,34 +869,16 @@ export default function KMAdminMeldungen() {
                       <td className="p-2">
                         <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
                           {(() => {
-                            if (!schuetze?.birthYear) return 'Unbekannt';
-                            
                             const currentSaison = saisons.find(s => s.id === selectedSaison);
-                            const age = (currentSaison?.jahr || 2026) - schuetze.birthYear;
-                            const isAuflage = disziplin?.name?.toLowerCase().includes('auflage');
-                            const isMale = schuetze.gender === 'male';
-                            
-                            if (age <= 14) return 'Schüler';
-                            if (age <= 16) return 'Jugend';
-                            if (age <= 18) return `Junioren II ${isMale ? 'm' : 'w'}`;
-                            if (age <= 20) return `Junioren I ${isMale ? 'm' : 'w'}`;
-                            
-                            if (isAuflage) {
-                              if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
-                              if (age <= 50) return isMale ? 'Senioren 0 m' : 'Seniorinnen 0';
-                              if (age <= 60) return isMale ? 'Senioren I m' : 'Seniorinnen I';
-                              if (age <= 65) return isMale ? 'Senioren II m' : 'Seniorinnen II';
-                              if (age <= 70) return isMale ? 'Senioren III m' : 'Seniorinnen III';
-                              if (age <= 75) return isMale ? 'Senioren IV m' : 'Seniorinnen IV';
-                              if (age <= 80) return isMale ? 'Senioren V m' : 'Seniorinnen V';
-                              return isMale ? 'Senioren VI m' : 'Seniorinnen VI';
-                            } else {
-                              if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
-                              if (age <= 50) return `${isMale ? 'Herren' : 'Damen'} II`;
-                              if (age <= 60) return `${isMale ? 'Herren' : 'Damen'} III`;
-                              if (age <= 70) return `${isMale ? 'Herren' : 'Damen'} IV`;
-                              return `${isMale ? 'Herren' : 'Damen'} V`;
-                            }
+                            return ermittleEinzelklasse({
+                              birthYear: schuetze?.birthYear,
+                              gender: schuetze?.gender,
+                              auflage: !!disziplin?.auflage,
+                              spoNummer: disziplin?.spoNummer,
+                              saisonJahr: currentSaison?.jahr || new Date().getFullYear(),
+                              altersklassen: altersklassenListe,
+                              altersgenehmigung: !!schuetze?.sondergenehmigung
+                            }) || 'Unbekannt';
                           })()
                           }
                         </span>
@@ -916,7 +888,7 @@ export default function KMAdminMeldungen() {
                           <input
                             type="checkbox"
                             checked={editData.lmTeilnahme || false}
-                            onChange={(e) => setEditData(prev => ({...prev, lmTeilnahme: e.target.checked}))}
+                            onChange={(e) => setEditData((prev: any) => ({...prev, lmTeilnahme: e.target.checked}))}
                             className="w-4 h-4"
                           />
                         ) : (
@@ -935,7 +907,7 @@ export default function KMAdminMeldungen() {
                             type="number"
                             step="0.1"
                             value={editData.vmRinge || ''}
-                            onChange={(e) => setEditData(prev => ({...prev, vmRinge: e.target.value}))}
+                            onChange={(e) => setEditData((prev: any) => ({...prev, vmRinge: e.target.value}))}
                             className="w-20 p-1 border rounded text-sm"
                             placeholder="Ringe"
                           />

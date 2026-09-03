@@ -6,6 +6,8 @@ import { secureLogger } from '@/lib/utils/secure-logger';
 import { sanitizeInput, InputValidator } from '@/lib/utils/input-validator';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { verifyApiAuth } from '@/lib/auth/api-auth';
+import { getServerMemberPermissions } from '@/app/api/members/route';
+import { isClubAllowed } from '@/lib/permissions/memberPermissions';
 
 export async function POST(request: NextRequest) {
   // Authentifizierung erforderlich
@@ -62,8 +64,7 @@ export async function POST(request: NextRequest) {
       birthYear: birthYear,
       gender: normalizedGender,
       mitgliedsnummer: mitgliedsnummer ? mitgliedsnummer.substring(0, 20) : null,
-      kmClubId: clubId.substring(0, 50),
-      rwkClubId: null,
+      clubId: clubId.substring(0, 50),
       isActive: true,
       genderGuessed: false,
       createdAt: FieldValue.serverTimestamp(),
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    secureLogger.error('Shooter creation failed', 'shooters-api');
+    secureLogger.error('Shooter creation failed', error instanceof Error ? error : undefined, 'shooters-api');
     return NextResponse.json({
       success: false,
       error: 'Fehler beim Anlegen des Schützen'
@@ -88,12 +89,22 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  // Authentifizierung erforderlich – die Route liefert personenbezogene Daten.
+  const user = await verifyApiAuth(request);
+  if (!user) {
+    secureLogger.warn('Unauthorized access attempt to GET /api/shooters', 'shooters-api');
+    return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+  }
+
+  // Rechte des Nutzers bestimmen (Admin/KM-Orga sehen alle, sonst nur erlaubte Vereine).
+  const perms = await getServerMemberPermissions(user.uid, user.email);
+
   try {
     const url = new URL(request.url);
     const includeMembers = url.searchParams.get('includeMembers') === 'true';
     const clubId = sanitizeInput(url.searchParams.get('clubId') || ''); // Vereins-Filter
     
-    let allShooters = [];
+    let allShooters: any[] = [];
     
     if (includeMembers) {
       // Für KM: Lade nur KM-Schützen
@@ -140,13 +151,21 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Rollenbasierter PII-Schutz: Wer nicht alle Vereine sehen darf (z.B. Sportleiter),
+    // erhält nur Schützen der erlaubten Vereine. Admin/KM-Orga sehen alle.
+    if (!perms.canViewAllClubs) {
+      allShooters = allShooters.filter((shooter) =>
+        isClubAllowed(perms, getShooterClubId(shooter))
+      );
+    }
+
     return NextResponse.json({
       success: true,
       data: allShooters
     });
 
   } catch (error) {
-    secureLogger.error('Shooters loading failed', 'shooters-api');
+    secureLogger.error('Shooters loading failed', error instanceof Error ? error : undefined, 'shooters-api');
     return NextResponse.json({
       success: false,
       error: 'Fehler beim Laden der Schützen'
@@ -172,21 +191,21 @@ export async function DELETE(request: NextRequest) {
     
     if (action === 'cleanup-duplicates') {
       const snapshot = await adminDb.collection('shooters').get();
-      const shooters = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+      const shooters = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })) as Array<{ id: string; [key: string]: any }>;
       
       // Finde Duplikate (gleicher Name)
-      const nameGroups = shooters.reduce((acc, s) => {
+      const nameGroups = shooters.reduce((acc: Record<string, any[]>, s) => {
         if (!acc[s.name]) acc[s.name] = [];
         acc[s.name].push(s);
         return acc;
       }, {});
       
-      const toDelete = [];
+      const toDelete: any[] = [];
       Object.values(nameGroups).forEach((group: any) => {
         if (group.length > 1) {
           // Behalte RWK-Teilnehmer (mit rwkClubId), lösche Excel-Importe
-          const rwkShooter = group.find(s => s.rwkClubId);
-          const duplicates = group.filter(s => !s.rwkClubId && s.id !== rwkShooter?.id);
+          const rwkShooter = group.find((s: any) => s.rwkClubId);
+          const duplicates = group.filter((s: any) => !s.rwkClubId && s.id !== rwkShooter?.id);
           toDelete.push(...duplicates);
         }
       });
@@ -209,7 +228,7 @@ export async function DELETE(request: NextRequest) {
     if (action === 'cleanup-imports') {
       // Lösche shooters mit createdAt (Excel-Importe)
       const snapshot = await adminDb.collection('shooters').get();
-      const shooters = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+      const shooters = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })) as Array<{ id: string; [key: string]: any }>;
       
       // Lösche nur Schützen mit createdAt (= Excel-Importe)
       const toDelete = shooters.filter(s => s.createdAt);
@@ -236,7 +255,7 @@ export async function DELETE(request: NextRequest) {
     }, { status: 400 });
     
   } catch (error) {
-    secureLogger.error('Shooters cleanup failed', 'shooters-api');
+    secureLogger.error('Shooters cleanup failed', error instanceof Error ? error : undefined, 'shooters-api');
     return NextResponse.json({
       success: false,
       error: 'Cleanup fehlgeschlagen'

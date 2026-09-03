@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError, logInfo, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 const KM_SAISONS_COLLECTION = 'km_saisons';
 
-type DisziplinTyp = 'KK' | 'LD' | 'KKP';
-
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
     const body = await request.json();
     const { jahr, disziplinTyp, meldeschluss, status, beschreibung } = body;
 
@@ -74,7 +77,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const snapshot = await adminDb.collection(KM_SAISONS_COLLECTION)
       .orderBy('jahr', 'desc')

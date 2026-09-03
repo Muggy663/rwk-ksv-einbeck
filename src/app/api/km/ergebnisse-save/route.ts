@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logError, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
     const body = await request.json();
     const { meldungId, kmErgebnis, saisonId } = body;
     
@@ -41,12 +46,12 @@ export async function POST(request: NextRequest) {
     }
     
     // Serien als separate String-Felder
-    const updateData = {
+    const updateData: Record<string, any> = {
       kmRinge: kmErgebnis.ringe
     };
     
     if (kmErgebnis.serien && kmErgebnis.serien.length > 0) {
-      kmErgebnis.serien.forEach((serie, index) => {
+      kmErgebnis.serien.forEach((serie: any, index: number) => {
         updateData[`kmSerie${index + 1}`] = serie.join(',');
       });
     }

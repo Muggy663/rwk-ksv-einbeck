@@ -1,6 +1,5 @@
 "use client";
 
-import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
@@ -32,7 +31,7 @@ export default function HilfePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="mb-4">Starten Sie die Einführung, um die wichtigsten Funktionen der App kennenzulernen. Der "Erste Schritte"-Assistent führt Sie durch die grundlegenden Funktionen für Vereinsvertreter und Mannschaftsführer.</p>
+            <p className="mb-4">Starten Sie die Einführung, um die wichtigsten Funktionen der App kennenzulernen. Der "Erste Schritte"-Assistent führt Sie durch die grundlegenden Funktionen für Sportleiter und Mannschaftsführer.</p>
             
             <div className="bg-blue-50 p-3 rounded-md border border-blue-100 mb-4">
               <h4 className="font-medium text-blue-800 mb-2">🏢 Multi-Verein-System (Neu!)</h4>

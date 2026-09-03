@@ -32,7 +32,7 @@ export const createUserWithRole = async (
     
     return result.data as { success: boolean; message: string; uid?: string };
   } catch (error: any) {
-    secureLogger.error('Error creating user', 'firebase-functions');
+    secureLogger.error('Error creating user', error instanceof Error ? error : undefined, 'firebase-functions');
     throw new Error(error.message || 'Beim Erstellen des Benutzers ist ein Fehler aufgetreten.');
   }
 };

@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { toast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
 import { CheckCircle, Upload, AlertCircle } from "lucide-react"
@@ -40,7 +39,7 @@ export function createProgressToast({ title, description, duration = 5000 }: Pro
     
     progress = Math.min(100, Math.max(0, newProgress))
     
-    const { update } = toast({
+    toast({
       title,
       description: (
         <div className="space-y-2">

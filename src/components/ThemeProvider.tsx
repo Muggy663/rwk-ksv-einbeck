@@ -47,6 +47,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       return () => mediaQuery.removeEventListener('change', handleChange);
     } else {
       applyTheme(theme);
+      return undefined;
     }
   }, [theme]);
 

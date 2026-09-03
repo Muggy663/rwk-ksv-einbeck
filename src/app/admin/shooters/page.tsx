@@ -1,12 +1,12 @@
 
 // src/app/admin/shooters/page.tsx
 "use client";
-import React, { useState, useEffect, FormEvent, useCallback, useMemo } from 'react';
+import { useState, useEffect, FormEvent, useCallback, useMemo } from 'react';
 import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Edit, Trash2, UserCircle as UserIcon, Loader2, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, UserCircle as UserIcon, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -41,12 +41,12 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRouter } from 'next/navigation';
-import type { Shooter, Club, Team, FirestoreLeagueSpecificDiscipline, TeamValidationInfo } from '@/types/rwk';
-import { MAX_SHOOTERS_PER_TEAM, leagueDisciplineOptions, GEWEHR_DISCIPLINES, PISTOL_DISCIPLINES, calculateAgeClass } from '@/types/rwk';
+import type { Shooter, Club, Team, League, TeamValidationInfo } from '@/types/rwk';
+import { MAX_SHOOTERS_PER_TEAM, leagueDisciplineOptions, calculateAgeClass } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import { 
-  collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, 
-  where, orderBy, documentId, writeBatch, getDoc as getFirestoreDoc, arrayRemove, arrayUnion, Timestamp
+  collection, getDocs, doc, query, 
+  where, orderBy, documentId, writeBatch, getDoc as getFirestoreDoc, arrayRemove, arrayUnion
 } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -259,7 +259,7 @@ export default function AdminShootersPage() {
         if (contextTeam && (contextTeam.currentShooterCount || 0) < MAX_SHOOTERS_PER_TEAM) {
           setSelectedTeamIdsInForm([queryTeamId]);
         } else if (contextTeam) {
-          toast({ title: "Mannschaft voll", description: `Kontext-Mannschaft "${contextTeam.name}" ist bereits voll.`, variant: "warning", duration: 4000 });
+          toast({ title: "Mannschaft voll", description: `Kontext-Mannschaft "${contextTeam.name}" ist bereits voll.`, variant: "destructive", duration: 4000 });
           setSelectedTeamIdsInForm([]);
         }
       } else {
@@ -379,8 +379,6 @@ export default function AdminShootersPage() {
       const batch = writeBatch(db);
       if (formMode === 'new') {
         if (selectedTeamIdsInForm.length > 0) { // Check before saving
-          let assignedGewehrCount = 0;
-          let assignedPistoleCount = 0;
           const yearCategoryMap = new Map<string, string>(); // key: "year_category", value: teamName
 
           for (const teamId of selectedTeamIdsInForm) {
@@ -421,6 +419,8 @@ export default function AdminShootersPage() {
         if (currentShooter.birthYear && !isNaN(parseInt(currentShooter.birthYear.toString()))) {
           shooterDataForSave.birthYear = parseInt(currentShooter.birthYear.toString());
         }
+        // Altersgenehmigung (für Luftgewehr ab 10 statt 12)
+        shooterDataForSave.sondergenehmigung = !!(currentShooter as any).sondergenehmigung;
         // Speichere in shooters Collection
         batch.set(newShooterRef, shooterDataForSave);
         
@@ -442,6 +442,8 @@ export default function AdminShootersPage() {
         if (currentShooter.birthYear && !isNaN(parseInt(currentShooter.birthYear.toString()))) {
           updateData.birthYear = parseInt(currentShooter.birthYear.toString());
         }
+        // Altersgenehmigung (für Luftgewehr ab 10 statt 12)
+        updateData.sondergenehmigung = !!(currentShooter as any).sondergenehmigung;
         
         batch.update(shooterDocRef, updateData);
         toast({ title: "Schütze aktualisiert", description: `Daten für "${combinedName}" aktualisiert.` });
@@ -486,11 +488,11 @@ export default function AdminShootersPage() {
 
     if (checked) { 
       if (selectedTeamIdsInForm.length >= 3 && !selectedTeamIdsInForm.includes(teamId)) { 
-          toast({ title: "Maximal 3 Mannschaften", description: "Ein Schütze kann maximal 3 Mannschaften gleichzeitig zugeordnet werden.", variant: "warning" });
+          toast({ title: "Maximal 3 Mannschaften", description: "Ein Schütze kann maximal 3 Mannschaften gleichzeitig zugeordnet werden.", variant: "destructive" });
           return;
       }
       if ((teamBeingChanged.currentShooterCount || 0) >= MAX_SHOOTERS_PER_TEAM) {
-        toast({ title: "Mannschaft voll", description: `Mannschaft "${teamBeingChanged.name}" ist bereits voll.`, variant: "warning" });
+        toast({ title: "Mannschaft voll", description: `Mannschaft "${teamBeingChanged.name}" ist bereits voll.`, variant: "destructive" });
         return; 
       }
       
@@ -939,6 +941,24 @@ export default function AdminShootersPage() {
                       <p>AK Freihand 2026: {calculateAgeClass(currentShooter.birthYear, currentShooter.gender as 'male' | 'female', 2026, 'freihand')}</p>
                     </div>
                   )}
+                </div>
+
+                <div className="flex items-start gap-2 pt-1">
+                  <Checkbox
+                    id="altersgenehmigungShooterAdmin"
+                    checked={!!(currentShooter as any).sondergenehmigung}
+                    onCheckedChange={(checked) =>
+                      setCurrentShooter(prev => prev ? ({ ...prev, sondergenehmigung: checked === true }) : prev)
+                    }
+                  />
+                  <div className="grid gap-0.5 leading-none">
+                    <Label htmlFor="altersgenehmigungShooterAdmin" className="cursor-pointer">
+                      Altersgenehmigung vorhanden
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Erlaubt 10-/11-Jährigen das Schießen mit Luftgewehr (offiziell ab 12). Wird dann als Schülerklasse 12-14 gewertet.
+                    </p>
+                  </div>
                 </div>
 
                 {formMode === 'new' && currentShooter.clubId && (

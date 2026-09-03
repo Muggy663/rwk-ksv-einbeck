@@ -1,15 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logWarn, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { authFetch } from '@/lib/auth/authFetch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Save, Trophy, Medal, Upload, FileText, ArrowLeft, Download, ChevronDown, ChevronUp, Camera } from 'lucide-react';
+import { ArrowLeft, Download, ChevronDown, ChevronUp, Camera } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import Link from 'next/link';
@@ -46,7 +47,6 @@ export default function KMErgebnissePage() {
   const [showPDFDialog, setShowPDFDialog] = useState(false);
   const [selectedPDFDisziplinen, setSelectedPDFDisziplinen] = useState<string[]>([]);
   const [showStarterList, setShowStarterList] = useState(false);
-  const [ocrFile, setOcrFile] = useState<File | null>(null);
   const [importProgress, setImportProgress] = useState({ 
     current: 0, 
     total: 0, 
@@ -63,12 +63,12 @@ export default function KMErgebnissePage() {
         const response = await fetch('/api/km/saisons');
         if (response.ok) {
           const data = await response.json();
-          const saisonData = (data.data || []).map(saison => ({
+          const saisonData = (data.data || []).map((saison: any) => ({
             id: saison.id,
             name: saison.name
           }));
           // Sortiere Saisons: Neueste zuerst (LD 2026 > KKP 2026 > KK 2026)
-          const sortedSaisons = saisonData.sort((a, b) => {
+          const sortedSaisons = saisonData.sort((a: any, b: any) => {
             // Priorisiere LD (Luftdruck) als neueste Saison
             if (a.name?.includes('Luftdruck') && !b.name?.includes('Luftdruck')) return -1;
             if (!a.name?.includes('Luftdruck') && b.name?.includes('Luftdruck')) return 1;
@@ -103,7 +103,7 @@ export default function KMErgebnissePage() {
         const { db } = await import('@/lib/firebase/config');
         
         const [meldungenRes, shootersSnapshot, disziplinenRes, clubsRes, altersklassenRes] = await Promise.all([
-          fetch(`/api/km/meldungen?saison=${selectedJahr}`),
+          authFetch(`/api/km/meldungen?saison=${selectedJahr}`),
           getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
           fetch('/api/km/disziplinen'),
           fetch('/api/clubs'),
@@ -115,7 +115,7 @@ export default function KMErgebnissePage() {
         const meldungenData = meldungenRes.ok ? (await meldungenRes.json()).data || [] : [];
         const altersklassenData = altersklassenRes.ok ? (await altersklassenRes.json()).data || [] : [];
 
-        const kmErgebnisseRes = await fetch(`/api/km/ergebnisse?saison=${selectedJahr}`);
+        const kmErgebnisseRes = await authFetch(`/api/km/ergebnisse?saison=${selectedJahr}`);
         const kmErgebnisseData = kmErgebnisseRes.ok ? (await kmErgebnisseRes.json()).data || [] : [];
         
         logDebug('🔍 Geladene KM-Ergebnisse:', kmErgebnisseData.length);
@@ -130,7 +130,7 @@ export default function KMErgebnissePage() {
         const schuetzenData = shootersSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        }));
+        })) as Array<{ id: string; [key: string]: any }>;
         const disziplinenData = disziplinenRes.ok ? (await disziplinenRes.json()).data || [] : [];
         const clubsData = clubsRes.ok ? (await clubsRes.json()).data || [] : [];
         
@@ -140,7 +140,7 @@ export default function KMErgebnissePage() {
         logDebug('🔍 Verarbeite Meldungen:', meldungenData.length);
 
         const kmErgebnisseMap = new Map();
-        kmErgebnisseData.forEach(data => {
+        kmErgebnisseData.forEach((data: any) => {
           kmErgebnisseMap.set(data.meldung_id, {
             ringe: data.ergebnis_ringe,
             teiler: data.ergebnis_teiler,
@@ -167,19 +167,19 @@ export default function KMErgebnissePage() {
           });
         });
         
-        disziplinenData.forEach(disziplin => {
+        disziplinenData.forEach((disziplin: any) => {
           disziplinenMap.set(disziplin.id, disziplin.name);
         });
         
-        clubsData.forEach(club => {
+        clubsData.forEach((club: any) => {
           clubsMap.set(club.id, club.name);
         });
         
-        altersklassenData.forEach(ak => {
+        altersklassenData.forEach((ak: any) => {
           altersklassenMap.set(ak.id, ak.name);
         });
 
-        meldungenData.forEach(meldung => {
+        meldungenData.forEach((meldung: any) => {
           const schuetze = schuetzenMap.get(meldung.schuetzeId);
           const disziplinName = disziplinenMap.get(meldung.disziplinId) || 'Unbekannte Disziplin';
           
@@ -223,7 +223,7 @@ export default function KMErgebnissePage() {
                 teiler: 0,
                 serien
               } : null;
-            })()
+            })() as any
           });
           disziplinenSet.add(disziplinName);
         });
@@ -243,7 +243,7 @@ export default function KMErgebnissePage() {
 
   // Disziplin-spezifische Schusszahlen
   const getDisciplineShots = (disziplinName: string) => {
-    const disciplineMap = {
+    const disciplineMap: Record<string, any> = {
       'Luftgewehr': 40,
       'Luftgewehr Auflage': 30,
       'KK-Gewehr Auflage 50m': 30,
@@ -260,7 +260,7 @@ export default function KMErgebnissePage() {
 
   // Serien-Definition für Meisterschaften (immer 10 Schuss pro Serie)
   const getSeriesInfo = (disziplinName: string) => {
-    const seriesMap = {
+    const seriesMap: Record<string, any> = {
       'Luftgewehr': { count: 4, shotsPerSeries: 10 }, // 4 Serien à 10 Schuss
       'Luftgewehr Auflage': { count: 3, shotsPerSeries: 10 }, // 3 Serien à 10 Schuss
       'KK-Gewehr Auflage 50m': { count: 3, shotsPerSeries: 10 }, // 3 Serien à 10 Schuss
@@ -360,7 +360,7 @@ export default function KMErgebnissePage() {
 
       logDebug('💾 Speichere KM-Ergebnis:', { meldungId, saisonId: selectedJahr, kmErgebnisData });
 
-      const response = await fetch('/api/km/ergebnisse-save', {
+      const response = await authFetch('/api/km/ergebnisse-save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ meldungId, saisonId: selectedJahr, kmErgebnis: kmErgebnisData })
@@ -453,7 +453,7 @@ export default function KMErgebnissePage() {
       doc.text('Wettkampfübersicht', 20, yPosition);
       yPosition += 15;
       
-      const uebersichtData = [];
+      const uebersichtData: any[] = [];
       let spoNr = 1;
       
       // Sortiere Altersklassen von jung nach alt
@@ -479,7 +479,7 @@ export default function KMErgebnissePage() {
             return acc;
           }, {} as {[verein: string]: any[]});
           
-          const hatMannschaften = Object.values(vereinsgruppen).some((schuetzen: any[]) => schuetzen.length >= 3);
+          const hatMannschaften = (Object.values(vereinsgruppen) as any[][]).some((schuetzen: any[]) => schuetzen.length >= 3);
           
           if (hatMannschaften) {
             uebersichtData.push([
@@ -530,8 +530,8 @@ export default function KMErgebnissePage() {
             return acc;
           }, {} as {[verein: string]: any[]});
           
-          const mannschaftsErgebnisse = Object.entries(vereinsgruppen)
-            .filter(([verein, schuetzen]: [string, any[]]) => schuetzen.length >= 3)
+          const mannschaftsErgebnisse = (Object.entries(vereinsgruppen) as [string, any[]][])
+            .filter(([, schuetzen]: [string, any[]]) => schuetzen.length >= 3)
             .map(([verein, schuetzen]: [string, any[]]) => {
               const beste3 = schuetzen
                 .sort((a, b) => (b.kmErgebnis?.ringe || 0) - (a.kmErgebnis?.ringe || 0))
@@ -592,10 +592,10 @@ export default function KMErgebnissePage() {
               const seriesInfo = getSeriesInfo(disziplin);
               let s1 = '', s2 = '', s3 = '', s4 = '';
               if (e.kmErgebnis?.serien && e.kmErgebnis.serien.length > 0) {
-                if (e.kmErgebnis.serien[0]) s1 = Math.round(e.kmErgebnis.serien[0].reduce((sum, shot) => sum + shot, 0) * 10) / 10;
-                if (e.kmErgebnis.serien[1]) s2 = Math.round(e.kmErgebnis.serien[1].reduce((sum, shot) => sum + shot, 0) * 10) / 10;
-                if (e.kmErgebnis.serien[2]) s3 = Math.round(e.kmErgebnis.serien[2].reduce((sum, shot) => sum + shot, 0) * 10) / 10;
-                if (seriesInfo.count > 3 && e.kmErgebnis.serien[3]) s4 = Math.round(e.kmErgebnis.serien[3].reduce((sum, shot) => sum + shot, 0) * 10) / 10;
+                if (e.kmErgebnis.serien[0]) s1 = String(Math.round(e.kmErgebnis.serien[0].reduce((sum: any, shot: any) => sum + shot, 0) * 10) / 10);
+                if (e.kmErgebnis.serien[1]) s2 = String(Math.round(e.kmErgebnis.serien[1].reduce((sum: any, shot: any) => sum + shot, 0) * 10) / 10);
+                if (e.kmErgebnis.serien[2]) s3 = String(Math.round(e.kmErgebnis.serien[2].reduce((sum: any, shot: any) => sum + shot, 0) * 10) / 10);
+                if (seriesInfo.count > 3 && e.kmErgebnis.serien[3]) s4 = String(Math.round(e.kmErgebnis.serien[3].reduce((sum: any, shot: any) => sum + shot, 0) * 10) / 10);
               }
               
               // Nur die benötigten Spalten zurückgeben
@@ -656,7 +656,7 @@ export default function KMErgebnissePage() {
             body: einzelTableData,
             styles: { fontSize: 8 },
             headStyles: { fillColor: [34, 139, 34] },
-            columnStyles: columnStyles
+            columnStyles: columnStyles as any
           });
           
           yPosition = (doc as any).lastAutoTable.finalY + 25;
@@ -789,7 +789,7 @@ export default function KMErgebnissePage() {
                     if (files.length === 0) return;
                     
                     setImporting(true);
-                    setImportProgress({ current: 0, total: files.length, show: true, paused: false, cancelled: false });
+                    setImportProgress(prev => ({ ...prev, current: 0, total: files.length, show: true, paused: false, cancelled: false }));
                     
                     let successCount = 0;
                     let errorCount = 0;
@@ -798,7 +798,7 @@ export default function KMErgebnissePage() {
                       for (let i = 0; i < files.length; i++) {
                         if (importProgress.cancelled) break;
                         
-                        setImportProgress({ current: i + 1, total: files.length, show: true, paused: false, cancelled: false });
+                        setImportProgress(prev => ({ ...prev, current: i + 1, total: files.length, show: true, paused: false, cancelled: false }));
                         
                         const file = files[i];
                         const formData = new FormData();
@@ -806,7 +806,7 @@ export default function KMErgebnissePage() {
                         formData.append('saisonId', selectedJahr);
                         
                         try {
-                          const response = await fetch('/api/km/ergebnisse-batch-import', {
+                          const response = await authFetch('/api/km/ergebnisse-batch-import', {
                             method: 'POST',
                             body: formData
                           });
@@ -830,7 +830,7 @@ export default function KMErgebnissePage() {
                                 });
                                 await new Promise(resolve => setTimeout(resolve, 1000));
                               }
-                              setImportProgress({ current: i + 1, total: files.length, show: true, paused: false, cancelled: false });
+                              setImportProgress(prev => ({ ...prev, current: i + 1, total: files.length, show: true, paused: false, cancelled: false }));
                               // Retry diese Datei
                               i--;
                               errorCount--;
@@ -843,15 +843,15 @@ export default function KMErgebnissePage() {
                         
                         // Rate Limit
                         if ((i + 1) % 15 === 0 && i + 1 < files.length) {
-                          setImportProgress({ current: i + 1, total: files.length, show: true, paused: true, cancelled: false });
+                          setImportProgress(prev => ({ ...prev, current: i + 1, total: files.length, show: true, paused: true, cancelled: false }));
                           await new Promise(resolve => setTimeout(resolve, 60000));
-                          setImportProgress({ current: i + 1, total: files.length, show: true, paused: false, cancelled: false });
+                          setImportProgress(prev => ({ ...prev, current: i + 1, total: files.length, show: true, paused: false, cancelled: false }));
                         } else if (i + 1 < files.length) {
                           await new Promise(resolve => setTimeout(resolve, 2000));
                         }
                       }
                       
-                      setImportProgress({ current: 0, total: 0, show: false });
+                      setImportProgress(prev => ({ ...prev, current: 0, total: 0, show: false }));
                       
                       toast({ 
                         title: '✅ Import abgeschlossen', 
@@ -863,7 +863,7 @@ export default function KMErgebnissePage() {
                         setTimeout(() => window.location.reload(), 2000);
                       }
                     } catch (error) {
-                      setImportProgress({ current: 0, total: 0, show: false });
+                      setImportProgress(prev => ({ ...prev, current: 0, total: 0, show: false }));
                       toast({ 
                         title: '❌ Fehler', 
                         description: 'Import fehlgeschlagen',
@@ -1068,7 +1068,7 @@ export default function KMErgebnissePage() {
                               variant="outline"
                               onClick={async () => {
                                 try {
-                                  const response = await fetch('/api/km/ergebnisse-save', {
+                                  const response = await authFetch('/api/km/ergebnisse-save', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ 

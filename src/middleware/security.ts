@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
 
-export function securityMiddleware(request: NextRequest) {
+export function securityMiddleware(_request: NextRequest) {
   try {
     const response = NextResponse.next();
     

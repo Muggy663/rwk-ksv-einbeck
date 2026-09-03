@@ -7,7 +7,6 @@ import '@/components/ui/heading-styles.css';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import { ClubProvider } from '@/contexts/ClubContext';
 import { Toaster } from '@/components/ui/toaster';
-import Script from 'next/script';
 import { SiteFooter } from '@/components/layout/SiteFooter';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -25,7 +24,6 @@ import { AppVersionChecker } from '@/components/AppVersionChecker';
 import { VersionCheck } from '@/components/VersionCheck';
 // import { ForceRefresh } from '@/components/ui/force-refresh'; // Temporarily disabled
 import { PWAInstallPrompt } from '@/components/ui/pwa-install-prompt';
-import { SessionTimeoutProvider } from '@/components/auth/SessionTimeoutProvider';
 
 
 // import { SentryClientInit } from '@/components/sentry-client-init';
@@ -78,7 +76,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <ThemeProvider>
         <NativeAppProvider>
         <AuthProvider>
-          <SessionTimeoutProvider>
           <ClubProvider>
             <div className="flex h-screen">
               <SkipLink targetId="main-content" />
@@ -111,7 +108,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
 
             </div>
           </ClubProvider>
-          </SessionTimeoutProvider>
         </AuthProvider>
         </NativeAppProvider>
         </ThemeProvider>

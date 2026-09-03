@@ -1,6 +1,6 @@
 import { db } from '@/lib/firebase/config';
 import { logError, logDebug } from '@/lib/utils/secure-logger';
-import { doc, getDoc, setDoc, addDoc, collection, query, where, getDocs, updateDoc, orderBy, limit } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, query, where, getDocs, updateDoc, orderBy, limit } from 'firebase/firestore';
 
 export interface NotificationPreferences {
   // E-Mail Benachrichtigungen (Opt-in)
@@ -26,7 +26,7 @@ export interface Notification {
   message: string;
   data?: any;
   read: boolean;
-  createdAt: Date;
+  createdAt?: Date;
   expiresAt?: Date;
 }
 

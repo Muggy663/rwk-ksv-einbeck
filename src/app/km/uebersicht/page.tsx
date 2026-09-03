@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logInfo } from '@/lib/utils/secure-logger';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,25 +10,31 @@ import { useToast } from '@/hooks/use-toast';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { useClubContext } from '@/contexts/ClubContext';
 import Link from 'next/link';
+import { authFetch } from '@/lib/auth/authFetch';
 
 export default function KMUebersicht() {
   const { toast } = useToast();
   const { hasKMAccess, loading: authLoading, userPermission, userClubIds } = useKMAuth();
-  const { activeClubId } = useClubContext();
+  useClubContext();
   const [selectedClubId, setSelectedClubId] = useState('');
   const [selectedSaison, setSelectedSaison] = useState('');
   const [aktivesJahr, setAktivesJahr] = useState(2027);
   const [editingMeldung, setEditingMeldung] = useState<string | null>(null);
   const [editData, setEditData] = useState<any>({});
-  const [saisons, setSaisons] = useState([]);
-  const [data, setData] = useState({
+  const [saisons, setSaisons] = useState<Array<{ id: string; jahr?: number; meldeschluss?: string; [key: string]: any }>>([]);
+  const [data, setData] = useState<{
+    meldungen: any[];
+    schuetzen: Array<{ id: string; name?: string; birthYear?: number; gender?: string; [key: string]: any }>;
+    disziplinen: Array<{ id: string; name?: string; [key: string]: any }>;
+    clubs: Array<{ id: string; name?: string; [key: string]: any }>;
+  }>({
     meldungen: [],
     schuetzen: [],
     disziplinen: [],
     clubs: []
   });
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState({
+  const [status] = useState({
     meldungen: 'loading',
     schuetzen: 'loading',
     disziplinen: 'loading',
@@ -47,7 +53,7 @@ export default function KMUebersicht() {
       const response = await fetch('/api/km/saisons');
       if (response.ok) {
         const data = await response.json();
-        setSaisons((data.data || []).sort((a, b) => (b.jahr || 0) - (a.jahr || 0)));
+        setSaisons((data.data || []).sort((a: { jahr?: number }, b: { jahr?: number }) => (b.jahr || 0) - (a.jahr || 0)));
         // Keine automatische Auswahl - Benutzer muss bewusst wählen
       }
     } catch (error) {
@@ -58,17 +64,6 @@ export default function KMUebersicht() {
   const loadData = async () => {
     try {
       const isAdmin = userPermission?.role === 'admin';
-      // Für Nicht-Admin: Immer nach eigenen Vereinen filtern
-      let clubFilter = '';
-      if (!isAdmin) {
-        if (selectedClubId) {
-          // Spezifischer Verein ausgewählt
-          clubFilter = `?clubId=${selectedClubId}`;
-        } else if (userClubIds.length > 0) {
-          // "Alle Vereine" = alle eigenen Vereine
-          clubFilter = `?clubIds=${userClubIds.join(',')}`;
-        }
-      }
       
       // Hole aktuelles Jahr
       const jahresRes = await fetch('/api/km/aktuelles-jahr');
@@ -97,14 +92,14 @@ export default function KMUebersicht() {
       const allSchuetzen = shootersSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as Array<{ id: string; name?: string; birthYear?: number; gender?: string; [key: string]: any }>;
       
-      let allMeldungen = [];
+      let allMeldungen: any[] = [];
       
       if (meldungenRes.ok) {
         const meldungenData = await meldungenRes.json();
         allMeldungen = meldungenData.data || [];
-        logInfo('Erste 3 Meldungen:', { data: allMeldungen.slice(0, 3).map(m => ({ id: m.id, disziplinId: m.disziplinId })) });
+        logInfo('Erste 3 Meldungen:', { data: allMeldungen.slice(0, 3).map((m: { id: string; disziplinId: string }) => ({ id: m.id, disziplinId: m.disziplinId })) });
       }
       
       // Client-seitige Filterung
@@ -389,15 +384,16 @@ export default function KMUebersicht() {
                 
                 // Berechne Altersklasse
                 let altersklasse = 'Unbekannt';
-                if (schuetze?.birthYear && schuetze?.gender && (disziplin || disziplinFallback)) {
+                const aktiveDisziplin: any = disziplin || disziplinFallback;
+                if (schuetze?.birthYear && schuetze?.gender && aktiveDisziplin) {
                   const age = (aktivesJahr || 2027) - schuetze.birthYear;
                   const gender = schuetze.gender;
-                  const istAuflage = (disziplin || disziplinFallback).auflage;
+                  const istAuflage = aktiveDisziplin.auflage;
                   
                   if (istAuflage) {
                     // Auflage-Wettkampfklassen
                     if (age <= 14) altersklasse = gender === 'male' ? 'Schüler m' : 'Schüler w';
-                    else if ((disziplin || disziplinFallback).spoNummer === '1.41' && age >= 15 && age <= 40) {
+                    else if (aktiveDisziplin.spoNummer === '1.41' && age >= 15 && age <= 40) {
                       if (age <= 16) altersklasse = gender === 'male' ? 'Jugend m' : 'Jugend w';
                       else if (age <= 18) altersklasse = gender === 'male' ? 'Junioren II m' : 'Junioren II w';
                       else if (age <= 20) altersklasse = gender === 'male' ? 'Junioren I m' : 'Junioren I w';
@@ -432,7 +428,7 @@ export default function KMUebersicht() {
                         <div className="font-medium text-lg">{schuetze?.name || 'Unbekannt'}</div>
                         <div className="text-sm text-gray-600">
                           {(disziplin || disziplinFallback) ? 
-                            `${(disziplin || disziplinFallback).spoNummer} - ${(disziplin || disziplinFallback).name}` : 
+                            `${(disziplin || disziplinFallback)!.spoNummer} - ${(disziplin || disziplinFallback)!.name}` : 
                             `Disziplin-ID: ${meldung.disziplinId} (nicht gefunden)`
                           }
                         </div>
@@ -447,7 +443,7 @@ export default function KMUebersicht() {
                               <input
                                 type="checkbox"
                                 checked={editData.lmTeilnahme || false}
-                                onChange={(e) => setEditData(prev => ({...prev, lmTeilnahme: e.target.checked}))}
+                                onChange={(e) => setEditData((prev: any) => ({...prev, lmTeilnahme: e.target.checked}))}
                                 className="ml-1"
                               />
                             ) : (
@@ -461,7 +457,7 @@ export default function KMUebersicht() {
                                 type="number"
                                 step="0.1"
                                 value={editData.vmRinge || ''}
-                                onChange={(e) => setEditData(prev => ({...prev, vmRinge: e.target.value}))}
+                                onChange={(e) => setEditData((prev: any) => ({...prev, vmRinge: e.target.value}))}
                                 className="ml-1 w-16 p-1 border rounded text-xs"
                               />
                             ) : (
@@ -486,7 +482,7 @@ export default function KMUebersicht() {
                                         bemerkung: meldung.vmErgebnis?.bemerkung || ''
                                       } : meldung.vmErgebnis
                                     };
-                                    const res = await fetch(`/api/km/meldungen/${meldung.id}`, {
+                                    const res = await authFetch(`/api/km/meldungen/${meldung.id}`, {
                                       method: 'PUT',
                                       headers: { 'Content-Type': 'application/json' },
                                       body: JSON.stringify(updateData)
@@ -566,7 +562,7 @@ export default function KMUebersicht() {
                                   onClick={async () => {
                                     if (confirm('Meldung wirklich löschen?')) {
                                       try {
-                                        const res = await fetch(`/api/km/meldungen/${meldung.id}`, { method: 'DELETE' });
+                                        const res = await authFetch(`/api/km/meldungen/${meldung.id}`, { method: 'DELETE' });
                                         if (res.ok) {
                                           toast({ title: 'Meldung gelöscht' });
                                           // Sofort aus State entfernen für schnelles UI-Feedback
@@ -599,7 +595,7 @@ export default function KMUebersicht() {
                             <input
                               type="text"
                               value={editData.anmerkung || ''}
-                              onChange={(e) => setEditData(prev => ({...prev, anmerkung: e.target.value}))}
+                              onChange={(e) => setEditData((prev: any) => ({...prev, anmerkung: e.target.value}))}
                               className="ml-2 flex-1 p-1 border rounded text-sm w-full mt-1"
                               placeholder="Anmerkung eingeben..."
                             />

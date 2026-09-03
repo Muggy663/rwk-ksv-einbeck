@@ -62,6 +62,8 @@ export function setUserContext(user: { id: string; role?: string }) {
 }
 
 // Performance Monitoring
+// Sentry v8+/v10: startTransaction wurde entfernt. startInactiveSpan liefert einen
+// manuell zu beendenden Span (span.end()), was dem alten Transaction-Verhalten entspricht.
 export function startTransaction(name: string) {
-  return Sentry.startTransaction({ name });
+  return Sentry.startInactiveSpan({ name });
 }

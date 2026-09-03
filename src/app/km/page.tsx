@@ -5,7 +5,7 @@ import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronUp, FileSpreadsheet } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { useAuthContext } from '@/components/auth/AuthContext';
@@ -17,8 +17,8 @@ function KMDashboardContent() {
   const { hasKMAccess, userRole, loading } = useKMAuth();
   const { user, userAppPermissions } = useAuthContext();
   const [isInstructionOpen, setIsInstructionOpen] = useState(false);
-  const [aktiveSaisons, setAktiveSaisons] = useState([]);
-  const [isLoadingSaisons, setIsLoadingSaisons] = useState(true);
+  const [aktiveSaisons, setAktiveSaisons] = useState<Array<{ id: string; jahr?: number; name?: string; status?: string; meldeschluss?: string; aktivAb?: string; [key: string]: any }>>([]);
+  const [, setIsLoadingSaisons] = useState(true);
   
   React.useEffect(() => {
     loadAktiveSaisons();
@@ -30,8 +30,8 @@ function KMDashboardContent() {
       if (response.ok) {
         const data = await response.json();
         const aktiveSaisons = data.data
-          .filter(s => s.status === 'aktiv')
-          .sort((a, b) => b.jahr - a.jahr); // Neueste zuerst
+          .filter((s: { status?: string }) => s.status === 'aktiv')
+          .sort((a: { jahr?: number }, b: { jahr?: number }) => (b.jahr || 0) - (a.jahr || 0)); // Neueste zuerst
         setAktiveSaisons(aktiveSaisons);
       }
     } catch (error) {
@@ -64,8 +64,6 @@ function KMDashboardContent() {
     );
   }
 
-  const isVerein = userRole === 'verein';
-  
   return (
     <div className="container py-4 px-2 max-w-full mx-auto">
       <div className="mb-6">
@@ -195,42 +193,32 @@ function KMDashboardContent() {
           </CardContent>
         </Card>
 
-        {/* Mitgliederverwaltung */}
+        {/* Verwaltung (nur Admin/KM-Orga). Mitglieder laufen zentral über /mitglieder. */}
+        {(userRole === 'admin' || userRole === 'km_organisator') && (
         <Card className="hover:shadow-md transition-shadow border-green-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-800">
-              👥 Mitgliederverwaltung
+              ⚙️ Verwaltung
             </CardTitle>
             <CardDescription>
-              Schützen und Vereinsmitglieder verwalten
+              Einstellungen für die Kreismeisterschaft
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <Link href="/km/mitglieder">
-                <Button className="w-full bg-green-600 hover:bg-green-700">👥 Mitglieder verwalten</Button>
+              <Link href="/km/mannschaftsregeln">
+                <Button variant="outline" className="w-full">⚙️ Mannschaftsregeln</Button>
               </Link>
-              <Link href="/verein/mitglieder-import">
-                <Button variant="outline" className="w-full">
-                  <FileSpreadsheet className="mr-2 h-4 w-4" />Mitcom-Import
-                </Button>
+              <Link href="/km/init">
+                <Button variant="outline" className="w-full">⚙️ System Init</Button>
               </Link>
-              {(userRole === 'admin' || userRole === 'km_organisator') && (
-                <>
-                  <Link href="/km/mannschaftsregeln">
-                    <Button variant="outline" className="w-full">⚙️ Mannschaftsregeln</Button>
-                  </Link>
-                  <Link href="/km/init">
-                    <Button variant="outline" className="w-full">⚙️ System Init</Button>
-                  </Link>
-                  <Link href="/change-password">
-                    <Button variant="outline" className="w-full">🔑 Passwort ändern</Button>
-                  </Link>
-                </>
-              )}
+              <Link href="/change-password">
+                <Button variant="outline" className="w-full">🔑 Passwort ändern</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
+        )}
 
         {/* Statistiken */}
         <Card className="hover:shadow-md transition-shadow border-orange-200">
@@ -249,7 +237,7 @@ function KMDashboardContent() {
                   .sort((a, b) => {
                     // Aktive Meldeschlüsse zuerst, dann nach Jahr sortiert
                     const today = new Date();
-                    const getDeadline = (s) => {
+                    const getDeadline = (s: { meldeschluss?: string }) => {
                       if (!s.meldeschluss) return new Date(0);
                       if (s.meldeschluss.includes('.') && s.meldeschluss.length > 6) {
                         const [day, month, year] = s.meldeschluss.split('.');
@@ -266,7 +254,7 @@ function KMDashboardContent() {
                     if (aExpired !== bExpired) {
                       return aExpired ? 1 : -1; // Aktive zuerst
                     }
-                    return b.jahr - a.jahr; // Dann nach Jahr
+                    return (b.jahr || 0) - (a.jahr || 0); // Dann nach Jahr
                   })
                   .map((saison) => {
                   // Prüfe ob Meldeschluss abgelaufen ist

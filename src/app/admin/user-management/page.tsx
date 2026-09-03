@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { UserCog, Info, Loader2, SaveIcon, Users as UsersIcon, HelpCircle, ListChecks, Search, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { UserCog, Loader2, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,8 +15,6 @@ import { collection, getDocs, query, orderBy, doc, setDoc, getDoc, Timestamp } f
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { UserList } from './user-list';
-import { CreateUserFormLocal } from '@/components/admin/create-user-form-local';
-import { MultiClubSelector } from '@/components/admin/multi-club-selector';
 import Link from 'next/link';
 
 const CLUBS_COLLECTION = "clubs";
@@ -132,7 +130,7 @@ export default function AdminUserManagementPage() {
           displayName: data.displayName || '',
           platformRole: (data as any).platformRole || 'NO_PLATFORM_ROLE',
           kvRole: (data as any).kvRole || 'NO_KV_ROLE',
-          clubRole: Object.values((data as any).clubRoles || {})[0] || 'NO_CLUB_ROLE',
+          clubRole: (Object.values((data as any).clubRoles || {})[0] as string) || 'NO_CLUB_ROLE',
           selectedClubId: data.clubId || Object.keys((data as any).clubRoles || {})[0] || '',
           selectedClubIds,
           isPremium: (data as any).isPremium || false,
@@ -169,20 +167,16 @@ export default function AdminUserManagementPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (name: keyof Pick<UserPermissionFormData, 'selectedClubId'>, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
   const handleSubmitPermissions = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!adminUser || adminUser.email !== "admin@rwk-einbeck.de") {
       toast({ title: "Nicht autorisiert", variant: "destructive" }); return;
     }
     if (!formData.uid.trim()) {
-      toast({ title: "UID fehlt", description: "Bitte User-ID (UID) eingeben.", variant: "warning" }); return;
+      toast({ title: "UID fehlt", description: "Bitte User-ID (UID) eingeben.", variant: "destructive" }); return;
     }
     if (!formData.email.trim()) {
-      toast({ title: "E-Mail fehlt", description: "Bitte E-Mail des Benutzers eingeben.", variant: "warning" }); return;
+      toast({ title: "E-Mail fehlt", description: "Bitte E-Mail des Benutzers eingeben.", variant: "destructive" }); return;
     }
 
     // Validierung: Club-Rollen oder KV-Rollen mit Vereinen benötigen Vereinszuweisung
@@ -258,9 +252,6 @@ export default function AdminUserManagementPage() {
         
         // Automatische E-Mail-Verifizierung für Admin-aktivierte Premium-Nutzer
         try {
-          const { updateUser } = await import('firebase/auth');
-          const { auth } = await import('@/lib/firebase/config');
-          
           // Setze emailVerified auf true für diesen User
           // Hinweis: Das funktioniert nur mit Admin SDK, nicht mit Client SDK
           logDebug('📧 E-Mail-Verifizierung für Premium-User:', formData.email);
@@ -270,7 +261,7 @@ export default function AdminUserManagementPage() {
           permissionData.emailVerifiedAt = Timestamp.now();
           
         } catch (error) {
-          logWarn('E-Mail-Verifizierung fehlgeschlagen:', error);
+          logWarn('E-Mail-Verifizierung fehlgeschlagen:', error instanceof Error ? error.message : String(error));
         }
       } else {
         permissionData.isPremium = false;
@@ -336,7 +327,7 @@ export default function AdminUserManagementPage() {
       displayName: user.displayName || '',
       platformRole: (user as any).platformRole || 'NO_PLATFORM_ROLE',
       kvRole: (user as any).kvRole || 'NO_KV_ROLE',
-      clubRole: Object.values((user as any).clubRoles || {})[0] || 'NO_CLUB_ROLE',
+      clubRole: (Object.values((user as any).clubRoles || {})[0] as string) || 'NO_CLUB_ROLE',
       selectedClubId: user.clubId || Object.keys((user as any).clubRoles || {})[0] || '',
       selectedClubIds,
       isPremium: (user as any).isPremium || false,
@@ -344,10 +335,6 @@ export default function AdminUserManagementPage() {
       autoRenew: (user as any).autoRenew || false,
     });
     setActiveTab("edit");
-  };
-  
-  const handleUserCreated = () => {
-    setRefreshTrigger(prev => prev + 1);
   };
   
   if (!adminUser) { // Einfache Ladeanzeige, bis Admin-User geladen ist

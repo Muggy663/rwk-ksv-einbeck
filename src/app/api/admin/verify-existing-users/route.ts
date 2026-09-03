@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminAuth } from '@/lib/firebase/admin';
+import { adminDb } from '@/lib/firebase/admin';
 import { Timestamp } from 'firebase-admin/firestore';
+import { verifyApiAuth } from '@/lib/auth/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
+    // Nur der Plattform-Admin darf diese Massen-Aktion auslösen.
+    const authUser = await verifyApiAuth(request);
+    if (!authUser) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    if (authUser.email !== 'admin@rwk-einbeck.de') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const snapshot = await adminDb.collection('user_permissions').get();
     const batch = adminDb.batch();
     let count = 0;

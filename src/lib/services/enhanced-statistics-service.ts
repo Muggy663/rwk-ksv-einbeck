@@ -1,6 +1,4 @@
-import { db } from '@/lib/firebase/config';
 import { logError } from '@/lib/utils/secure-logger';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { fetchShooterPerformanceData } from '@/lib/services/statistics-service';
 
 /**

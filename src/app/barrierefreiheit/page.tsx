@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { A11yButton } from '@/components/ui/a11y-button';
 import { A11yTable } from '@/components/ui/a11y-table';
 import { AriaLive } from '@/components/ui/aria-live';

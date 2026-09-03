@@ -59,7 +59,7 @@ Beachte dabei:
       contents: [{ role: 'user', parts: [{ text: fullPrompt }] }]
     });
 
-    const reply = response.text.trim();
+    const reply = (response.text || '').trim();
     
     // Prüfe ob JSON-Antwort mit modifizierter Startliste
     let modifiedStartliste = null;

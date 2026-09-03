@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError, logWarn, logInfo, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import type { KMMeldung } from '@/types/km';
 import { sendKMMeldungNotificationEmail } from '@/lib/services/email-notification-service';
+import { requireKMAuth } from '@/lib/auth/api-auth';
+import { ermittleEinzelklasse, type KmAltersklasse } from '@/lib/utils/altersklassen';
 
 const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => {
   const kuerzel = disziplinKuerzel.toLowerCase();
@@ -15,24 +16,15 @@ const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => {
   return `km_meldungen_${jahr}_${kuerzel}`;
 };
 
-// Disziplin-ID zu Kürzel Mapping
-const getDisziplinKuerzel = async (disziplinId: string): Promise<string> => {
-  try {
-    const disziplinDoc = await adminDb.collection('km_disziplinen').doc(disziplinId).get();
-    if (disziplinDoc.exists) {
-      const disziplin = disziplinDoc.data();
-      const name = disziplin?.name?.toLowerCase() || '';
-      if (name.includes('kleinkaliber') || name.includes('kk')) return 'kk';
-      if (name.includes('luftdruck') || name.includes('ld') || name.includes('luftgewehr') || name.includes('lg') || name.includes('luftpistole') || name.includes('lp')) return 'ld';
-    }
-  } catch (e) {
-    logWarn('Fallback Disziplin-Kürzel:', e);
-  }
-  return 'ld'; // Fallback
-};
-
 export async function POST(request: NextRequest) {
   try {
+    // Authentifizierung erforderlich (nur eingeloggte KM-Berechtigte).
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+    const gemeldeteVon = auth.email || 'Vereinsvertreter';
+
     const body = await request.json();
     const { schuetzeId, disziplinId, saisonId, lmTeilnahme, anmerkung, vmErgebnis } = body;
 
@@ -41,20 +33,6 @@ export async function POST(request: NextRequest) {
         success: false,
         error: 'Schütze, Disziplin und Saison sind erforderlich'
       }, { status: 400 });
-    }
-
-    // Hole Benutzerinformationen aus Authorization Header
-    const authHeader = request.headers.get('authorization');
-    let gemeldeteVon = 'Unbekannter Benutzer';
-    
-    if (authHeader?.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.substring(7);
-        const decodedToken = await adminDb.app.auth().verifyIdToken(token);
-        gemeldeteVon = decodedToken.email || decodedToken.name || 'Vereinsvertreter';
-      } catch {
-        gemeldeteVon = 'Vereinsvertreter';
-      }
     }
 
     // Hole Saison-Daten
@@ -66,7 +44,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const saisonData = saisonDoc.data();
+    const saisonData = saisonDoc.data() as any;
     const aktivesJahr = saisonData.jahr;
     const disziplinTyp = saisonData.disziplinTyp; // 'KK' oder 'LD'
 
@@ -89,6 +67,35 @@ export async function POST(request: NextRequest) {
       }, { status: 409 });
     }
 
+    // Altersklasse (Einzel-Wettkampfklasse) bereits bei der Meldung fixieren,
+    // damit sie überall konsistent ist und nicht auf jeder Folgeseite neu
+    // (und abweichend) berechnet wird. Datengetrieben aus km_altersklassen.
+    let altersklasse: string | null = null;
+    try {
+      const [schuetzeSnap, disziplinSnap, altersklassenSnap] = await Promise.all([
+        adminDb.collection('shooters').doc(schuetzeId).get(),
+        adminDb.collection('km_disziplinen').doc(disziplinId).get(),
+        adminDb.collection('km_altersklassen').get()
+      ]);
+      const schuetzeData = schuetzeSnap.exists ? schuetzeSnap.data() : null;
+      const disziplinData = disziplinSnap.exists ? disziplinSnap.data() : null;
+      const altersklassenListe = altersklassenSnap.docs.map(d => d.data()) as KmAltersklasse[];
+
+      if (schuetzeData && disziplinData) {
+        altersklasse = ermittleEinzelklasse({
+          birthYear: schuetzeData.birthYear,
+          gender: schuetzeData.gender,
+          auflage: !!disziplinData.auflage,
+          spoNummer: disziplinData.spoNummer,
+          saisonJahr: aktivesJahr,
+          altersklassen: altersklassenListe,
+          altersgenehmigung: !!schuetzeData.sondergenehmigung
+        });
+      }
+    } catch (e) {
+      logWarn('Altersklasse konnte bei Meldung nicht berechnet werden:', getErrorMessage(e));
+    }
+
     // Echte Firestore-Speicherung
     const meldung = {
       schuetzeId,
@@ -96,6 +103,7 @@ export async function POST(request: NextRequest) {
       saisonId,
       lmTeilnahme: !!lmTeilnahme,
       anmerkung: anmerkung || '',
+      altersklasse: altersklasse || null,
       saison: aktivesJahr.toString(),
       jahr: aktivesJahr,
       meldedatum: new Date(),
@@ -160,6 +168,10 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
     const { searchParams } = new URL(request.url);
     const jahr = parseInt(searchParams.get('jahr') || '2026');
     const saisonId = searchParams.get('saison');
@@ -172,7 +184,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ success: true, data: [] });
       }
       
-      const saisonData = saisonDoc.data();
+      const saisonData = saisonDoc.data() as any;
       const disziplinTyp = saisonData.disziplinTyp || 'KK';
       const saisonJahr = saisonData.jahr || 2026;
       
@@ -198,7 +210,7 @@ export async function GET(request: NextRequest) {
         id: doc.id,
         ...doc.data(),
         _collection: disziplinTyp.toLowerCase()
-      }));
+      })) as Array<{ id: string; [key: string]: any }>;
       
       if (clubId) {
         const shootersSnapshot = await adminDb.collection('shooters').where('clubId', '==', clubId).get();
@@ -214,7 +226,7 @@ export async function GET(request: NextRequest) {
     
     // Fallback: Alle Disziplinen für ein Jahr laden
     const collections = ['kk', 'kkp', 'ld'];
-    let alleMeldungen = [];
+    let alleMeldungen: Array<{ id: string; [key: string]: any }> = [];
     
     logDebug('DEBUG: Suche in Jahr:', jahr);
     

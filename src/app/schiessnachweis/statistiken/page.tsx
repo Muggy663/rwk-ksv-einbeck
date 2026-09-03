@@ -5,14 +5,12 @@ import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NativeSelect } from "@/components/ui/native-select";
-import { ArrowLeft, TrendingUp, Calendar, Target, Trophy, Download, Crown, Lock } from "lucide-react";
+import { ArrowLeft, TrendingUp, Calendar, Target, Trophy, Download } from "lucide-react";
 import Link from "next/link";
 import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
-import { SchießEintrag, DISZIPLIN_NAMES } from "@/types/schiessnachweis";
-
-import { Badge } from "@/components/ui/badge";
+import { SchießEintrag } from "@/types/schiessnachweis";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
+import { format, subMonths } from "date-fns";
 import { de } from "date-fns/locale";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
@@ -23,7 +21,6 @@ export default function StatistikenPage() {
   const [filterZeitraum, setFilterZeitraum] = useState<string>("12monate");
   const [ergebnisTyp, setErgebnisTyp] = useState<string>("auto");
   const [isLoading, setIsLoading] = useState(true);
-  const isPremium = true; // Premium entfernt - alle Features für alle
 
   useEffect(() => {
     loadData();
@@ -345,7 +342,7 @@ export default function StatistikenPage() {
                     <XAxis dataKey="datum" />
                     <YAxis />
                     <Tooltip 
-                      formatter={(value, name, props) => {
+                      formatter={(value, _name, props) => {
                         if (value === null) return ['Kein Wert', 'Fehlend'];
                         return [
                           `${value} Ringe`,
@@ -372,16 +369,16 @@ export default function StatistikenPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Aktivitäts-Verteilung */}
-            <Card className={!isPremium ? "relative" : ""}>
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   Training vs Wettkampf
-                  {!isPremium && <Badge variant="outline" className="ml-2"><Crown className="h-3 w-3 mr-1" />Premium</Badge>}
+
                 </CardTitle>
                 <CardDescription>Verteilung und Durchschnittsergebnisse</CardDescription>
               </CardHeader>
               <CardContent>
-                {isPremium ? (
+                {true ? (
                   <div className="space-y-4">
                     <div className="h-[200px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
@@ -439,32 +436,21 @@ export default function StatistikenPage() {
                     })()
                     }
                   </div>
-                ) : (
-                  <div className="h-[250px] w-full bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex flex-col items-center justify-center">
-                    <Lock className="h-12 w-12 text-yellow-600 mb-3" />
-                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3 text-center">Erweiterte Statistiken<br />nur mit Premium</p>
-                    <Link href="/schiessnachweis/premium">
-                      <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700">
-                        <Crown className="h-4 w-4 mr-2" />
-                        Upgraden
-                      </Button>
-                    </Link>
-                  </div>
-                )}
+                ) : null}
               </CardContent>
             </Card>
 
             {/* Disziplinen-Verteilung */}
-            <Card className={!isPremium ? "relative" : ""}>
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   Disziplinen-Verteilung
-                  {!isPremium && <Badge variant="outline" className="ml-2"><Crown className="h-3 w-3 mr-1" />Premium</Badge>}
+
                 </CardTitle>
                 <CardDescription>Häufigkeit der verschiedenen Disziplinen</CardDescription>
               </CardHeader>
               <CardContent>
-                {isPremium ? (
+                {true ? (
                   <div className="h-[250px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -477,7 +463,7 @@ export default function StatistikenPage() {
                           dataKey="value"
                           label={({ name, percentage }) => `${name}: ${percentage}%`}
                         >
-                          {disziplinendaten.map((entry, index) => (
+                          {disziplinendaten.map((_entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
@@ -485,18 +471,7 @@ export default function StatistikenPage() {
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                ) : (
-                  <div className="h-[250px] w-full bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex flex-col items-center justify-center">
-                    <Lock className="h-12 w-12 text-yellow-600 mb-3" />
-                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3 text-center">Erweiterte Statistiken<br />nur mit Premium</p>
-                    <Link href="/schiessnachweis/premium">
-                      <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700">
-                        <Crown className="h-4 w-4 mr-2" />
-                        Upgraden
-                      </Button>
-                    </Link>
-                  </div>
-                )}
+                ) : null}
               </CardContent>
             </Card>
           </div>

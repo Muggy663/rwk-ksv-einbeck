@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
-import admin from 'firebase-admin';
 
 // Korrigierte Importe
 import { getFirestore } from 'firebase-admin/firestore';
@@ -34,7 +33,7 @@ async function checkFirestoreUsage() {
     }
     
     const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || 'restored-main';
-    const db = getFirestore(undefined, databaseId);
+    const db = getFirestore(undefined as any, databaseId);
     
     // Sammle Statistiken über alle Sammlungen
     const collections = [
@@ -72,7 +71,7 @@ async function checkFirestoreUsage() {
           estimatedSizeInKB: Math.round(estimatedSizeInKB)
         });
       } catch (collectionError) {
-        logWarn(`Fehler beim Abrufen der Collection ${collectionName}:`, collectionError);
+        logWarn(`Fehler beim Abrufen der Collection ${collectionName}:`, collectionError instanceof Error ? collectionError.message : String(collectionError));
       } finally {
         snapshot = null;
       }

@@ -1,7 +1,6 @@
 // src/components/layout/Header.tsx
 "use client";
 import Link from 'next/link';
-import Image from 'next/image';
 import { useAuth } from '@/hooks/use-auth';
 import { ThemeToggle } from '@/components/ThemeToggle';
 

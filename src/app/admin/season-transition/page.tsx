@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Loader2, ArrowUpDown, Calendar } from 'lucide-react';
+import { Loader2, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase/config';
@@ -64,7 +64,7 @@ export default function SeasonTransitionPage() {
   const { user } = useAuth();
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [selectedSourceSeason, setSelectedSourceSeason] = useState<string>('');
-  const [selectedTargetSeason, setSelectedTargetSeason] = useState<string>('');
+  const [selectedTargetSeason] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [leagues, setLeagues] = useState<League[]>([]);
@@ -76,7 +76,6 @@ export default function SeasonTransitionPage() {
   const [allLeagueSuggestions, setAllLeagueSuggestions] = useState<Map<string, PromotionRelegationSuggestion[]>>(new Map());
   const [showAllLeagues, setShowAllLeagues] = useState(false);
   const [teamStandings, setTeamStandings] = useState<Map<string, any>>(new Map());
-  const [notRegisteredTeams, setNotRegisteredTeams] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchSeasons = async () => {
@@ -404,7 +403,7 @@ export default function SeasonTransitionPage() {
     try {
       doc.addImage('/images/logo2.png', 'PNG', 240, 10, 30, 30);
     } catch (error) {
-      logDebug('Logo konnte nicht geladen werden:', error);
+      logDebug(`Logo konnte nicht geladen werden: ${error instanceof Error ? error.message : String(error)}`);
     }
     
     const todayFormatted = format(new Date(), 'dd.MM.yyyy', { locale: de });

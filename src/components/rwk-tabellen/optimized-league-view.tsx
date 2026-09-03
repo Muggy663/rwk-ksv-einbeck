@@ -3,7 +3,7 @@
  */
 "use client";
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { PDFExportButton } from '@/components/pdf-export-button';
@@ -65,7 +65,7 @@ export function OptimizedLeagueView({
   onShooterClick,
 }: OptimizedLeagueViewProps) {
   const [expandedTeamIds, setExpandedTeamIds] = useState<string[]>([]);
-  const [loadingState, setLoadingState] = useState({
+  const [loadingState] = useState({
     isLoading: false,
     message: ''
   });
@@ -98,7 +98,6 @@ export function OptimizedLeagueView({
     <ErrorBoundary>
       <AriaLive 
         message={loadingState.isLoading ? loadingState.message : ''} 
-        politeness="polite"
       />
       
       <Accordion 

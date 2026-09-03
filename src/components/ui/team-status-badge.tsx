@@ -1,9 +1,9 @@
-import React from 'react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TeamStatusBadgeProps {
   outOfCompetition?: boolean;
+  reason?: string;
   className?: string;
   showTooltip?: boolean;
 }
@@ -13,6 +13,7 @@ interface TeamStatusBadgeProps {
  */
 export function TeamStatusBadge({ 
   outOfCompetition, 
+  reason,
   className,
   showTooltip = true
 }: TeamStatusBadgeProps) {
@@ -37,7 +38,7 @@ export function TeamStatusBadge({
             {badge}
           </TooltipTrigger>
           <TooltipContent>
-            <p className="text-sm">Außer Konkurrenz</p>
+            <p className="text-sm">{reason || 'Außer Konkurrenz'}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

@@ -70,15 +70,32 @@ export interface Shooter {
   gender: 'male' | 'female' | 'unknown';
   birthYear?: number;
   birthDate?: Date;
-  clubId?: string;
-  rwkClubId?: string;
-  email?: string;
-  phone?: string;
-  isActive?: boolean;
+  clubId?: string; // EINZIGES Vereinsfeld (Neuanlage/Update schreiben nur dieses)
+  rwkClubId?: string; // Legacy (Altdaten) — wird nicht mehr geschrieben
+  isActive?: boolean; // false = Soft-Delete (aus Verwaltungslisten ausgeblendet)
   teamIds?: string[]; // Array der Team-IDs, in denen der Schütze ist
+  // Kontakt-/Stammdaten (real vorhanden, u.a. aus Mitcom-Import)
+  email?: string;
+  telefon?: string;
+  mobil?: string;
+  phone?: string; // Legacy-Feld (frühere RWK-Anlage) — nur Lese-Fallback
+  strasse?: string;
+  plz?: string;
+  ort?: string;
   // KM-spezifische Felder
-  mitgliedsnummer?: string;
+  mitgliedsnummer?: string; // Verbandsnummer (ohne führende 0)
   sondergenehmigung?: boolean; // Für Schützen unter 12 Jahren
+  kmClubId?: string; // Legacy (Altdaten) — wird nicht mehr geschrieben
+  kmStartrechte?: Record<string, string>; // Startrechte je Disziplin/Bereich für KM
+  // Meta / Herkunft / Audit
+  genderGuessed?: boolean;
+  source?: string; // 'mitcom_import' | 'manual' | 'migration_excel' | 'auto-from-scores'
+  createdBy?: string;
+  createdAt?: any;
+  importedAt?: any;
+  updatedAt?: any;
+  deletedAt?: any;
+  deletedBy?: string;
 }
 
 // Wettkampfklassen für automatische Zuordnung
@@ -149,6 +166,7 @@ export interface ScoreEntry {
   entryTimestamp?: any;
   teamOutOfCompetition?: boolean;
   teamOutOfCompetitionReason?: string;
+  isSubstitutionCopy?: boolean;
 }
 
 // Neue Interfaces für Ersatzschützen
@@ -176,8 +194,9 @@ export interface UserPermission {
   uid: string;
   email: string;
   displayName?: string;
-  role?: 'admin' | 'vereinsvertreter' | 'mannschaftsfuehrer' | 'km_orga';
+  role?: 'admin' | 'superadmin' | 'vereinsvertreter' | 'mannschaftsfuehrer' | 'km_orga';
   clubId?: string;
+  assignedClubId?: string;
   representedClubs?: string[];
   isActive?: boolean;
   createdAt?: Date;
@@ -325,6 +344,9 @@ export interface IndividualShooterDisplayData {
   teamOutOfCompetition?: boolean;
   teamOutOfCompetitionReason?: string;
   rank?: number | null;
+  isSubstitute?: boolean;
+  isReplacedShooter?: boolean;
+  substitutionInfo?: { isSubstitute?: boolean; fromRound?: number; originalShooterName?: string } | null;
 }
 
 export interface LeagueDisplay {

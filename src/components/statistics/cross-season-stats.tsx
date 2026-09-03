@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -55,7 +55,26 @@ export function CrossSeasonStats() {
   const [selectedDiscipline, setSelectedDiscipline] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(false);
   const [shooterStats, setShooterStats] = useState<ShooterStats | null>(null);
-  const [searchResults, setSearchResults] = useState<{ id: string; name: string }[]>([]);
+  const [searchResults, setSearchResults] = useState<{ id: string; name: string; clubName?: string }[]>([]);
+  const [clubMap, setClubMap] = useState<Record<string, string>>({});
+
+  // Vereine einmalig laden (id → Name), um sie in der Trefferliste anzuzeigen.
+  useEffect(() => {
+    const loadClubs = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'clubs'));
+        const map: Record<string, string> = {};
+        snap.forEach(d => {
+          const data = d.data() as any;
+          map[d.id] = data.shortName || data.name || d.id;
+        });
+        setClubMap(map);
+      } catch {
+        // Vereinsnamen sind optional – bei Fehler bleibt die Suche ohne Verein nutzbar.
+      }
+    };
+    loadClubs();
+  }, []);
 
   const handleSearch = async () => {
     if (searchTerm.trim().length < 3) {
@@ -79,10 +98,15 @@ export function CrossSeasonStats() {
       );
       
       const querySnapshot = await getDocs(q);
-      const results = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().name
-      }));
+      const results = querySnapshot.docs.map(doc => {
+        const data = doc.data() as any;
+        const clubId = data.clubId || data.kmClubId || data.rwkClubId;
+        return {
+          id: doc.id,
+          name: data.name,
+          clubName: clubId ? (clubMap[clubId] || undefined) : undefined,
+        };
+      });
       
       setSearchResults(results);
       
@@ -108,10 +132,25 @@ export function CrossSeasonStats() {
   const fetchShooterStats = async (shooterId: string, discipline: string) => {
     setIsLoading(true);
     try {
+      // Ein Schütze kann als mehrere shooter-Dokumente existieren (z.B. RWK- und
+      // KM-Anlage, oder Dubletten). Wir sammeln daher ALLE IDs mit gleichem Namen
+      // wie der ausgewählte Schütze und fragen die Scores über alle IDs ab.
+      const selectedName =
+        searchResults.find(r => r.id === shooterId)?.name || '';
+      let shooterIds: string[] = [shooterId];
+      if (selectedName) {
+        const sameName = searchResults
+          .filter(r => r.name === selectedName)
+          .map(r => r.id);
+        // 'in'-Query erlaubt max. 10 Werte
+        shooterIds = Array.from(new Set([shooterId, ...sameName])).slice(0, 10);
+      }
+
       // Da wir saisonübergreifend suchen, müssen wir alle Collections durchsuchen
       const currentYear = new Date().getFullYear();
-      const years = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1]; // Letzte 2 Jahre + aktuell + nächstes
-      const disciplines = discipline === 'all' ? ['KKG', 'KKP', 'LGA', 'LGS', 'LP'] : [discipline];
+      const years = [currentYear - 3, currentYear - 2, currentYear - 1, currentYear, currentYear + 1];
+      // Normalisierte Disziplin-Codes (entsprechen den Collection-Suffixen rwk_scores_JAHR_XX)
+      const disciplines = discipline === 'all' ? ['KK', 'KKP', 'LD'] : [discipline];
       
       let allScores: ShooterScore[] = [];
       
@@ -119,34 +158,38 @@ export function CrossSeasonStats() {
       for (const year of years) {
         for (const disc of disciplines) {
           try {
-            const collectionName = getSeasonSpecificScoresCollection(year, disc);
+            const collectionName = getSeasonSpecificScoresCollection(year, disc as any);
             const scoresRef = collection(db, collectionName);
             
+            // Bewusst OHNE orderBy: die Kombination where('shooterId') + orderBy
+            // bräuchte einen zusammengesetzten Index; fehlt der, wirft die Query
+            // einen Fehler, der hier als "keine Ergebnisse" verschluckt würde.
+            // Sortiert wird ohnehin clientseitig beim Aggregieren.
             const q = query(
               scoresRef,
-              where('shooterId', '==', shooterId),
-              orderBy('competitionYear'),
-              orderBy('durchgang')
+              where('shooterId', 'in', shooterIds)
             );
             
             const querySnapshot = await getDocs(q);
             const scores: ShooterScore[] = querySnapshot.docs.map(doc => ({
               ...doc.data(),
               id: doc.id
-            })) as ShooterScore[];
+            })) as unknown as ShooterScore[];
             
             allScores = [...allScores, ...scores];
           } catch (error) {
             // Collection existiert möglicherweise nicht - das ist ok
-            logWarn(`Collection ${disc} für Jahr ${year} nicht gefunden:`, error);
+            logWarn(`Collection ${disc} für Jahr ${year} nicht gefunden:`, error instanceof Error ? error.message : String(error));
           }
         }
       }
       
       // Entferne Duplikate basierend auf einer eindeutigen Kombination
+      // Dedup über Jahr+Durchgang+Disziplin (bewusst OHNE shooterId, damit
+      // Ergebnisse aus mehreren shooter-Dokumenten desselben Schützen zusammengeführt
+      // und nicht doppelt gezählt werden).
       const uniqueScores = allScores.filter((score, index, self) => 
         index === self.findIndex(s => 
-          s.shooterId === score.shooterId && 
           s.competitionYear === score.competitionYear && 
           s.durchgang === score.durchgang &&
           s.leagueType === score.leagueType
@@ -166,15 +209,15 @@ export function CrossSeasonStats() {
       }
       
       // Statistiken berechnen
-      const years = Array.from(new Set(scores.map(score => score.competitionYear))).sort();
+      const statYears = Array.from(new Set(scores.map(score => score.competitionYear))).sort();
       const averageByYear: { [year: number]: number } = {};
       const totalByYear: { [year: number]: number } = {};
       const roundsByYear: { [year: number]: number } = {};
       const scoresByYear: { [year: number]: number[] } = {};
       
-      let allScores: number[] = [];
+      let allRingScores: number[] = [];
       
-      years.forEach(year => {
+      statYears.forEach(year => {
         const yearScores = scores
           .filter(score => score.competitionYear === year)
           .map(score => score.totalRinge);
@@ -184,17 +227,17 @@ export function CrossSeasonStats() {
         roundsByYear[year] = yearScores.length;
         averageByYear[year] = totalByYear[year] / roundsByYear[year];
         
-        allScores = [...allScores, ...yearScores];
+        allRingScores = [...allRingScores, ...yearScores];
       });
       
-      const bestScore = Math.max(...allScores);
-      const worstScore = Math.min(...allScores);
-      const overallAverage = allScores.reduce((sum, score) => sum + score, 0) / allScores.length;
+      const bestScore = Math.max(...allRingScores);
+      const worstScore = Math.min(...allRingScores);
+      const overallAverage = allRingScores.reduce((sum, score) => sum + score, 0) / allRingScores.length;
       
       setShooterStats({
         shooterId,
         shooterName: scores[0].shooterName,
-        years,
+        years: statYears,
         averageByYear,
         totalByYear,
         roundsByYear,
@@ -329,7 +372,7 @@ export function CrossSeasonStats() {
                 borderRadius: 'var(--radius)'
               }} 
               labelStyle={{ color: 'hsl(var(--foreground))' }}
-              formatter={(value, name, props) => {
+              formatter={(value, _name, props) => {
                 const item = data[props.payload.index];
                 return [`${value} Ringe`, `${item.year} DG${item.round}`];
               }}
@@ -403,12 +446,9 @@ export function CrossSeasonStats() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Alle Disziplinen</SelectItem>
-                  <SelectItem value="KK">Kleinkaliber</SelectItem>
-                  <SelectItem value="KKG">Kleinkaliber Gewehr</SelectItem>
-                  <SelectItem value="LG">Luftgewehr</SelectItem>
-                  <SelectItem value="LGA">Luftgewehr Auflage</SelectItem>
-                  <SelectItem value="LP">Luftpistole</SelectItem>
-                  <SelectItem value="LPA">Luftpistole Auflage</SelectItem>
+                  <SelectItem value="KK">Kleinkaliber Gewehr (KK)</SelectItem>
+                  <SelectItem value="KKP">Kleinkaliber Pistole (KKP)</SelectItem>
+                  <SelectItem value="LD">Luftdruck (LG/LP)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -422,10 +462,15 @@ export function CrossSeasonStats() {
                   <li key={result.id}>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start text-left"
+                      className="w-full justify-start text-left h-auto py-2"
                       onClick={() => handleShooterSelect(result.id)}
                     >
-                      {result.name}
+                      <span className="font-medium text-foreground">{result.name}</span>
+                      {result.clubName && (
+                        <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                          {result.clubName}
+                        </span>
+                      )}
                     </Button>
                   </li>
                 ))}

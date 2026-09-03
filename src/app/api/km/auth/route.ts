@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    secureLogger.error('KM permission loading failed', 'km-auth-api');
+    secureLogger.error('KM permission loading failed', error instanceof Error ? error : undefined, 'km-auth-api');
     return NextResponse.json({
       success: false,
       error: 'Fehler beim Laden der Berechtigung'
@@ -39,8 +39,6 @@ export async function POST(request: NextRequest) {
     const uid = sanitizeInput(body.uid);
     const email = sanitizeInput(body.email);
     const role = sanitizeInput(body.role);
-    const clubId = sanitizeInput(body.clubId);
-    const displayName = sanitizeInput(body.displayName);
 
     if (!uid || !email || !role) {
       secureLogger.warn('Missing required fields in KM auth creation', 'km-auth-api');
@@ -66,7 +64,7 @@ export async function POST(request: NextRequest) {
     }, { status: 501 });
 
   } catch (error) {
-    secureLogger.error('KM permission creation failed', 'km-auth-api');
+    secureLogger.error('KM permission creation failed', error instanceof Error ? error : undefined, 'km-auth-api');
     return NextResponse.json({
       success: false,
       error: 'Fehler beim Erstellen der Berechtigung'

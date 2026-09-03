@@ -16,7 +16,7 @@ export async function createSampleUserLogins() {
     }));
     
     // Für jeden Benutzer einen Eintrag in der users-Collection erstellen
-    for (const user of users) {
+    for (const user of users as Array<{ uid: string; email?: string; displayName?: string }>) {
       // Zufälliges Datum in den letzten 30 Tagen
       const daysAgo = Math.floor(Math.random() * 30);
       const lastLogin = new Date();

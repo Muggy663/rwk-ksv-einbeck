@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { OptimizedCard } from '@/components/optimized-card';
 import { OptimizedImage } from '@/components/optimized-image';
 import { LazyComponent } from '@/components/lazy-component';

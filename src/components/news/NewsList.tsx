@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Newspaper, Pin, Eye, Edit, Trash2, Search, Filter } from 'lucide-react';
+import { Newspaper, Pin, Eye, Edit, Trash2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { newsService, NewsArticle } from '@/lib/services/news-service';
@@ -83,10 +83,6 @@ export function NewsList({ showAll = false, onEdit, limit = 10 }: NewsListProps)
         variant: 'destructive'
       });
     }
-  };
-
-  const handleViewIncrement = async (articleId: string) => {
-    await newsService.incrementViews(articleId);
   };
 
   const getStatusBadge = (status: NewsArticle['status']) => {

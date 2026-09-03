@@ -1,8 +1,8 @@
 "use client";
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
-import { Loader2, Share, FileDown } from 'lucide-react';
+import { Loader2, Share } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNativeApp } from '@/components/ui/native-app-detector';
 
@@ -25,7 +25,6 @@ interface NativePDFButtonProps {
  */
 export function NativePDFButton({
   league,
-  numRounds,
   competitionYear,
   type,
   className
@@ -40,9 +39,6 @@ export function NativePDFButton({
     setIsGenerating(true);
     
     try {
-      // Generiere PDF-Daten
-      const { generateLeaguePDFFixed, generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
-      
       let pdfBlob: Blob;
       if (type === 'teams') {
         // Erstelle temporäre Funktion die das Blob direkt zurückgibt
@@ -126,8 +122,6 @@ export function NativePDFButton({
             reader.readAsDataURL(pdfBlob);
           });
 
-          const fileName = `${league.name.replace(/\s+/g, '_')}_${type}_${competitionYear}.pdf`;
-          
           await Share.share({
             title: `${league.name} ${type === 'teams' ? 'Mannschaften' : 'Einzelschützen'}`,
             text: `RWK Tabelle ${competitionYear}`,

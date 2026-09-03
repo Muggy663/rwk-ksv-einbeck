@@ -5,7 +5,7 @@ import { secureLogger } from '@/lib/utils/secure-logger';
 import { sanitizeInput } from '@/lib/utils/input-validator';
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -61,13 +61,13 @@ export async function GET(
     
     // Nur erlaubte Content-Types
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-    const contentType = allowedTypes.includes(file.metadata?.contentType) 
-      ? file.metadata.contentType 
+    const contentType = allowedTypes.includes(file.metadata?.contentType || '') 
+      ? file.metadata!.contentType 
       : 'application/pdf';
     
     const chunks: Buffer[] = [];
     
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       downloadStream.on('data', (chunk) => {
         chunks.push(chunk);
       });
@@ -88,7 +88,7 @@ export async function GET(
       });
       
       downloadStream.on('error', () => {
-        secureLogger.error('File download stream error', 'files-api');
+        secureLogger.error('File download stream error', undefined, 'files-api');
         resolve(NextResponse.json(
           { error: 'Fehler beim Herunterladen der Datei' },
           { status: 500 }
@@ -97,7 +97,7 @@ export async function GET(
     });
 
   } catch (error) {
-    secureLogger.error('File download failed', 'files-api');
+    secureLogger.error('File download failed', undefined, 'files-api');
     return NextResponse.json(
       { error: 'Fehler beim Herunterladen der Datei' },
       { status: 500 }

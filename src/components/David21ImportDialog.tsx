@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Upload, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { David21Service } from '@/lib/services/david21-service';
-import { KMErgebnisseService } from '@/lib/services/km-ergebnisse-service';
+import { KMErgebnisseService, type KMErgebnis } from '@/lib/services/km-ergebnisse-service';
 
 interface David21ImportDialogProps {
   onImport?: (results: any[]) => void;
@@ -47,7 +47,7 @@ export function David21ImportDialog({ onImport, trigger, wettkampfId = 'VW111' }
       
       // Berechne Statistiken
       const statistik = KMErgebnisseService.calculateStatistics(
-        results.map(r => ({ ...r, importDatum: new Date(), saison: '2025', status: 'importiert' as const }))
+        results.map(r => ({ ...r, importDatum: new Date(), saison: '2025', status: 'importiert' as const })) as unknown as KMErgebnis[]
       );
 
       // Callback für Parent-Komponente

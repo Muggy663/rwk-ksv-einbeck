@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy, deleteDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { SubstitutionDialog } from '@/components/admin/SubstitutionDialog';
 import { TeamRestructureDialog } from '@/components/admin/TeamRestructureDialog';
-import { UserPlus, Search, Trash2, Calendar, Users, AlertCircle, ChevronDown, ChevronRight, Wrench, Pencil, Check, X } from 'lucide-react';
+import { UserPlus, Search, Trash2, Calendar, AlertCircle, ChevronDown, ChevronRight, Wrench, Pencil, Check, X } from 'lucide-react';
 import type { Team, TeamSubstitution, UserPermission, Season, Shooter } from '@/types/rwk';
 
 export default function SubstitutionsPage() {
@@ -31,7 +31,7 @@ export default function SubstitutionsPage() {
   const [teamShooters, setTeamShooters] = useState<Map<string, Shooter[]>>(new Map());
   const [showRestructureDialog, setShowRestructureDialog] = useState(false);
   const [restructureTeam, setRestructureTeam] = useState<Team | null>(null);
-  const [currentNumRounds, setCurrentNumRounds] = useState(5);
+  const [currentNumRounds] = useState(5);
   const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
   const [editingTeamName, setEditingTeamName] = useState('');
 
@@ -40,7 +40,7 @@ export default function SubstitutionsPage() {
     email: 'admin@rwk-einbeck.de',
     displayName: 'Admin',
     role: 'admin',
-    clubId: null
+    clubId: undefined
   };
 
   useEffect(() => {
@@ -183,7 +183,7 @@ export default function SubstitutionsPage() {
     return matchesSearch && matchesLeague && matchesDiscipline;
   });
   
-  const availableDisciplines = [...new Set(teams.map(t => t.leagueType).filter(Boolean))].sort();
+  const availableDisciplines = [...new Set(teams.map(t => t.leagueType).filter((d): d is NonNullable<typeof d> => Boolean(d)))].sort() as string[];
 
   const handleRenameTeam = async (teamId: string) => {
     if (!editingTeamName.trim()) return;
@@ -364,7 +364,7 @@ export default function SubstitutionsPage() {
                         <div className="flex items-center gap-4 mt-1">
                           <span className="flex items-center">
                             <Calendar className="mr-1 h-3 w-3" />
-                            {substitution.substitutionDate?.toDate?.()?.toLocaleDateString() || 'Unbekannt'}
+                            {(substitution.substitutionDate as any)?.toDate?.()?.toLocaleDateString() || 'Unbekannt'}
                           </span>
                           <span>von {substitution.createdByUserName}</span>
                         </div>

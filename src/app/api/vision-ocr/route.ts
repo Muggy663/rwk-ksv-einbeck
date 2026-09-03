@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { HtmlSanitizer } from '@/lib/utils/html-sanitizer';
 import { secureLogger } from '@/lib/utils/secure-logger';
-import { sanitizeInput, validateImageUpload } from '@/lib/utils/input-validator';
+import { validateImageUpload } from '@/lib/utils/input-validator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,7 +56,7 @@ export async function POST(request: NextRequest) {
       fullText = data.responses[0].textAnnotations[0].description || '';
     }
     
-    const lines = fullText.split('\n').filter(line => line.trim());
+    const lines = fullText.split('\n').filter((line: any) => line.trim());
     
     const shooterNames: string[] = [];
     const scores: number[] = [];
@@ -122,7 +121,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    secureLogger.error('Vision OCR processing failed', 'vision-ocr');
+    secureLogger.error('Vision OCR processing failed', error instanceof Error ? error : undefined, 'vision-ocr');
     return NextResponse.json({ 
       success: false, 
       error: 'OCR processing failed' 

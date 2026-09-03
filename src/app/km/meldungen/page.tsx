@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,23 +10,21 @@ import Link from 'next/link';
 import type { Shooter, KMDisziplin, KMMeldung } from '@/types';
 import { getStartVereinForDisziplin } from '@/lib/services/km-startrechte-service';
 import { useKMAuth } from '@/hooks/useKMAuth';
-import { useAuthContext } from '@/components/auth/AuthContext';
 import { BackButton } from '@/components/ui/back-button';
 import { KMProvider, useKMContext } from '@/contexts/KMContext';
 import { KMClubSwitcher } from '@/components/ui/km-club-switcher';
-import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { getShooterClubId, ermittleEinzelklasse, type KmAltersklasse } from '@/lib/utils/altersklassen';
+import { authFetch } from '@/lib/auth/authFetch';
 
 function KMMeldungenContent() {
   const { toast } = useToast();
-  const { isMultiClub, userRole } = useKMAuth();
+  const { userRole } = useKMAuth();
   const { currentClubId, userClubIds } = useKMContext();
-  const { user } = useAuthContext();
   const [meldeModus, setMeldeModus] = useState<'schuetze-disziplinen' | 'disziplin-schuetzen'>('disziplin-schuetzen');
   const [selectedSchuetze, setSelectedSchuetze] = useState('');
   const [selectedSchuetzen, setSelectedSchuetzen] = useState<string[]>([]);
   const [selectedDisziplinen, setSelectedDisziplinen] = useState<string[]>([]);
   const [selectedDisziplin, setSelectedDisziplin] = useState('');
-  const [selectedClub, setSelectedClub] = useState('');
   const [schuetzenSuche, setSchuetzenSuche] = useState('');
   const [lmTeilnahme, setLmTeilnahme] = useState<{[key: string]: boolean}>({});
   const [anmerkung, setAnmerkung] = useState('');
@@ -37,11 +35,11 @@ function KMMeldungenContent() {
   
   const [schuetzen, setSchuetzen] = useState<Shooter[]>([]);
   const [disziplinen, setDisziplinen] = useState<KMDisziplin[]>([]);
-  const [meldungen, setMeldungen] = useState<KMMeldung[]>([]);
+  const [, setMeldungen] = useState<KMMeldung[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
+  const [altersklassenListe, setAltersklassenListe] = useState<KmAltersklasse[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingMeldung, setEditingMeldung] = useState<KMMeldung | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   
   // Zwischenspeicher für Meldungen
   const [pendingMeldungen, setPendingMeldungen] = useState<any[]>([]);
@@ -94,10 +92,10 @@ function KMMeldungenContent() {
       const disziplinTyp = saison?.disziplinTyp?.toLowerCase() || 'kk';
       
       const meldungenSnapshot = await getDocs(collection(db, `km_meldungen_${saison?.jahr || 2027}_${disziplinTyp}`));
-      const saisonMeldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const saisonMeldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as KMMeldung[];
       setMeldungen(saisonMeldungen);
     } catch (error) {
-      logWarn('Fehler beim Laden der Disziplinen:', error);
+      logWarn('Fehler beim Laden der Disziplinen:', error instanceof Error ? error.message : String(error));
     }
   };
 
@@ -108,23 +106,26 @@ function KMMeldungenContent() {
       const { db } = await import('@/lib/firebase/config');
       
       // Lade alle Daten parallel
-      const [shootersSnapshot, disziplinenSnapshot, saisonSnapshot, clubsSnapshot] = await Promise.all([
+      const [shootersSnapshot, disziplinenSnapshot, saisonSnapshot, clubsSnapshot, altersklassenSnapshot] = await Promise.all([
         getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
         getDocs(collection(db, 'km_disziplinen')),
         getDocs(collection(db, 'km_saisons')),
-        getDocs(collection(db, 'clubs'))
+        getDocs(collection(db, 'clubs')),
+        getDocs(collection(db, 'km_altersklassen'))
       ]);
       
-      const allSchuetzen = shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const allDisziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const allSaisons = saisonSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const allClubs = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const allSchuetzen = shootersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as Shooter[];
+      const allDisziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as KMDisziplin[];
+      const allSaisons = saisonSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as Array<{ id: string; jahr: number; status: string; meldeschluss?: string; disziplinTyp?: string; [key: string]: any }>;
+      const allClubs = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as Array<{ id: string; name: string; [key: string]: any }>;
+      const allAltersklassen = altersklassenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as KmAltersklasse[];
+      setAltersklassenListe(allAltersklassen);
       
-      logDebug('DEBUG: Disziplinen aus Firebase:', allDisziplinen.length);
-      logDebug('DEBUG: Vereine aus Firebase:', allClubs.length);
-      logDebug('DEBUG: Beispiel Disziplinen IDs:', allDisziplinen.slice(0, 5).map(d => ({ id: d.id, name: d.name })));
-      logDebug('DEBUG: Suche nach Disziplin Zlnqwo6I1KYyOzeO0CPU:', allDisziplinen.find(d => d.id === 'Zlnqwo6I1KYyOzeO0CPU'));
-      logDebug('DEBUG: Alle Disziplin IDs:', allDisziplinen.map(d => d.id));
+      logDebug(`DEBUG: Disziplinen aus Firebase: ${allDisziplinen.length}`);
+      logDebug(`DEBUG: Vereine aus Firebase: ${allClubs.length}`);
+      logDebug(`DEBUG: Beispiel Disziplinen IDs: ${JSON.stringify(allDisziplinen.slice(0, 5).map(d => ({ id: d.id, name: d.name })))}`);
+      logDebug(`DEBUG: Suche nach Disziplin Zlnqwo6I1KYyOzeO0CPU: ${JSON.stringify(allDisziplinen.find(d => d.id === 'Zlnqwo6I1KYyOzeO0CPU'))}`);
+      logDebug(`DEBUG: Alle Disziplin IDs: ${JSON.stringify(allDisziplinen.map(d => d.id))}`);
       
       setSchuetzen(allSchuetzen);
       setDisziplinen(allDisziplinen);
@@ -135,7 +136,7 @@ function KMMeldungenContent() {
         .filter(s => s.status === 'aktiv' || s.status === 'Aktiv')
         .sort((a, b) => {
         const today = new Date();
-        const getDeadline = (s) => {
+        const getDeadline = (s: { meldeschluss?: string }) => {
           if (!s.meldeschluss) return new Date(0);
           if (s.meldeschluss.includes('.') && s.meldeschluss.length > 6) {
             const [day, month, year] = s.meldeschluss.split('.');
@@ -161,13 +162,13 @@ function KMMeldungenContent() {
       const aktiveSaisonDaten = sortedSaisons.length > 0 ? sortedSaisons[0] : null;
       const jahr = aktiveSaisonDaten?.jahr || new Date().getFullYear() + (new Date().getMonth() >= 6 ? 1 : 0);
       const collections = ['kk', 'kkp', 'ld'];
-      let alleMeldungen = [];
+      let alleMeldungen: KMMeldung[] = [];
       
       for (const typ of collections) {
         try {
           const collectionName = `km_meldungen_${jahr}_${typ}`;
           const meldungenSnapshot = await getDocs(collection(db, collectionName));
-          const meldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const meldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as KMMeldung[];
           alleMeldungen.push(...meldungen);
         } catch (e) {
           logWarn(`Collection km_meldungen_${jahr}_${typ} nicht gefunden`);
@@ -176,17 +177,17 @@ function KMMeldungenContent() {
       
       setMeldungen(alleMeldungen);
       
-      logDebug('DEBUG: Rohe Meldungen aus Firebase:', alleMeldungen.length);
+      logDebug(`DEBUG: Rohe Meldungen aus Firebase: ${alleMeldungen.length}`);
       if (alleMeldungen.length > 0) {
-        logDebug('DEBUG: Erste Meldung:', alleMeldungen[0]);
+        logDebug(`DEBUG: Erste Meldung: ${JSON.stringify(alleMeldungen[0])}`);
       }
       
       // Debug: Prüfe Mapping
       alleMeldungen.forEach(meldung => {
         const schuetze = allSchuetzen.find(s => s.id === meldung.schuetzeId);
         const disziplin = allDisziplinen.find(d => d.id === meldung.disziplinId);
-        logDebug('DEBUG: Prüfe Meldung:', meldung.id, 'SchuetzeId:', meldung.schuetzeId, 'DisziplinId:', meldung.disziplinId);
-        logDebug('DEBUG: Mapping - Schütze:', schuetze?.name || schuetze?.firstName + ' ' + schuetze?.lastName, 'Disziplin:', disziplin?.name, 'DisziplinId:', meldung.disziplinId);
+        logDebug(`DEBUG: Prüfe Meldung: ${meldung.id} SchuetzeId: ${meldung.schuetzeId} DisziplinId: ${meldung.disziplinId}`);
+        logDebug(`DEBUG: Mapping - Schütze: ${schuetze?.name || (schuetze?.firstName + ' ' + schuetze?.lastName)} Disziplin: ${disziplin?.name} DisziplinId: ${meldung.disziplinId}`);
       });
       
       const verarbeitete = alleMeldungen.filter(meldung => {
@@ -195,66 +196,13 @@ function KMMeldungenContent() {
         return schuetze && disziplin;
       });
       
-      logDebug('DEBUG: Verarbeitete Meldungen:', verarbeitete.length);
+      logDebug(`DEBUG: Verarbeitete Meldungen: ${verarbeitete.length}`);
       
     } catch (error) {
       logError('Fehler beim Laden der Daten:', error);
       toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden', variant: 'destructive' });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleEditMeldung = (meldung: KMMeldung) => {
-    setEditingMeldung(meldung);
-    setSelectedSchuetze(meldung.schuetzeId);
-    setSelectedDisziplinen([meldung.disziplinId]);
-    setLmTeilnahme({[meldung.disziplinId]: meldung.lmTeilnahme});
-    setAnmerkung(meldung.anmerkung || '');
-    if (meldung.vmErgebnis) {
-      // Sichere Date-Konvertierung
-      let datum = '';
-      try {
-        const vmDatum = meldung.vmErgebnis.datum;
-        if (vmDatum) {
-          const date = typeof vmDatum === 'string' ? new Date(vmDatum) : vmDatum.toDate ? vmDatum.toDate() : new Date(vmDatum);
-          if (!isNaN(date.getTime())) {
-            datum = date.toISOString().split('T')[0];
-          }
-        }
-      } catch (e) {
-        logWarn('Date parsing error:', e);
-      }
-      
-      setVmErgebnisse({
-        [meldung.disziplinId]: {
-          ringe: meldung.vmErgebnis.ringe?.toString() || '',
-          datum,
-          bemerkung: meldung.vmErgebnis.bemerkung || ''
-        }
-      });
-    }
-  };
-  
-  const handleDeleteMeldung = async (meldungId: string) => {
-    if (!confirm('Meldung wirklich löschen?')) return;
-    
-    setDeletingId(meldungId);
-    try {
-      const response = await fetch(`/api/km/meldungen/${meldungId}`, {
-        method: 'DELETE'
-      });
-      
-      if (response.ok) {
-        toast({ title: 'Erfolg', description: 'Meldung gelöscht' });
-        loadData();
-      } else {
-        toast({ title: 'Fehler', description: 'Löschen fehlgeschlagen', variant: 'destructive' });
-      }
-    } catch (error) {
-      toast({ title: 'Fehler', description: 'Löschen fehlgeschlagen', variant: 'destructive' });
-    } finally {
-      setDeletingId(null);
     }
   };
 
@@ -298,14 +246,13 @@ function KMMeldungenContent() {
     logDebug('Starting bulk submit...');
     setIsSubmitting(true);
     try {
-      logDebug('Creating promises for', pendingMeldungen.length, 'meldungen');
+      logDebug(`Creating promises for ${pendingMeldungen.length} meldungen`);
       const promises = pendingMeldungen.map((meldung, index) => {
-        logDebug(`Creating promise ${index + 1}:`, meldung);
-        return fetch('/api/km/meldungen', {
+        logDebug(`Creating promise ${index + 1}: ${JSON.stringify(meldung)}`);
+        return authFetch('/api/km/meldungen', {
           method: 'POST',
           headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${JSON.stringify({ email: user?.email, displayName: user?.displayName })}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             ...meldung,
@@ -382,11 +329,10 @@ function KMMeldungenContent() {
       if (editingMeldung) {
         // Update bestehende Meldung
         const vmData = vmErgebnisse[selectedDisziplinen[0]];
-        const response = await fetch(`/api/km/meldungen/${editingMeldung.id}`, {
+        const response = await authFetch(`/api/km/meldungen/${editingMeldung.id}`, {
           method: 'PUT',
           headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${JSON.stringify({ email: user?.email, displayName: user?.displayName })}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             lmTeilnahme: lmTeilnahme[selectedDisziplinen[0]] || false,
@@ -412,11 +358,10 @@ function KMMeldungenContent() {
         // Erstelle neue Meldungen
         const meldungsPromises = selectedDisziplinen.map(disziplinId => {
           const vmData = vmErgebnisse[disziplinId];
-          return fetch('/api/km/meldungen', {
+          return authFetch('/api/km/meldungen', {
             method: 'POST',
             headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${JSON.stringify({ email: user?.email, displayName: user?.displayName })}`
+              'Content-Type': 'application/json'
             },
             body: JSON.stringify({
               schuetzeId: selectedSchuetze,
@@ -433,7 +378,6 @@ function KMMeldungenContent() {
           });
         });
         
-        const results = [];
         let successful = 0;
         let duplicates = 0;
         
@@ -494,77 +438,60 @@ function KMMeldungenContent() {
         warnung: 'Geburtsjahr und Geschlecht erforderlich'
       };
     }
-    
+
     const selectedSaisonData = saisons.find(s => s.id === selectedSaison);
     const sportjahr = selectedSaisonData?.jahr || new Date().getFullYear();
     const age = sportjahr - schuetze.birthYear;
     const gender = schuetze.gender;
-    
-    // Spezielle Behandlung für Lichtgewehr (11.11)
+    const altersgenehmigung = !!(schuetze as any).sondergenehmigung;
+
+    // Lichtgewehr (11.11): nur 6-11 Jahre
     if (spoNummer === '11.11') {
       if (age >= 6 && age <= 11) {
         const klasse = gender === 'male' ? 'Lichtgewehr m' : 'Lichtgewehr w';
         return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
-      } else {
-        return {
-          klasse: 'Nicht teilnahmeberechtigt',
-          kmErlaubt: false,
-          lmErlaubt: false,
-          warnung: 'Lichtgewehr (11.11) nur für Altersklasse 6-11 Jahre'
-        };
       }
+      return {
+        klasse: 'Nicht teilnahmeberechtigt',
+        kmErlaubt: false,
+        lmErlaubt: false,
+        warnung: 'Lichtgewehr (11.11) nur für Altersklasse 6-11 Jahre'
+      };
     }
-    
-    if (auflage) {
-      // Schüler (KM + LM erlaubt)
-      if (age >= 12 && age <= 14) {
-        const klasse = gender === 'male' ? 'Schüler I m' : 'Schüler I w';
-        return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
-      }
-      
-      // KM-Sonderregelung: 15-40 Jahre bei Auflage kreisintern erlaubt (KM ja, LM nein)
-      // Gilt für alle Auflage-Disziplinen im Kreisverband
-      if (age >= 15 && age <= 40) {
-        let klasse;
-        if (age <= 16) klasse = gender === 'male' ? 'Jugend m' : 'Jugend w';
-        else if (age <= 18) klasse = gender === 'male' ? 'Junioren II m' : 'Junioren II w';
-        else if (age <= 20) klasse = gender === 'male' ? 'Junioren I m' : 'Junioren I w';
-        else klasse = gender === 'male' ? 'Herren I' : 'Damen I';
-        
-        return {
-          klasse,
-          kmErlaubt: true,
-          lmErlaubt: false,
-          warnung: 'KM erlaubt, aber nicht LM-berechtigt (Sonderregelung Kreisverband Auflage)'
-        };
-      }
-      
-      // Senioren (KM + LM erlaubt)
-      let klasse;
-      if (age <= 50) klasse = 'Senioren 0';
-      else if (age <= 60) klasse = gender === 'male' ? 'Senioren I m' : 'Seniorinnen I';
-      else if (age <= 65) klasse = gender === 'male' ? 'Senioren II m' : 'Seniorinnen II';
-      else if (age <= 70) klasse = gender === 'male' ? 'Senioren III m' : 'Seniorinnen III';
-      else if (age <= 75) klasse = gender === 'male' ? 'Senioren IV m' : 'Seniorinnen IV';
-      else if (age <= 80) klasse = gender === 'male' ? 'Senioren V m' : 'Seniorinnen V';
-      else klasse = gender === 'male' ? 'Senioren VI m' : 'Seniorinnen VI';
-      
-      return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
-    } else {
-      // Freihand (alle Altersklassen KM + LM erlaubt)
-      let klasse;
-      if (age <= 14) klasse = gender === 'male' ? 'Schüler I m' : 'Schüler I w';
-      else if (age <= 16) klasse = gender === 'male' ? 'Jugend m' : 'Jugend w';
-      else if (age <= 18) klasse = gender === 'male' ? 'Junioren II m' : 'Junioren II w';
-      else if (age <= 20) klasse = gender === 'male' ? 'Junioren I m' : 'Junioren I w';
-      else if (age <= 40) klasse = gender === 'male' ? 'Herren I' : 'Damen I';
-      else if (age <= 50) klasse = gender === 'male' ? 'Herren II' : 'Damen II';
-      else if (age <= 60) klasse = gender === 'male' ? 'Herren III' : 'Damen III';
-      else if (age <= 70) klasse = gender === 'male' ? 'Herren IV' : 'Damen IV';
-      else klasse = gender === 'male' ? 'Herren V' : 'Damen V';
-      
-      return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
+
+    // Klassenname datengetrieben aus km_altersklassen (Single Source of Truth)
+    const klasse = ermittleEinzelklasse({
+      birthYear: schuetze.birthYear,
+      gender,
+      auflage,
+      spoNummer,
+      saisonJahr: sportjahr,
+      altersklassen: altersklassenListe,
+      altersgenehmigung
+    });
+
+    if (!klasse) {
+      // Kein startberechtigter Treffer (z. B. unter 12 ohne Genehmigung bei Freihand,
+      // oder 21-40 bei regulärer Auflage ohne kreisinterne Ausnahme).
+      const hinweis = !auflage && age < 12
+        ? 'Luftgewehr erst ab 12 Jahren (bzw. ab 10 mit Altersgenehmigung)'
+        : 'Für diese Disziplin/Altersklasse keine Startberechtigung';
+      return { klasse: 'Nicht teilnahmeberechtigt', kmErlaubt: false, lmErlaubt: false, warnung: hinweis };
     }
+
+    // LM-Berechtigung: kreisinterne Auflage-Ausnahme (1.41/1.11) für 21-40 ist KM-,
+    // aber nicht LM-berechtigt.
+    const istKreisinterneAuflage = auflage && (spoNummer === '1.41' || spoNummer === '1.11');
+    if (istKreisinterneAuflage && age >= 21 && age <= 40) {
+      return {
+        klasse,
+        kmErlaubt: true,
+        lmErlaubt: false,
+        warnung: 'KM erlaubt, aber nicht LM-berechtigt (Sonderregelung Kreisverband Auflage)'
+      };
+    }
+
+    return { klasse, kmErlaubt: true, lmErlaubt: true, warnung: null };
   };
 
   if (loading) {
@@ -745,7 +672,7 @@ function KMMeldungenContent() {
                         schuetze.clubId, 
                         schuetze.kmClubId,
                         ...(schuetze.kmStartrechte ? Object.values(schuetze.kmStartrechte) : [])
-                      ].filter(Boolean);
+                      ].filter((c): c is string => Boolean(c));
                       
                       const hasAccess = schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
                       if (!hasAccess) return false;
@@ -765,11 +692,11 @@ function KMMeldungenContent() {
                     })
                     .sort((a, b) => {
                       // Nach Nachname sortieren
-                      const getLastName = (schuetze) => {
+                      const getLastName = (schuetze: Shooter) => {
                         if (schuetze.lastName) return schuetze.lastName;
                         if (schuetze.name) {
                           const parts = schuetze.name.trim().split(' ');
-                          return parts.length >= 2 ? parts.pop() : schuetze.name;
+                          return parts.length >= 2 ? (parts.pop() || '') : schuetze.name;
                         }
                         return '';
                       };
@@ -916,7 +843,7 @@ function KMMeldungenContent() {
                         if (!schuetze) return '';
                         const selectedSaisonInfo = saisons.find(s => s.id === selectedSaison);
                         const sportjahr = selectedSaisonInfo?.jahr || new Date().getFullYear();
-                        const age = sportjahr - schuetze.birthYear;
+                        const age = sportjahr - (schuetze.birthYear || 0);
                         return `Alter Sportjahr ${sportjahr}: ${age} Jahre, ${schuetze.gender === 'male' ? 'Männlich' : 'Weiblich'}`;
                       })()}
                     </div>
@@ -991,8 +918,8 @@ function KMMeldungenContent() {
                       const today = new Date();
                       let isExpired = false;
                       
-                      if (disziplin.saison?.meldeschluss) {
-                        const meldeschluss = disziplin.saison.meldeschluss;
+                      if ((disziplin as any).saison?.meldeschluss) {
+                        const meldeschluss = (disziplin as any).saison.meldeschluss;
                         let deadline;
                         
                         if (meldeschluss.includes('.') && meldeschluss.length > 6) {
@@ -1245,7 +1172,7 @@ function KMMeldungenContent() {
                             schuetze.clubId, 
                             schuetze.kmClubId,
                             ...(schuetze.kmStartrechte ? Object.values(schuetze.kmStartrechte) : [])
-                          ].filter(Boolean);
+                          ].filter((c): c is string => Boolean(c));
                           const hasAccess = schuetzeClubIds.some(clubId => userClubIds.includes(clubId));
                           if (!hasAccess) return false;
                           if (currentClubId && !schuetzeClubIds.includes(currentClubId)) return false;
@@ -1259,11 +1186,11 @@ function KMMeldungenContent() {
                           return true;
                         })
                         .sort((a, b) => {
-                          const getLastName = (schuetze) => {
+                          const getLastName = (schuetze: Shooter) => {
                             if (schuetze.lastName) return schuetze.lastName;
                             if (schuetze.name) {
                               const parts = schuetze.name.trim().split(' ');
-                              return parts.length >= 2 ? parts.pop() : schuetze.name;
+                              return parts.length >= 2 ? (parts.pop() || '') : schuetze.name;
                             }
                             return '';
                           };
@@ -1614,7 +1541,7 @@ function KMMeldungenContent() {
                             const lmKey = `${schuetzeId}_${selectedDisziplin}`;
                             const vmKey = `${schuetzeId}_${selectedDisziplin}`;
                             const vmData = vmErgebnisse[vmKey];
-                            logDebug('LM Key:', lmKey, 'Value:', lmTeilnahme[lmKey]);
+                            logDebug(`LM Key: ${lmKey} Value: ${lmTeilnahme[lmKey]}`);
                             return {
                               schuetzeId,
                               disziplinId: selectedDisziplin,

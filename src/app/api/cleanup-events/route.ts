@@ -1,9 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
 import { logError, logInfo } from '@/lib/utils/secure-logger';
+import { verifyApiAuth } from '@/lib/auth/api-auth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Nur für angemeldete Nutzer (verhindert anonymes Auslösen der Löschung).
+    const authUser = await verifyApiAuth(request);
+    if (!authUser) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 30);
 

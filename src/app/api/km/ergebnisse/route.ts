@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError, logDebug, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { requireKMAuth } from '@/lib/auth/api-auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
     const body = await request.json();
     const { 
       meldung_id, 
@@ -33,7 +38,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const saisonData = saisonDoc.data();
+    const saisonData = saisonDoc.data() as any;
     const saisonJahr = saisonData.jahr || 2026;
     
     // Collection-Name basierend auf Saison
@@ -95,6 +100,10 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireKMAuth(request);
+    if (!auth.ok) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
     const { searchParams } = new URL(request.url);
     const saisonId = searchParams.get('saison');
     
@@ -108,7 +117,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, data: [] });
     }
 
-    const saisonData = saisonDoc.data();
+    const saisonData = saisonDoc.data() as any;
     const saisonJahr = saisonData.jahr || 2026;
     
     // Collection-Name basierend auf Saison

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, History, Search, Filter, Calendar, User, RefreshCw } from 'lucide-react';
+import { Loader2, History, Search, User, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { auditLogService, AuditLogEntry } from '@/lib/services/audit-service';
 import { format } from 'date-fns';

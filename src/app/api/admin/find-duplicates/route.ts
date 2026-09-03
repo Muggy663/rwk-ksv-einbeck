@@ -9,7 +9,7 @@ export async function GET() {
     const shooters = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })) as Array<{ id: string; [key: string]: any }>;
 
 
 
@@ -33,8 +33,8 @@ export async function GET() {
       });
     });
 
-    const duplicates = [];
-    duplicateMap.forEach((entries, key) => {
+    const duplicates: any[] = [];
+    duplicateMap.forEach((entries, _key) => {
       if (entries.length > 1) {
         const first = entries[0];
         duplicates.push({ 

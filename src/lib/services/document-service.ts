@@ -33,7 +33,7 @@ export async function getAllDocuments(): Promise<Document[]> {
         }
       }
     } catch (apiErr) {
-      logWarn('Fehler beim Laden der Dokumente aus MongoDB, fallback zu JSON:', apiErr);
+      logWarn('Fehler beim Laden der Dokumente aus MongoDB, fallback zu JSON:', apiErr instanceof Error ? apiErr.message : String(apiErr));
     }
     
     // Fallback: Lade Dokumente aus der JSON-Datei

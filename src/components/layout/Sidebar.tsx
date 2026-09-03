@@ -1,5 +1,4 @@
 "use client";
-import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -14,10 +13,7 @@ import {
   MessageSquare,
   Bell,
   ShieldCheck,
-  User,
   Settings,
-  Trophy,
-  Users,
   AlertTriangle,
   Newspaper,
   Target
@@ -38,7 +34,8 @@ export function Sidebar() {
     { href: '/dokumente', label: 'Dokumente', icon: FileText },
   ];
 
-  const betaRoutes = [
+  // Eigenständiges Zusatz-Feature (kein Kern-RWK/KM) – bewusst abgesetzt.
+  const extraRoutes = [
     { href: '/schiessnachweis', label: 'Schießnachweis', icon: Target },
   ];
 
@@ -86,8 +83,6 @@ export function Sidebar() {
             >
               <Icon className="h-4 w-4 mr-3" />
               {route.label}
-
-              {(route.href === '/social' || route.href === '/social/welcome') && <span className="text-xs text-green-600 dark:text-green-400 font-semibold ml-2">NEU</span>}
             </Link>
           );
         })}
@@ -99,8 +94,37 @@ export function Sidebar() {
     <div className="w-64 h-full bg-background border-r flex flex-col">
       <div className="p-6 pt-8 flex-1 overflow-y-auto">
         <NavSection title="Hauptbereich" routes={publicRoutes} />
-        
-        <NavSection title="Beta Features" routes={betaRoutes} />
+
+        {/* Zusatz-Feature – abgesetzt mit Trenner und extra Abstand */}
+        <div className="mt-2 mb-6 border-t pt-5">
+          <h3 className="mb-3 flex items-center gap-1.5 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Extra
+            <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium normal-case text-primary-foreground">
+              Bonus
+            </span>
+          </h3>
+          <div className="space-y-1">
+            {extraRoutes.map((route) => {
+              const Icon = route.icon;
+              const isActive = pathname === route.href || pathname.startsWith(route.href);
+              return (
+                <Link
+                  key={route.href}
+                  href={route.href}
+                  className={cn(
+                    'flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  <Icon className="mr-3 h-4 w-4" />
+                  {route.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
         
         {user && (
           <NavSection title="Mein Bereich" routes={userRoutes} />

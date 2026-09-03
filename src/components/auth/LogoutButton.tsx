@@ -1,6 +1,5 @@
 "use client";
 
-import React from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';

@@ -6,6 +6,8 @@ import { GoogleGenAI } from '@google/genai';
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 export async function POST(request: NextRequest) {
+  let personalData: any;
+  let stats: any;
   try {
     logDebug('🤖 Gemini Behördentext API aufgerufen');
     
@@ -19,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     logDebug('📝 Request Body:', body);
-    const { personalData, stats } = body;
+    ({ personalData, stats } = body);
     
     const systemPrompt = `Du bist ein Experte für offizielle Behördenschreiben im Schießsport. 
 Erstelle einen professionellen Begleittext für einen Schießnachweis in ICH-FORM.
@@ -60,7 +62,7 @@ Erstelle einen kurzen, professionellen Text in ICH-FORM für Behörden.`;
     });
     logDebug('✅ Gemini Response erhalten');
 
-    const text = response.text.trim();
+    const text = (response.text || '').trim();
     logDebug('📄 Generierter Text:', text.substring(0, 100) + '...');
     
     return NextResponse.json({

@@ -145,45 +145,6 @@ export function NewsForm({ article, onSuccess, onCancel }: NewsFormProps) {
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const getCategoryLabel = (cat: string) => {
-    switch (cat) {
-      case 'allgemein': return 'Allgemein';
-      case 'ergebnisse': return 'Ergebnisse';
-      case 'termine': return 'Termine';
-      case 'regelaenderung': return 'Regeländerung';
-      case 'wichtig': return 'Wichtig';
-      default: return cat;
-    }
-  };
-
-  const getPriorityLabel = (prio: string) => {
-    switch (prio) {
-      case 'normal': return 'Normal';
-      case 'hoch': return 'Hoch';
-      case 'dringend': return 'Dringend';
-      default: return prio;
-    }
-  };
-
-  const getStatusLabel = (stat: string) => {
-    switch (stat) {
-      case 'entwurf': return 'Entwurf';
-      case 'veroeffentlicht': return 'Veröffentlicht';
-      case 'archiviert': return 'Archiviert';
-      default: return stat;
-    }
-  };
-
-  const getAudienceLabel = (aud: string) => {
-    switch (aud) {
-      case 'alle': return 'Alle';
-      case 'vereinsvertreter': return 'Vereinsvertreter';
-      case 'mannschaftsfuehrer': return 'Mannschaftsführer';
-      case 'admins': return 'Admins';
-      default: return aud;
-    }
-  };
-
   if (!isAdmin) {
     return (
       <Card>

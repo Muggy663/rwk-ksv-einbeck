@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logWarn } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { authFetch } from '@/lib/auth/authFetch';
 
 export default function KMMeldungenStatistik() {
   const { toast } = useToast();
@@ -32,7 +33,7 @@ export default function KMMeldungenStatistik() {
       const { db } = await import('@/lib/firebase/config');
       
       const [meldungenRes, shootersSnapshot, disziplinenRes, clubsRes] = await Promise.all([
-        fetch(`/api/km/meldungen?jahr=${selectedYear}`),
+        authFetch(`/api/km/meldungen?jahr=${selectedYear}`),
         getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc'))),
         fetch('/api/km/disziplinen'),
         fetch('/api/clubs')
@@ -116,7 +117,7 @@ export default function KMMeldungenStatistik() {
           );
           stats.byAltersklasse[altersklasse] = (stats.byAltersklasse[altersklasse] || 0) + 1;
         } catch (error) {
-          logWarn('Altersklasse calculation failed:', error);
+          logWarn('Altersklasse calculation failed:', error instanceof Error ? error.message : String(error));
         }
       }
     });

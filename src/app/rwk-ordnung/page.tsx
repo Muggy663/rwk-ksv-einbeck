@@ -1,7 +1,6 @@
 // src/app/rwk-ordnung/page.tsx
 "use client"; // Good practice, though not strictly needed for static content yet
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ScrollText } from 'lucide-react';
 import { FAQSearch } from '@/components/rwk-ordnung/faq-search';

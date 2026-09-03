@@ -16,7 +16,7 @@ interface Firework {
 export const Fireworks: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fireworksRef = useRef<Firework[]>([]);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     const canvas = canvasRef.current;

@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
@@ -30,8 +30,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    secureLogger.error('ErrorBoundary caught an error', 'error-boundary');
+  componentDidCatch(error: Error, _errorInfo: ErrorInfo): void {
+    secureLogger.error('ErrorBoundary caught an error', error, 'error-boundary');
   }
 
   resetErrorBoundary = (): void => {

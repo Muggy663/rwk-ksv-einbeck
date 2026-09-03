@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import type { KMMeldung, KMDisziplin, Shooter, Club } from '@/types';
 import { useKMAuth } from '@/hooks/useKMAuth';
+import { authFetch } from '@/lib/auth/authFetch';
 
 export default function KMAdmin() {
   const { toast } = useToast();
@@ -21,7 +22,7 @@ export default function KMAdmin() {
 
   const handlePDFExport = async (type: 'meldeliste' | 'startliste' | 'lm-meldungen') => {
     try {
-      const response = await fetch('/api/km/export', {
+      const response = await authFetch('/api/km/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type })
@@ -56,9 +57,9 @@ export default function KMAdmin() {
   const loadData = async () => {
     try {
       const [meldungenRes, disziplinenRes, schuetzenRes, vereineRes] = await Promise.all([
-        fetch('/api/km/meldungen'),
+        authFetch('/api/km/meldungen'),
         fetch('/api/km/disziplinen'),
-        fetch('/api/shooters'),
+        authFetch('/api/shooters'),
         fetch('/api/clubs')
       ]);
       

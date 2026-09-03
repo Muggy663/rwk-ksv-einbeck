@@ -1,7 +1,7 @@
 
 // src/app/admin/seasons/page.tsx
 "use client";
-import React, { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -139,7 +139,7 @@ export default function AdminSeasonsPage() {
       return;
     }
 
-    const seasonName = getSeasonName(currentSeason.competitionYear, currentSeason.type);
+    const seasonName = getSeasonName(currentSeason.competitionYear, currentSeason.type as UIDisciplineSelection);
     const seasonDataToSave: Omit<Season, 'id'> = {
       competitionYear: currentSeason.competitionYear,
       type: currentSeason.type,
@@ -357,7 +357,7 @@ export default function AdminSeasonsPage() {
                   <Label htmlFor="type" className="text-right">Disziplin</Label>
                   <NativeSelect
                       value={currentSeason.type || 'KK'} 
-                      onValueChange={(value: UIDisciplineSelection) => handleFormInputChange('type', value)}
+                      onValueChange={(value: string) => handleFormInputChange('type', value as UIDisciplineSelection)}
                       placeholder="Disziplin wählen"
                       options={[
                         { value: 'KK', label: 'Kleinkaliber (KK)' },
@@ -370,7 +370,7 @@ export default function AdminSeasonsPage() {
                   <Label htmlFor="status" className="text-right">Status</Label>
                   <NativeSelect
                       value={currentSeason.status || 'Vorbereitung'} 
-                      onValueChange={(value: Season['status']) => handleFormInputChange('status', value)}
+                      onValueChange={(value: string) => handleFormInputChange('status', value as Season['status'])}
                       placeholder="Status wählen"
                       options={[
                         { value: 'Vorbereitung', label: 'Vorbereitung' },

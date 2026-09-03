@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Newspaper, AlertTriangle, Activity, Users } from 'lucide-react';
+import { Newspaper, AlertTriangle, Activity } from 'lucide-react';
 import { newsService } from '@/lib/services/news-service';
 import { protestService } from '@/lib/services/protest-service';
 import { auditLogService } from '@/lib/services/audit-service';

@@ -11,8 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   GraduationCap, Calendar, MapPin, Users, Clock,
-  Euro, ChevronRight, BookOpen, Award, AlertCircle,
-  Target, CheckCircle2, Info, Mail, Phone
+  ChevronRight, BookOpen, Award, AlertCircle,
+  Target, CheckCircle2, Info, Mail
 } from 'lucide-react';
 
 // ─── Typen ───────────────────────────────────────────────────────────────────
@@ -500,7 +500,7 @@ function KursDetail({ kurs, onClose }: { kurs: Kurs; onClose: () => void }) {
 
 export default function AusbildungPage() {
   const [kurse, setKurse] = useState<Kurs[]>([]);
-  const [loadingKurse, setLoadingKurse] = useState(true);
+  const [, setLoadingKurse] = useState(true);
   const [selectedKurs, setSelectedKurs] = useState<Kurs | null>(null);
   const [filter, setFilter] = useState<KursKategorie | 'alle'>('alle');
 
@@ -509,7 +509,7 @@ export default function AusbildungPage() {
     import('@/lib/services/ausbildung-service').then(({ getKurse }) => {
       getKurse().then(data => {
         if (data.length > 0) {
-          setKurse(data.filter(k => k.status !== 'entwurf'));
+          setKurse(data.filter(k => k.status !== 'entwurf') as Kurs[]);
         } else {
           // Fallback: Beispieldaten solange Firestore leer ist
           setKurse(KURSE.filter(k => k.status !== 'entwurf'));

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Save, Trophy } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { authFetch } from '@/lib/auth/authFetch';
 
 
 interface Meldung {
@@ -35,15 +36,15 @@ export default function VMErgebnissePage() {
     const loadData = async () => {
       try {
         const [meldungenRes, ergebnisseRes] = await Promise.all([
-          fetch('/api/km/meldungen'),
-          fetch('/api/km/ergebnisse')
+          authFetch('/api/km/meldungen'),
+          authFetch('/api/km/ergebnisse')
         ]);
         
         const meldungenData: Meldung[] = [];
         const disziplinenSet = new Set<string>();
         
         if (meldungenRes.ok && ergebnisseRes.ok) {
-          const meldungen = (await meldungenRes.json()).data || [];
+          await meldungenRes.json();
           const ergebnisse = (await ergebnisseRes.json()).data || [];
           
           const vmErgebnisseMap = new Map();
@@ -92,7 +93,7 @@ export default function VMErgebnissePage() {
 
     setSaving(true);
     try {
-      const response = await fetch('/api/km/ergebnisse', {
+      const response = await authFetch('/api/km/ergebnisse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { ShooterComparisonSelector, Shooter } from '@/components/statistics/ShooterComparisonSelector';
 import { ShooterComparisonChart } from '@/components/statistics/ShooterComparisonChart';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Users } from 'lucide-react';
 import Link from 'next/link';
 import { fetchSeasons, fetchLeagues, fetchShooterPerformanceData } from '@/lib/services/statistics-service';
 
@@ -159,17 +159,30 @@ export default function ShooterComparisonPage() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-primary">Schützenvergleich</h1>
-        <Button asChild variant="outline" className="w-full sm:w-auto">
-          <Link href="/statistik" className="flex items-center justify-center">
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Zurück zur Übersicht
-          </Link>
-        </Button>
+      <div className="relative mb-6 overflow-hidden rounded-2xl border bg-gradient-to-br from-emerald-500/10 via-background to-background p-6 animate-fade-in">
+        <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 p-2.5 text-white shadow-lg">
+              <Users className="h-7 w-7" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
+                Schützenvergleich
+              </h1>
+              <p className="text-sm text-muted-foreground">Bis zu 6 Schützen über die Durchgänge gegenüberstellen</p>
+            </div>
+          </div>
+          <Button asChild variant="outline" className="w-full sm:w-auto">
+            <Link href="/statistik" className="flex items-center justify-center">
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Übersicht
+            </Link>
+          </Button>
+        </div>
       </div>
       
-      <div className="space-y-4 mb-6">
+      <div className="glass-card space-y-4 rounded-xl border-0 p-4 shadow-sm mb-6">
         <div>
           <Label htmlFor="season-select" className="text-base font-medium">Saison</Label>
           <NativeSelect

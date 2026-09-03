@@ -22,7 +22,7 @@ interface SmartSearchProps {
   onExpandTeam: (teamId: string) => void;
 }
 
-export function SmartSearch({ teamData, onResult, onOpenAccordion, onExpandTeam }: SmartSearchProps) {
+export function SmartSearch({ teamData, onOpenAccordion, onExpandTeam }: SmartSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isListening, setIsListening] = useState(false);

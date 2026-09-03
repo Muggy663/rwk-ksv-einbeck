@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -163,7 +163,7 @@ export default function StoragePage() {
                   </div>
                   
                   {mongoDBInfo.isNearLimit && (
-                    <Alert variant="warning" className="bg-amber-50 border-amber-200">
+                    <Alert variant="default" className="bg-amber-50 border-amber-200">
                       <AlertTriangle className="h-4 w-4 text-amber-600" />
                       <AlertTitle className="text-amber-800">Warnung: Speicherplatz fast aufgebraucht</AlertTitle>
                       <AlertDescription className="text-amber-700">
@@ -268,7 +268,7 @@ export default function StoragePage() {
                   </div>
                   
                   {firestoreInfo.isNearLimit && (
-                    <Alert variant="warning" className="bg-amber-50 border-amber-200">
+                    <Alert variant="default" className="bg-amber-50 border-amber-200">
                       <AlertTriangle className="h-4 w-4 text-amber-600" />
                       <AlertTitle className="text-amber-800">Warnung: Speicherplatz fast aufgebraucht</AlertTitle>
                       <AlertDescription className="text-amber-700">

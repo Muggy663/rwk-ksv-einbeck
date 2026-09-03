@@ -1,6 +1,6 @@
 // src/lib/services/km-wettkampfklassen-service.ts
 import { db } from '@/lib/firebase/config';
-import { collection, addDoc, writeBatch, doc } from 'firebase/firestore';
+import { collection, writeBatch, doc } from 'firebase/firestore';
 
 // Wettkampfklassen-Definitionen für 2026
 const COMPETITION_CLASSES_2026 = [

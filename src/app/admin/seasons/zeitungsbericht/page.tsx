@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -160,7 +160,7 @@ export default function ZeitungsberichtPage() {
         
         // Hole Liga-Name für korrekte Anzeige
         const leagueInfo = leagues.find(l => l.id === selectedLeague);
-        const ligaName = leagueInfo ? leagueInfo.name : s.category;
+        const ligaName = leagueInfo ? leagueInfo.name : '';
         
         besteSchuetzen.push(...topShooters.map(s => ({
           name: s.name,
@@ -170,15 +170,6 @@ export default function ZeitungsberichtPage() {
         })));
         
         besteMannschaften.push(...topTeams.map(t => {
-          // Vereinsname-Extraktion: Entferne römische Zahlen nur aus Vereinsname, nicht aus Teamname
-          let vereinsname = t.clubName || 'Unbekannt';
-          if (!t.clubName && t.name) {
-            // Extrahiere Vereinsname aus Teamname (entferne römische Zahlen am Ende)
-            vereinsname = t.name
-              .replace(/\s+(I{1,3}|\d+)\s*$/, '') // Entferne nur römische Zahlen/Nummern für Vereinsname
-              .trim();
-          }
-          
           // Schützen-Namen: Nutze teamMembersWithScores wenn verfügbar, sonst teamMembers
           let schuetzenNamen = '';
           if (t.teamMembersWithScores && t.teamMembersWithScores.length > 0) {
@@ -209,15 +200,6 @@ export default function ZeitungsberichtPage() {
             })));
             
             besteMannschaften.push(...topTeams.map(t => {
-              // Vereinsname-Extraktion: Entferne römische Zahlen nur aus Vereinsname, nicht aus Teamname
-              let vereinsname = t.clubName || 'Unbekannt';
-              if (!t.clubName && t.name) {
-                // Extrahiere Vereinsname aus Teamname (entferne römische Zahlen am Ende)
-                vereinsname = t.name
-                  .replace(/\s+(I{1,3}|\d+)\s*$/, '') // Entferne nur römische Zahlen/Nummern für Vereinsname
-                  .trim();
-              }
-              
               // Schützen-Namen: Nutze teamMembersWithScores wenn verfügbar, sonst teamMembers
               let schuetzenNamen = '';
               if (t.teamMembersWithScores && t.teamMembersWithScores.length > 0) {
@@ -304,7 +286,7 @@ export default function ZeitungsberichtPage() {
     if (!reportData) return;
 
     const berichtText = `
-**Zeitungsbericht - ${data.saison}**
+**Zeitungsbericht - ${reportData.saison}**
 
 **${reportData.wettkampftag} in ${reportData.ort}**
 
