@@ -98,36 +98,25 @@ export default function StartlistenV2Uebersicht() {
 
   const loadVerfuegbareJahre = async () => {
     try {
-      const { getFirestore } = await import('firebase/firestore');
-      const { app } = await import('@/lib/firebase/config');
-      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
-      const correctDb = getFirestore(app, databaseId);
-      
-      // Dynamisch aus existierenden Collections ableiten
-      const knownCollections = [
-        'km_meldungen_2026_kk', 'km_meldungen_2026_kkp', 'km_meldungen_2026_ld'
-      ];
-      
+      // Verfügbare Jahre dynamisch aus den angelegten KM-Saisons ableiten,
+      // statt fest verdrahteter Collection-Namen (sonst fehlen neue Jahre wie 2027).
       const gefundeneJahre = new Set<string>();
-      
-      for (const collectionName of knownCollections) {
-        try {
-          const { getDocs, collection, limit, query } = await import('firebase/firestore');
-          const testQuery = query(collection(correctDb, collectionName), limit(1));
-          const snapshot = await getDocs(testQuery);
-          
-          if (!snapshot.empty) {
-            // Extrahiere Jahr aus Collection-Name (z.B. "km_meldungen_2026_kk" -> "2026")
-            const jahr = collectionName.match(/_(\d{4})_/)?.[1];
-            if (jahr) {
-              gefundeneJahre.add(jahr);
-            }
-          }
-        } catch (e) {
-          // Collection existiert nicht - ignorieren
-        }
+
+      const res = await fetch('/api/km/saisons');
+      if (res.ok) {
+        const data = await res.json();
+        (data.data || []).forEach((s: any) => {
+          if (s.jahr) gefundeneJahre.add(String(s.jahr));
+        });
       }
-      
+
+      // Sicherheitsnetz: aktuelles + kommendes Jahr immer anbieten
+      if (gefundeneJahre.size === 0) {
+        const jetzt = new Date().getFullYear();
+        gefundeneJahre.add(String(jetzt));
+        gefundeneJahre.add(String(jetzt + 1));
+      }
+
       const jahreArray = Array.from(gefundeneJahre).sort((a, b) => parseInt(b) - parseInt(a));
       setVerfuegbareJahre(jahreArray);
       
@@ -137,9 +126,11 @@ export default function StartlistenV2Uebersicht() {
       }
     } catch (error) {
       logError('Fehler beim Laden der verfügbaren Jahre:', error);
-      // Fallback
-      setVerfuegbareJahre(['2026']);
-      setSelectedSaison('2026');
+      // Fallback: aktuelles + kommendes Jahr
+      const jetzt = new Date().getFullYear();
+      const fallback = [String(jetzt + 1), String(jetzt)];
+      setVerfuegbareJahre(fallback);
+      setSelectedSaison(String(jetzt));
     }
   };
 
