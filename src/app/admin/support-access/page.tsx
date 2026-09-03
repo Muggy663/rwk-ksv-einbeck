@@ -172,6 +172,7 @@ export default function SupportAccessPage() {
 
       await updateDoc(doc(db, 'support_sessions', sessionDoc.id), {
         accessLog,
+        adminUid: user.uid,
         lastAccessAt: Timestamp.now()
       });
 

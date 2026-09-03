@@ -431,11 +431,18 @@ export default function DashboardAuswahl() {
                 <p className="text-sm text-red-700 dark:text-red-300 mb-3">
                   Temporären Support-Zugang für das Support-Team generieren
                 </p>
-                <Link href="/support">
-                  <Button className="w-full bg-red-600 hover:bg-red-700">
-                    Support kontaktieren
-                  </Button>
-                </Link>
+                <div className="flex flex-col gap-2">
+                  <Link href="/support-zugang">
+                    <Button className="w-full bg-red-600 hover:bg-red-700">
+                      Support-Code generieren
+                    </Button>
+                  </Link>
+                  <Link href="/support">
+                    <Button variant="outline" className="w-full">
+                      Support kontaktieren
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           )}
