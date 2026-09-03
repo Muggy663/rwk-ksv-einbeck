@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logError, logInfo, getErrorMessage } from '@/lib/utils/secure-logger';
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
-import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { getShooterClubId, ermittleEinzelklasse, ermittleMannschaftsgruppe, type KmAltersklasse } from '@/lib/utils/altersklassen';
 import { requireKMAuth } from '@/lib/auth/api-auth';
 
 const KM_MANNSCHAFTEN_COLLECTION = 'km_mannschaften';
@@ -84,10 +84,13 @@ export async function POST(request: NextRequest) {
     
     // Lade alle Disziplinen (sie haben saison: '2026', nicht saisonId)
     const disziplinenSnapshot = await db.collection('km_disziplinen').get();
+    // Altersklassen (Single Source of Truth) für datengetriebene Klassenermittlung
+    const altersklassenSnapshot = await db.collection('km_altersklassen').get();
     
     const schuetzen = schuetzenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<{ id: string; [key: string]: any }>;
     const disziplinen = disziplinenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<{ id: string; [key: string]: any }>;
     const clubs = clubsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<{ id: string; [key: string]: any }>;
+    const altersklassenListe = altersklassenSnapshot.docs.map(doc => doc.data()) as KmAltersklasse[];
     
     // Lade Mannschaftsregeln aus der Datenbank.
     // Gespeichert wird direkt unter system_config/mannschaftsregeln (Root-Felder),
@@ -101,13 +104,16 @@ export async function POST(request: NextRequest) {
     
     // Mannschaftsregeln - Gruppiere nach echten Altersklassen
     const gruppiert: Record<string, { vereinId: string; disziplin: any; gruppenKey: string; schuetzen: any[]; club: any }> = {};
-    
-    // Dynamisches Sportjahr berechnen
-    const now = new Date();
-    const sportjahr = now.getMonth() >= 6 ? now.getFullYear() + 1 : now.getFullYear();
+
+    // Saison-Jahr (maßgeblich für die Altersklasse) aus den Saison-Daten,
+    // nicht mehr aus einer Sportjahr-Heuristik.
+    const sportjahr = saisonData?.jahr || new Date().getFullYear();
+    // Konfigurierte Mannschafts-Kombinationen (Gruppierung mehrerer Klassen).
+    const altersklassenKombinationen =
+      (mannschaftsregeln as any).altersklassenKombinationen as Record<string, string[]> | undefined;
     
     logInfo('Starte Gruppierung von', { data: meldungen.length, meldungen: true });
-    logInfo('Sportjahr:', { data: sportjahr });
+    logInfo('Sportjahr (Saison):', { data: sportjahr });
     
     for (const meldung of meldungen) {
       const schuetze = schuetzen.find(s => s.id === meldung.schuetzeId);
@@ -119,94 +125,36 @@ export async function POST(request: NextRequest) {
       if (!vereinId) continue;
       
       const age = sportjahr - (schuetze.birthYear || 0);
-      const gender = schuetze.gender;
-      const istAuflage = disziplin.auflage;
+      const istAuflage = !!disziplin.auflage;
       const spoNummer = disziplin.spoNummer || '';
-      
-      // --- ALTERSKLASSE BESTIMMEN ---
-      let altersklasse = 'AK';
-      
-      if (istAuflage) {
-        // Lichtgewehr (11.10/11.11) - 6-11 Jahre, keine Mannschaftswertung
-        if (spoNummer.startsWith('11.') && age >= 6 && age <= 11) {
-          altersklasse = 'Lichtgewehr';
-          // Keine Mannschaftswertung bei Lichtgewehr → skip
-          continue;
-        }
-        
-        // Auflage kreisintern (1.11, 1.41) — Schüler bis Schützen I/Damen I
-        if ((spoNummer === '1.41' || spoNummer === '1.11') && age < 41) {
-          if (age <= 14) altersklasse = 'Schüler m/w'; // Keine Mannschaftswertung für Schüler bei Auflage kreisintern
-          else if (age <= 16) altersklasse = 'Jugend m/w'; // Keine Mannschaftswertung für Jugend
-          else if (age <= 18) altersklasse = 'Junioren II m/w';
-          else if (age <= 20) altersklasse = 'Junioren I m/w';
-          else altersklasse = gender === 'male' ? 'Schützen I' : 'Damen I';
-        }
-        // Auflage regulär — Senioren
-        else if (age >= 41) {
-          if (age <= 50) altersklasse = 'Senioren 0'; // m/w gemischt!
-          else if (age <= 60) altersklasse = gender === 'male' ? 'Senioren I' : 'Seniorinnen I';
-          else if (age <= 65) altersklasse = gender === 'male' ? 'Senioren II' : 'Seniorinnen II';
-          else if (age <= 70) altersklasse = gender === 'male' ? 'Senioren III' : 'Seniorinnen III';
-          else if (age <= 75) altersklasse = gender === 'male' ? 'Senioren IV' : 'Seniorinnen IV';
-          else if (age <= 80) altersklasse = gender === 'male' ? 'Senioren V' : 'Seniorinnen V';
-          else altersklasse = gender === 'male' ? 'Senioren VI' : 'Seniorinnen VI';
-        }
-        else {
-          // Unter 41 bei Auflage ohne Sonderregel → nicht berechtigt
-          altersklasse = 'Nicht berechtigt';
-        }
-      } else {
-        // FREIHAND (LG 1.10, LP 2.10 etc.)
-        // Schüler und Jugend: m/w dürfen gemischt werden
-        // Junioren: I und II zusammen, aber Geschlecht getrennt
-        // Herren/Damen: getrennt nach Geschlecht UND Klasse
-        if (age <= 14) altersklasse = 'Schüler m/w';
-        else if (age <= 16) altersklasse = 'Jugend m/w';
-        else if (age <= 20) altersklasse = gender === 'male' ? 'Junioren m' : 'Junioren w';
-        else if (age <= 40) altersklasse = gender === 'male' ? 'Herren I' : 'Damen I';
-        else if (age <= 50) altersklasse = gender === 'male' ? 'Herren II' : 'Damen II';
-        else if (age <= 60) altersklasse = gender === 'male' ? 'Herren III' : 'Damen III';
-        else if (age <= 70) altersklasse = gender === 'male' ? 'Herren IV' : 'Damen IV';
-        else altersklasse = gender === 'male' ? 'Herren V' : 'Damen V';
+
+      // Lichtgewehr (11.x) 6-11 Jahre: keine Mannschaftswertung → überspringen
+      if (spoNummer.startsWith('11.') && age >= 6 && age <= 11) {
+        continue;
       }
-      
-      // "Nicht berechtigt" → Kein Team
-      if (altersklasse === 'Nicht berechtigt') continue;
-      
-      // --- MANNSCHAFTS-GRUPPIERUNG ---
-      let gruppenKey = altersklasse;
-      
-      if (istAuflage) {
-        // Senioren 0 → m/w gemischt, eigene Gruppe
-        if (altersklasse === 'Senioren 0') {
-          gruppenKey = 'Senioren 0';
-        }
-        // Senioren I-II m/w gemischt
-        else if (/^Senioren (I|II)$/.test(altersklasse) || /^Seniorinnen (I|II)$/.test(altersklasse)) {
-          gruppenKey = 'Senioren I-II';
-        }
-        // Senioren III-VI m/w gemischt
-        else if (/^Senioren (III|IV|V|VI)$/.test(altersklasse) || /^Seniorinnen (III|IV|V|VI)$/.test(altersklasse)) {
-          gruppenKey = 'Senioren III-VI';
-        }
-        // Kreisintern Auflage: Junioren I m/w zusammen, Junioren II m/w zusammen
-        // (bereits durch altersklasse 'Junioren I m/w' / 'Junioren II m/w' abgedeckt)
-        // Schützen I / Damen I zusammen in einer Mannschaft
-        else if (altersklasse === 'Schützen I' || altersklasse === 'Damen I') {
-          gruppenKey = 'Schützen I/Damen I';
-        }
-      } else {
-        // FREIHAND: Schüler/Jugend m/w gemischt (schon durch Altersklasse abgedeckt)
-        // Junioren I+II zusammen aber nach Geschlecht getrennt (schon als 'Junioren m'/'Junioren w')
-        // Herren/Damen getrennt nach Klasse (schon korrekt)
-        // gruppenKey = altersklasse (default)
+
+      // --- EINZEL-ALTERSKLASSE (datengetrieben aus km_altersklassen) ---
+      const altersklasse = ermittleEinzelklasse({
+        birthYear: schuetze.birthYear,
+        gender: schuetze.gender,
+        auflage: istAuflage,
+        spoNummer,
+        saisonJahr: sportjahr,
+        altersklassen: altersklassenListe,
+        altersgenehmigung: !!schuetze.sondergenehmigung
+      });
+
+      // Keine startberechtigte Klasse → kein Team
+      if (!altersklasse) continue;
+
+      // Schüler/Jugend bei Auflage kreisintern: nur Einzelwertung, keine Mannschaft
+      const istKreisinterneAuflage = istAuflage && (spoNummer === '1.41' || spoNummer === '1.11');
+      if (istKreisinterneAuflage && /^(sch(ü|ue)ler|jugend)/i.test(altersklasse)) {
+        continue;
       }
-      
-      // Mannschaftswertung: Schüler/Jugend bei Auflage kreisintern KEINE Mannschaftswertung
-      if (istAuflage && (altersklasse === 'Schüler m/w' || altersklasse === 'Jugend m/w')) {
-        continue; // Nur Einzelwertung lt. Ausschreibung
-      }
+
+      // --- MANNSCHAFTS-GRUPPIERUNG (aus system_config/mannschaftsregeln) ---
+      const gruppenKey = ermittleMannschaftsgruppe(altersklasse, altersklassenKombinationen);
       
       const key = `${vereinId}_${disziplin.id}_${gruppenKey}`;
       if (!gruppiert[key]) {

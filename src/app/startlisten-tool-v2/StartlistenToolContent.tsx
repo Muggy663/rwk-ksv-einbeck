@@ -147,7 +147,9 @@ export function StartlistenToolV2Content() {
             };
             
             const disziplinData = disziplinenMap[data.disziplinId];
-            const berechnetAltersklasse = berechneAltersklasse(schuetze, disziplinData, selectedSaison);
+            // Bevorzugt die bei der Meldung gespeicherte Altersklasse (Single Source
+            // of Truth). Nur als Fallback (Alt-Meldungen ohne Feld) lokal berechnen.
+            const berechnetAltersklasse = data.altersklasse || berechneAltersklasse(schuetze, disziplinData, selectedSaison);
             
             return {
               id: data.id,
@@ -1449,34 +1451,11 @@ export function StartlistenToolV2Content() {
                             const originalMeldung = meldungen.find(m => m.name === (s.name || s.schuetzeName) && m.disziplin === s.disziplin);
                             const lmTeilnahme = originalMeldung?.lmTeilnahme === true;
                             
-                            // Altersklasse berechnen
-                            let korrekteAltersklasse = 'Unbekannt';
-                            if (schuetze?.birthYear) {
-                              const age = (new Date().getFullYear()) - schuetze.birthYear;
-                              const isAuflage = s.disziplin?.toLowerCase().includes('auflage');
-                              const isMale = schuetze.gender === 'male';
-                              
-                              if (age <= 14) korrekteAltersklasse = 'Schüler';
-                              else if (age <= 16) korrekteAltersklasse = 'Jugend';
-                              else if (age <= 18) korrekteAltersklasse = `Junioren II ${isMale ? 'm' : 'w'}`;
-                              else if (age <= 20) korrekteAltersklasse = `Junioren I ${isMale ? 'm' : 'w'}`;
-                              else if (isAuflage) {
-                                if (age <= 40) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
-                                else if (age <= 50) korrekteAltersklasse = isMale ? 'Senioren 0 m' : 'Seniorinnen 0';
-                                else if (age <= 60) korrekteAltersklasse = isMale ? 'Senioren I m' : 'Seniorinnen I';
-                                else if (age <= 65) korrekteAltersklasse = isMale ? 'Senioren II m' : 'Seniorinnen II';
-                                else if (age <= 70) korrekteAltersklasse = isMale ? 'Senioren III m' : 'Seniorinnen III';
-                                else if (age <= 75) korrekteAltersklasse = isMale ? 'Senioren IV m' : 'Seniorinnen IV';
-                                else if (age <= 80) korrekteAltersklasse = isMale ? 'Senioren V m' : 'Seniorinnen V';
-                                else korrekteAltersklasse = isMale ? 'Senioren VI m' : 'Seniorinnen VI';
-                              } else {
-                                if (age <= 40) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} I`;
-                                else if (age <= 50) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} II`;
-                                else if (age <= 60) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} III`;
-                                else if (age <= 70) korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} IV`;
-                                else korrekteAltersklasse = `${isMale ? 'Herren' : 'Damen'} V`;
-                              }
-                            }
+                            // Altersklasse: bevorzugt die bei der Meldung gespeicherte
+                            // (Single Source of Truth), sonst die in der Startliste
+                            // hinterlegte. Keine erneute Berechnung mit falschem Jahr.
+                            const korrekteAltersklasse =
+                              originalMeldung?.altersklasse || s.altersklasse || 'Unbekannt';
                             
                             // Hole SPO-Nummer
                             const disziplinDoc = disziplinenData.find((d: any) => d.name === s.disziplin);
