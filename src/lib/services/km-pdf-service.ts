@@ -122,7 +122,7 @@ export async function generateStartlistePDF(
     });
     
     doc.autoTable({
-      head: [['Team', 'Verein', 'Klasse', 'SchÃ¼tzen', 'Gemischt']],
+      head: [['Team', 'Verein', 'Klasse', 'Schützen', 'Gemischt']],
       body: tableData,
       startY: yPosition,
       styles: { fontSize: 8 },
@@ -131,7 +131,7 @@ export async function generateStartlistePDF(
     
     yPosition = (doc as any).lastAutoTable.finalY + 15;
     
-    // Neue Seite wenn nÃ¶tig
+    // Neue Seite wenn nötig
     if (yPosition > 250) {
       doc.addPage();
       yPosition = 20;

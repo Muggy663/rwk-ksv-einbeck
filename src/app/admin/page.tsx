@@ -37,12 +37,12 @@ export default function AdminDashboardPage() {
           <BackButton className="mr-2" fallbackHref="/dashboard-auswahl" />
           <div>
             <h1 className="text-xl md:text-3xl font-bold text-primary">Admin Dashboard</h1>
-            <p className="text-sm md:text-base text-muted-foreground">Verwaltung der RundenwettkÃ¤mpfe.</p>
+            <p className="text-sm md:text-base text-muted-foreground">Verwaltung der Rundenwettkämpfe.</p>
           </div>
         </div>
         <Link href="/km-orga" className="w-full md:w-auto">
           <Button variant="outline" className="w-full md:w-auto">
-            ðŸ† KM-Orga-Dashboard
+            🏆 KM-Orga-Dashboard
           </Button>
         </Link>
       </div>
@@ -61,7 +61,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Saisons, Ligen und zugehÃ¶rige Daten verwalten.
+              Saisons, Ligen und zugehörige Daten verwalten.
             </CardDescription>
             <div className="flex flex-col gap-2">
               <Link href="/admin/seasons" passHref>
@@ -71,7 +71,7 @@ export default function AdminDashboardPage() {
                 <Button variant="outline" className="w-full">Saisonwechsel</Button>
               </Link>
               <Link href="/admin/promotion-relegation" passHref>
-                <Button variant="outline" className="w-full">ðŸ”¼ðŸ”½ Auf- & Abstiege</Button>
+                <Button variant="outline" className="w-full">🔼🔽 Auf- & Abstiege</Button>
               </Link>
               <Link href="/admin/league-settings">
                 <Button variant="outline" className="w-full">
@@ -96,12 +96,12 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Vereine, Mannschaften und SchÃ¼tzen pflegen.
+              Vereine, Mannschaften und Schützen pflegen.
             </CardDescription>
              <div className="flex flex-col gap-2">
                 <Link href="/admin/clubs" passHref><Button variant="outline" className="w-full">Vereine</Button></Link>
                 <Link href="/admin/teams" passHref><Button variant="outline" className="w-full">Mannschaften</Button></Link>
-                <Link href="/admin/shooters" passHref><Button variant="outline" className="w-full">SchÃ¼tzen</Button></Link>
+                <Link href="/admin/shooters" passHref><Button variant="outline" className="w-full">Schützen</Button></Link>
                 <Link href="/admin/mitglieder-import" passHref><Button variant="outline" className="w-full"><FileUp className="mr-2 h-4 w-4" />Mitcom-Import</Button></Link>
              </div>
           </CardContent>
@@ -118,9 +118,9 @@ export default function AdminDashboardPage() {
             </CardDescription>
             <div className="flex flex-col gap-2">
                 <Link href="/admin/results" passHref><Button className="w-full">Erfassen</Button></Link>
-                <Link href="/admin/edit-results" passHref><Button variant="outline" className="w-full">Bearbeiten/LÃ¶schen</Button></Link>
-                <Link href="/admin/missing-results" passHref><Button variant="outline" className="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200">Fehlende Ergebnisse prÃ¼fen</Button></Link>
-                <Link href="/admin/substitutions" passHref><Button variant="outline" className="w-full bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200">ðŸ”„ ErsatzschÃ¼tzen verwalten</Button></Link>
+                <Link href="/admin/edit-results" passHref><Button variant="outline" className="w-full">Bearbeiten/Löschen</Button></Link>
+                <Link href="/admin/missing-results" passHref><Button variant="outline" className="w-full bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200">Fehlende Ergebnisse prüfen</Button></Link>
+                <Link href="/admin/substitutions" passHref><Button variant="outline" className="w-full bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-200">🔄 Ersatzschützen verwalten</Button></Link>
             </div>
           </CardContent>
         </Card>
@@ -136,7 +136,7 @@ export default function AdminDashboardPage() {
             </CardDescription>
             <div className="flex flex-col gap-2">
               <Link href="/admin/user-management" passHref>
-                <Button className="w-full" variant="outline">ðŸ‘¥ Benutzer & Rollen</Button>
+                <Button className="w-full" variant="outline">👥 Benutzer & Rollen</Button>
               </Link>
               <BulkVerifyButton />
             </div>
@@ -160,15 +160,15 @@ export default function AdminDashboardPage() {
         
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">MannschaftsfÃ¼hrer</CardTitle>
+            <CardTitle className="text-lg font-medium">Mannschaftsführer</CardTitle>
             <Users className="h-6 w-6 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Liste aller MannschaftsfÃ¼hrer nach Saison und Liga mit Kontaktdaten.
+              Liste aller Mannschaftsführer nach Saison und Liga mit Kontaktdaten.
             </CardDescription>
             <Link href="/admin/team-managers" passHref>
-              <Button className="w-full" variant="outline">MannschaftsfÃ¼hrer anzeigen</Button>
+              <Button className="w-full" variant="outline">Mannschaftsführer anzeigen</Button>
             </Link>
           </CardContent>
         </Card>
@@ -187,7 +187,7 @@ export default function AdminDashboardPage() {
                 <Button className="w-full" variant="outline">Tickets anzeigen</Button>
               </Link>
               <Link href="/admin/feedback" passHref>
-                <Button className="w-full" variant="outline">ðŸ’¬ Feedbacks</Button>
+                <Button className="w-full" variant="outline">💬 Feedbacks</Button>
               </Link>
             </div>
           </CardContent>
@@ -200,7 +200,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-center p-3 bg-green-50 rounded-md">
-              <p className="text-sm text-green-800 font-medium">âœ… Error-Monitoring aktiv</p>
+              <p className="text-sm text-green-800 font-medium">✅ Error-Monitoring aktiv</p>
               <p className="text-xs text-green-600">Fehler werden automatisch per E-Mail gesendet</p>
             </div>
           </CardContent>
@@ -213,7 +213,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <CardDescription className="mb-4">
-              Startgelder berechnen und KostenÃ¼bersicht fÃ¼r den Schatzmeister.
+              Startgelder berechnen und Kostenübersicht für den Schatzmeister.
             </CardDescription>
             <Link href="/admin/startgelder" passHref>
               <Button className="w-full">Startgelder verwalten</Button>
@@ -235,10 +235,10 @@ export default function AdminDashboardPage() {
                 <Button className="w-full">Handzettel erstellen</Button>
               </Link>
               <Link href="/admin/email-system" passHref>
-                <Button className="w-full" variant="outline">ðŸ“§ E-Mail-System</Button>
+                <Button className="w-full" variant="outline">📧 E-Mail-System</Button>
               </Link>
               <Link href="/admin/support-access" passHref>
-                <Button className="w-full" variant="outline">ðŸ› ï¸ Support-Zugang</Button>
+                <Button className="w-full" variant="outline">🛠️ Support-Zugang</Button>
               </Link>
             </div>
           </CardContent>
@@ -256,10 +256,10 @@ export default function AdminDashboardPage() {
             </CardDescription>
              <div className="flex flex-col gap-2">
               <Link href="/admin/audit" passHref>
-                <Button className="w-full">Ã„nderungsprotokoll</Button>
+                <Button className="w-full">Änderungsprotokoll</Button>
               </Link>
               <Link href="/admin/recovery" passHref>
-                <Button className="w-full" variant="outline">ðŸ”„ Datenwiederherstellung</Button>
+                <Button className="w-full" variant="outline">🔄 Datenwiederherstellung</Button>
               </Link>
             </div>
           </CardContent>
@@ -273,7 +273,7 @@ export default function AdminDashboardPage() {
           <CardTitle className="text-xl text-accent flex items-center"><InfoIcon className="mr-2 h-5 w-5" /> Wichtige Hinweise</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>Dies ist der Administrationsbereich. Ã„nderungen hier haben direkte Auswirkungen auf die angezeigten Daten in der App.</p>
+          <p>Dies ist der Administrationsbereich. Änderungen hier haben direkte Auswirkungen auf die angezeigten Daten in der App.</p>
           <p>Stellen Sie sicher, dass alle Eingaben korrekt sind, bevor Sie sie speichern.</p>
         </CardContent>
       </Card>
