@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { authFetch } from '@/lib/auth/authFetch';
+import { useKMAuth } from '@/hooks/useKMAuth';
 import Link from 'next/link';
 
 export default function KMInit() {
   const { toast } = useToast();
+  const { hasKMAccess, isKMAdmin, loading: authLoading } = useKMAuth();
   const [initStates, setInitStates] = useState({
     wettkampfklassen: false,
     disziplinen: false
@@ -91,6 +93,33 @@ export default function KMInit() {
   };
 
   const allInitialized = initStates.wettkampfklassen && initStates.disziplinen;
+
+  // Ladezustand der Berechtigungsprüfung
+  if (authLoading) {
+    return (
+      <div className="container py-8 max-w-4xl mx-auto">
+        <div className="flex items-center justify-center py-10">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mr-3"></div>
+          <p>Lade…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Zugangsschutz: Nur eingeloggte KM-Berechtigte (Admin/KM-Orga/Sportleiter)
+  if (!hasKMAccess) {
+    return (
+      <div className="container py-8 max-w-4xl mx-auto">
+        <div className="text-center py-10">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Zugriff verweigert</h1>
+          <p className="text-muted-foreground mb-4">
+            Dieser Bereich (System-Initialisierung) ist nur für Administratoren und die KM-Organisation.
+          </p>
+          <Link href="/" className="text-primary hover:text-primary/80">← Zur Startseite</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8 max-w-4xl mx-auto">
@@ -242,7 +271,8 @@ export default function KMInit() {
         </Card>
       )}
 
-      {/* Wartung: Altersklassen in bestehende Meldungen nachtragen */}
+      {/* Wartung: Altersklassen in bestehende Meldungen nachtragen — nur Admin */}
+      {isKMAdmin && (
       <Card className="mt-6 border-blue-200">
         <CardContent className="pt-6">
           <h3 className="font-semibold mb-1">🎯 Altersklassen nachtragen (Migration)</h3>
@@ -269,6 +299,7 @@ export default function KMInit() {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }
