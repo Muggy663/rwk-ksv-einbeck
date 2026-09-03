@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { logError, logInfo, logDebug } from '@/lib/utils/secure-logger';
-import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { getShooterClubId, ermittleEinzelklasse, type KmAltersklasse } from '@/lib/utils/altersklassen';
 import { authFetch } from '@/lib/auth/authFetch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ export default function KMAdminMeldungen() {
   const [schuetzen, setSchuetzen] = useState<any[]>([]);
   const [disziplinen, setDisziplinen] = useState<any[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
+  const [altersklassenListe, setAltersklassenListe] = useState<KmAltersklasse[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSaison, setSelectedSaison] = useState('');
   const [saisons, setSaisons] = useState<any[]>([]);
@@ -92,11 +93,17 @@ export default function KMAdminMeldungen() {
 
   const loadData = async () => {
     try {
-      const [meldungenRes, disziplinenRes, clubsRes] = await Promise.all([
+      const [meldungenRes, disziplinenRes, clubsRes, altersklassenRes] = await Promise.all([
         authFetch(`/api/km/meldungen?saison=${selectedSaison}`),
         fetch('/api/km/disziplinen'),
-        fetch('/api/clubs')
+        fetch('/api/clubs'),
+        fetch('/api/km/altersklassen')
       ]);
+
+      if (altersklassenRes.ok) {
+        const akData = await altersklassenRes.json();
+        setAltersklassenListe(akData.data || []);
+      }
       
       // Lade Schützen direkt aus Firebase
       const { getDocs, collection, query, orderBy } = await import('firebase/firestore');
@@ -620,34 +627,15 @@ export default function KMAdminMeldungen() {
                       </h3>
                       <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
                         {(() => {
-                          if (!schuetze?.birthYear) return 'Unbekannt';
-                          
                           const currentSaison = saisons.find(s => s.id === selectedSaison);
-                          const age = (currentSaison?.jahr || 2026) - schuetze.birthYear;
-                          const isAuflage = disziplin?.name?.toLowerCase().includes('auflage');
-                          const isMale = schuetze.gender === 'male';
-                          
-                          if (age <= 14) return 'Schüler';
-                          if (age <= 16) return 'Jugend';
-                          if (age <= 18) return `Junioren II ${isMale ? 'm' : 'w'}`;
-                          if (age <= 20) return `Junioren I ${isMale ? 'm' : 'w'}`;
-                          
-                          if (isAuflage) {
-                            if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
-                            if (age <= 50) return 'Senioren 0';
-                            if (age <= 60) return isMale ? 'Senioren I m' : 'Seniorinnen I';
-                            if (age <= 65) return isMale ? 'Senioren II m' : 'Seniorinnen II';
-                            if (age <= 70) return isMale ? 'Senioren III m' : 'Seniorinnen III';
-                            if (age <= 75) return isMale ? 'Senioren IV m' : 'Seniorinnen IV';
-                            if (age <= 80) return isMale ? 'Senioren V m' : 'Seniorinnen V';
-                            return isMale ? 'Senioren VI m' : 'Seniorinnen VI';
-                          } else {
-                            if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
-                            if (age <= 50) return `${isMale ? 'Herren' : 'Damen'} II`;
-                            if (age <= 60) return `${isMale ? 'Herren' : 'Damen'} III`;
-                            if (age <= 70) return `${isMale ? 'Herren' : 'Damen'} IV`;
-                            return `${isMale ? 'Herren' : 'Damen'} V`;
-                          }
+                          return ermittleEinzelklasse({
+                            birthYear: schuetze?.birthYear,
+                            gender: schuetze?.gender,
+                            auflage: !!disziplin?.auflage,
+                            spoNummer: disziplin?.spoNummer,
+                            saisonJahr: currentSaison?.jahr || new Date().getFullYear(),
+                            altersklassen: altersklassenListe
+                          }) || 'Unbekannt';
                         })()
                         }
                       </span>
@@ -880,34 +868,15 @@ export default function KMAdminMeldungen() {
                       <td className="p-2">
                         <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
                           {(() => {
-                            if (!schuetze?.birthYear) return 'Unbekannt';
-                            
                             const currentSaison = saisons.find(s => s.id === selectedSaison);
-                            const age = (currentSaison?.jahr || 2026) - schuetze.birthYear;
-                            const isAuflage = disziplin?.name?.toLowerCase().includes('auflage');
-                            const isMale = schuetze.gender === 'male';
-                            
-                            if (age <= 14) return 'Schüler';
-                            if (age <= 16) return 'Jugend';
-                            if (age <= 18) return `Junioren II ${isMale ? 'm' : 'w'}`;
-                            if (age <= 20) return `Junioren I ${isMale ? 'm' : 'w'}`;
-                            
-                            if (isAuflage) {
-                              if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
-                              if (age <= 50) return isMale ? 'Senioren 0 m' : 'Seniorinnen 0';
-                              if (age <= 60) return isMale ? 'Senioren I m' : 'Seniorinnen I';
-                              if (age <= 65) return isMale ? 'Senioren II m' : 'Seniorinnen II';
-                              if (age <= 70) return isMale ? 'Senioren III m' : 'Seniorinnen III';
-                              if (age <= 75) return isMale ? 'Senioren IV m' : 'Seniorinnen IV';
-                              if (age <= 80) return isMale ? 'Senioren V m' : 'Seniorinnen V';
-                              return isMale ? 'Senioren VI m' : 'Seniorinnen VI';
-                            } else {
-                              if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
-                              if (age <= 50) return `${isMale ? 'Herren' : 'Damen'} II`;
-                              if (age <= 60) return `${isMale ? 'Herren' : 'Damen'} III`;
-                              if (age <= 70) return `${isMale ? 'Herren' : 'Damen'} IV`;
-                              return `${isMale ? 'Herren' : 'Damen'} V`;
-                            }
+                            return ermittleEinzelklasse({
+                              birthYear: schuetze?.birthYear,
+                              gender: schuetze?.gender,
+                              auflage: !!disziplin?.auflage,
+                              spoNummer: disziplin?.spoNummer,
+                              saisonJahr: currentSaison?.jahr || new Date().getFullYear(),
+                              altersklassen: altersklassenListe
+                            }) || 'Unbekannt';
                           })()
                           }
                         </span>

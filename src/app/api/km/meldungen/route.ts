@@ -5,6 +5,7 @@ import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { sendKMMeldungNotificationEmail } from '@/lib/services/email-notification-service';
 import { requireKMAuth } from '@/lib/auth/api-auth';
+import { ermittleEinzelklasse, type KmAltersklasse } from '@/lib/utils/altersklassen';
 
 const getKMMeldungenCollection = (jahr: number, disziplinKuerzel: string) => {
   const kuerzel = disziplinKuerzel.toLowerCase();
@@ -66,6 +67,34 @@ export async function POST(request: NextRequest) {
       }, { status: 409 });
     }
 
+    // Altersklasse (Einzel-Wettkampfklasse) bereits bei der Meldung fixieren,
+    // damit sie überall konsistent ist und nicht auf jeder Folgeseite neu
+    // (und abweichend) berechnet wird. Datengetrieben aus km_altersklassen.
+    let altersklasse: string | null = null;
+    try {
+      const [schuetzeSnap, disziplinSnap, altersklassenSnap] = await Promise.all([
+        adminDb.collection('shooters').doc(schuetzeId).get(),
+        adminDb.collection('km_disziplinen').doc(disziplinId).get(),
+        adminDb.collection('km_altersklassen').get()
+      ]);
+      const schuetzeData = schuetzeSnap.exists ? schuetzeSnap.data() : null;
+      const disziplinData = disziplinSnap.exists ? disziplinSnap.data() : null;
+      const altersklassenListe = altersklassenSnap.docs.map(d => d.data()) as KmAltersklasse[];
+
+      if (schuetzeData && disziplinData) {
+        altersklasse = ermittleEinzelklasse({
+          birthYear: schuetzeData.birthYear,
+          gender: schuetzeData.gender,
+          auflage: !!disziplinData.auflage,
+          spoNummer: disziplinData.spoNummer,
+          saisonJahr: aktivesJahr,
+          altersklassen: altersklassenListe
+        });
+      }
+    } catch (e) {
+      logWarn('Altersklasse konnte bei Meldung nicht berechnet werden:', getErrorMessage(e));
+    }
+
     // Echte Firestore-Speicherung
     const meldung = {
       schuetzeId,
@@ -73,6 +102,7 @@ export async function POST(request: NextRequest) {
       saisonId,
       lmTeilnahme: !!lmTeilnahme,
       anmerkung: anmerkung || '',
+      altersklasse: altersklasse || null,
       saison: aktivesJahr.toString(),
       jahr: aktivesJahr,
       meldedatum: new Date(),
