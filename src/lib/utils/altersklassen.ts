@@ -42,7 +42,16 @@ export interface ErmittleKlasseParams {
   saisonJahr: number;
   /** Liste aller Altersklassen aus km_altersklassen */
   altersklassen: KmAltersklasse[];
+  /**
+   * Altersgenehmigung: Erlaubt 10-/11-Jährigen das Schießen mit scharfem
+   * Luftgewehr (offiziell ab 12). Dann wird für die Klassenermittlung ein
+   * effektives Mindestalter von 12 angesetzt (→ Schülerklasse 12-14).
+   */
+  altersgenehmigung?: boolean;
 }
+
+// Offizielles Mindestalter für scharfes Gewehr/Pistole (unter 12 nur Lichtgewehr).
+const MINDESTALTER_SCHARF = 12;
 
 // Klassennamen der jungen Klassen (gelten für Auflage UND Freihand)
 const JUNGE_KLASSEN_REGEX = /^(sch(ü|ue)ler|jugend|junior)/i;
@@ -67,12 +76,18 @@ function passtGeschlecht(klasseGeschlecht: number, isMale: boolean): boolean {
  * @returns Klassenname oder null, wenn keine passende/startberechtigte Klasse existiert.
  */
 export function ermittleEinzelklasse(params: ErmittleKlasseParams): string | null {
-  const { birthYear, gender, auflage, spoNummer, saisonJahr, altersklassen } = params;
+  const { birthYear, gender, auflage, spoNummer, saisonJahr, altersklassen, altersgenehmigung } = params;
 
   if (!birthYear || !gender || gender === 'unknown') return null;
   if (!Array.isArray(altersklassen) || altersklassen.length === 0) return null;
 
-  const alter = saisonJahr - birthYear;
+  const echtesAlter = saisonJahr - birthYear;
+  // Mit Altersgenehmigung wird ein 10-/11-Jähriger für die Klassenermittlung
+  // wie ein 12-Jähriger behandelt (darf scharfes Luftgewehr schießen).
+  const alter =
+    altersgenehmigung && echtesAlter < MINDESTALTER_SCHARF
+      ? MINDESTALTER_SCHARF
+      : echtesAlter;
   const isMale = gender === 'male';
 
   // Kandidaten: passendes Alter + Geschlecht

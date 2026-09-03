@@ -88,7 +88,8 @@ export async function POST(request: NextRequest) {
           auflage: !!disziplinData.auflage,
           spoNummer: disziplinData.spoNummer,
           saisonJahr: aktivesJahr,
-          altersklassen: altersklassenListe
+          altersklassen: altersklassenListe,
+          altersgenehmigung: !!schuetzeData.sondergenehmigung
         });
       }
     } catch (e) {

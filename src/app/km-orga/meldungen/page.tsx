@@ -634,7 +634,8 @@ export default function KMAdminMeldungen() {
                             auflage: !!disziplin?.auflage,
                             spoNummer: disziplin?.spoNummer,
                             saisonJahr: currentSaison?.jahr || new Date().getFullYear(),
-                            altersklassen: altersklassenListe
+                            altersklassen: altersklassenListe,
+                            altersgenehmigung: !!schuetze?.sondergenehmigung
                           }) || 'Unbekannt';
                         })()
                         }
@@ -875,7 +876,8 @@ export default function KMAdminMeldungen() {
                               auflage: !!disziplin?.auflage,
                               spoNummer: disziplin?.spoNummer,
                               saisonJahr: currentSaison?.jahr || new Date().getFullYear(),
-                              altersklassen: altersklassenListe
+                              altersklassen: altersklassenListe,
+                              altersgenehmigung: !!schuetze?.sondergenehmigung
                             }) || 'Unbekannt';
                           })()
                           }
