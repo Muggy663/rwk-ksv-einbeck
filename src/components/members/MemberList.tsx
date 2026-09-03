@@ -117,7 +117,19 @@ function currentSportjahr(): number {
 
 async function getToken(): Promise<string | null> {
   const { auth } = await import('@/lib/firebase/config');
-  const user = auth.currentUser;
+  // Auf Firebase-Auth-Initialisierung warten, falls currentUser beim ersten
+  // Aufruf (direkt nach Seitenladen) noch nicht gesetzt ist.
+  let user = auth.currentUser;
+  if (!user) {
+    user = await new Promise((resolve) => {
+      const timeout = setTimeout(() => { unsubscribe(); resolve(auth.currentUser); }, 3000);
+      const unsubscribe = auth.onAuthStateChanged((u) => {
+        clearTimeout(timeout);
+        unsubscribe();
+        resolve(u);
+      });
+    });
+  }
   if (!user) return null;
   return user.getIdToken();
 }
