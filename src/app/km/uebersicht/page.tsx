@@ -48,6 +48,9 @@ export default function KMUebersicht() {
       // API alle Meldungen des Jahres liefern (ungefilterter Zwischenstand).
       if (selectedSaison) {
         loadData();
+      } else {
+        // Keine Saison gewählt: Ladeanzeige beenden, damit die Auswahl erscheint.
+        setLoading(false);
       }
     }
   }, [hasKMAccess, authLoading, selectedClubId, selectedSaison]);
@@ -66,8 +69,12 @@ export default function KMUebersicht() {
   };
 
   const loadData = async () => {
-    // Ohne gewählte Saison nicht laden (verhindert ungefilterten Zwischenstand)
-    if (!selectedSaison) return;
+    // Ohne gewählte Saison nicht laden (verhindert ungefilterten Zwischenstand).
+    // Ladeanzeige aber beenden, damit die Saison-Auswahl sichtbar wird.
+    if (!selectedSaison) {
+      setLoading(false);
+      return;
+    }
     try {
       const isAdmin = userPermission?.role === 'admin';
       
