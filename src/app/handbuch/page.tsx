@@ -24,7 +24,7 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM und Schießnachweis.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: Version 3.0.0 - Next.js 16 + Glassmorphism Design
+            Stand: Version 3.0.1 - Next.js 16 + Glassmorphism Design
           </p>
         </div>
       </div>
@@ -475,7 +475,7 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Kreismeisterschaften - Benutzerhandbuch</CardTitle>
-              <CardDescription>Anleitung zur Nutzung des Kreismeisterschafts-Moduls - Version 3.0.0</CardDescription>
+              <CardDescription>Anleitung zur Nutzung des Kreismeisterschafts-Moduls - Version 3.0.1</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">
@@ -742,7 +742,7 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Schießnachweis - Benutzerhandbuch</CardTitle>
-              <CardDescription>Das digitale Schießtagebuch für Sportschützen - Version 3.0.0</CardDescription>
+              <CardDescription>Das digitale Schießtagebuch für Sportschützen - Version 3.0.1</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">

@@ -29,6 +29,10 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 - **📉 Sentry im Live-Betrieb sparsamer**: Detail-Aufzeichnung (Tracing) in Produktion auf 10% reduziert (spart Ressourcen, in der Entwicklung weiterhin vollständig)
 - **🧹 Social Training & Premium entfernt**: Die nicht mehr genutzten Bereiche Social Training (Trainingsgruppen, Duelle, Live-Wettkämpfe, Community-Profile) und die Premium-/Bezahl-Reste wurden vollständig aus der App entfernt. Schlankere, fokussierte Anwendung
 - **🔒 Weitere Sicherheitslücken geschlossen**: Mehrere interne Schnittstellen, über die ohne Anmeldung Daten hätten massenhaft gelöscht oder Berechtigungen manipuliert werden können, wurden entfernt bzw. mit Anmelde- und Rechteprüfung abgesichert. Die Registrierung legt Berechtigungen jetzt nur noch für das eigene Konto an
+
+---
+
+## Version 3.0.1
 - **🔒 Kreismeisterschafts-Schnittstellen abgesichert**: Alle schreibenden KM-Funktionen (Meldungen anlegen/ändern/löschen/verschieben, Ergebnisse speichern und importieren, Mannschaften generieren/bearbeiten/löschen, Disziplinen, Jahre/Saisons, Altersklassen, Startlisten, David21-Import, Mannschaftsregeln) prüfen jetzt serverseitig Anmeldung und KM-Berechtigung — vorher waren einige ohne echte Prüfung erreichbar. Zusätzlich wurde ein unsicherer „Pseudo-Anmelde"-Weg beim KM-Melden durch echte Token-Prüfung ersetzt
 - **🐛 Bugfix Mannschaften generieren**: Beim automatischen Erstellen von KM-Mannschaften wurden die Mannschaftsregeln am falschen Ort gesucht und daher nicht angewandt — jetzt werden die konfigurierten Regeln korrekt geladen und berücksichtigt
 - **🎯 Altersklassen jetzt einheitlich (eine Quelle für alles)**: Die Wettkampfklasse eines Schützen wird jetzt überall aus derselben, im KM-Bereich gepflegten Altersklassen-Tabelle abgeleitet — beim Melden, in der KM-Orga-Übersicht, bei der Mannschaftsbildung und in den Startlisten inkl. PDF. Zuvor rechnete jede Seite eigenständig (und teils widersprüchlich). Grundlage ist immer das Jahr der jeweiligen Saison, nicht mehr das aktuelle Kalenderjahr
