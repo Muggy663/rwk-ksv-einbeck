@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { ListChecks, Info, CalendarDays, ChevronRight, Newspaper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { MeldefensterBanner } from '@/components/home/MeldefensterBanner';
 import { getUIDisciplineValueFromSpecificType, uiDisciplineFilterOptions } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
 import { collection, query, orderBy, limit as firestoreLimit, getDocs, Timestamp } from 'firebase/firestore';
@@ -163,8 +164,8 @@ export default function HomePage() {
 
   return (
     <div className="container py-8 max-w-7xl mx-auto pwa-optimized">
-      {/* Wartungshinweis entfernt - System ist live */}
-      
+      {/* Meldefenster-Hinweis ganz oben (RWK/KM), zuerst sichtbar auf Desktop & Mobil */}
+      <MeldefensterBanner />
 
       {/* Hero-Section mit modernem Design */}
       <section className="relative text-center mb-16 overflow-hidden">

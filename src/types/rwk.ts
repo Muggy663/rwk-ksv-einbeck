@@ -8,6 +8,7 @@ export interface Season {
   status: 'Vorbereitung' | 'Anmeldung möglich' | 'Laufend' | 'Abgeschlossen';
   startDate?: Date;
   endDate?: Date;
+  meldeschluss?: string; // Meldeschluss-Datum (ISO "YYYY-MM-DD"), v.a. bei Status "Anmeldung möglich"
 }
 
 export interface League {

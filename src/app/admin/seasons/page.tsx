@@ -145,6 +145,8 @@ export default function AdminSeasonsPage() {
       type: currentSeason.type,
       status: currentSeason.status,
       name: seasonName,
+      // Meldeschluss nur bei "Anmeldung möglich" speichern, sonst leeren.
+      meldeschluss: currentSeason.status === 'Anmeldung möglich' ? (currentSeason.meldeschluss || '') : '',
     };
 
     setIsLoading(true);
@@ -381,6 +383,22 @@ export default function AdminSeasonsPage() {
                       className="col-span-3"
                   />
                 </div>
+                {currentSeason.status === 'Anmeldung möglich' && (
+                  <div className="grid grid-cols-4 items-start gap-4">
+                    <Label htmlFor="meldeschluss" className="text-right pt-2">Meldeschluss</Label>
+                    <div className="col-span-3">
+                      <Input
+                        id="meldeschluss"
+                        type="date"
+                        value={currentSeason.meldeschluss || ''}
+                        onChange={(e) => setCurrentSeason(prev => prev ? ({ ...prev, meldeschluss: e.target.value }) : prev)}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Bis zu diesem Tag ist die Anmeldung möglich. Wird auf der Startseite als Meldefenster angezeigt.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             <DialogFooter>

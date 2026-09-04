@@ -19,6 +19,14 @@ export interface SaisonLike {
  */
 export function parseMeldeschluss(meldeschluss?: string | null): Date | null {
   if (!meldeschluss || typeof meldeschluss !== 'string') return null;
+
+  // ISO-Format "YYYY-MM-DD" (z. B. RWK-Meldeschluss aus der Saisonverwaltung)
+  const iso = meldeschluss.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    const [, jahrStr, monatStr, tagStr] = iso;
+    return new Date(parseInt(jahrStr, 10), parseInt(monatStr, 10) - 1, parseInt(tagStr, 10), 23, 59, 59, 999);
+  }
+
   const teile = meldeschluss.split('.').map((t) => t.trim()).filter((t) => t !== '');
   if (teile.length < 2) return null;
 
