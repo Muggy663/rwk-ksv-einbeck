@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { logError, logInfo, logDebug } from '@/lib/utils/secure-logger';
 import { getShooterClubId, ermittleEinzelklasse, type KmAltersklasse } from '@/lib/utils/altersklassen';
 import { authFetch } from '@/lib/auth/authFetch';
+import { istMeldeschlussAbgelaufen, sortiereSaisons } from '@/lib/utils/km-meldeschluss';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -214,10 +215,6 @@ export default function KMAdminMeldungen() {
         setSchuetzenSearch('');
         loadData();
       } else if (duplicateCount > 0) {
-        // Browser-Alert für sofortige Sichtbarkeit
-        alert(`⚠️ Duplikat erkannt!\n\n${duplicateCount} Meldung(en) bereits vorhanden${meldungenCount > 0 ? `.\n${meldungenCount} neue Meldung(en) wurden erstellt` : ''}.`);
-        
-        // Zusätzlich Toast
         toast({ 
           title: '⚠️ Duplikat erkannt', 
           description: `${duplicateCount} Meldung(en) bereits vorhanden${meldungenCount > 0 ? `. ${meldungenCount} neue Meldung(en) erstellt` : ''}.`, 
@@ -455,11 +452,16 @@ export default function KMAdminMeldungen() {
                   required
                 >
                   <option value="">🔽 Bitte Saison wählen...</option>
-                  {saisons.map(saison => (
-                    <option key={saison.id} value={saison.id}>
-                      {saison.name}
-                    </option>
-                  ))}
+                  {sortiereSaisons(saisons).map(saison => {
+                    // KM-Orga darf auch abgelaufene Saisons bearbeiten — daher wählbar,
+                    // nur als abgelaufen gekennzeichnet.
+                    const abgelaufen = istMeldeschlussAbgelaufen(saison);
+                    return (
+                      <option key={saison.id} value={saison.id}>
+                        {saison.name}{saison.disziplinTyp ? ` (${saison.disziplinTyp})` : ''}{abgelaufen ? ' — abgelaufen' : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               
@@ -1164,7 +1166,7 @@ export default function KMAdminMeldungen() {
                 className="w-full p-2 border border-gray-300 rounded mt-1"
               >
                 <option value="">Saison wählen...</option>
-                {saisons
+                {sortiereSaisons(saisons)
                   .filter(s => s.id !== selectedSaison)
                   .map(saison => (
                     <option key={saison.id} value={saison.id}>

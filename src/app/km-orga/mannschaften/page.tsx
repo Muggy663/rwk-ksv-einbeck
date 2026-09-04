@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { authFetch } from '@/lib/auth/authFetch';
+import { istMeldeschlussAbgelaufen, sortiereSaisons } from '@/lib/utils/km-meldeschluss';
 import { useKMAuth } from '@/hooks/useKMAuth';
 
 export default function KMAdminMannschaften() {
@@ -237,11 +238,14 @@ export default function KMAdminMannschaften() {
                 required
               >
                 <option value="">🔽 Bitte Saison wählen...</option>
-                {saisons.map(saison => (
-                  <option key={saison.id} value={saison.id}>
-                    {saison.name}
-                  </option>
-                ))}
+                {sortiereSaisons(saisons).map(saison => {
+                  const abgelaufen = istMeldeschlussAbgelaufen(saison);
+                  return (
+                    <option key={saison.id} value={saison.id}>
+                      {saison.name}{saison.disziplinTyp ? ` (${saison.disziplinTyp})` : ''}{abgelaufen ? ' — abgelaufen' : ''}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>

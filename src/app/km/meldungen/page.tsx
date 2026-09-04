@@ -14,6 +14,7 @@ import { BackButton } from '@/components/ui/back-button';
 import { KMProvider, useKMContext } from '@/contexts/KMContext';
 import { KMClubSwitcher } from '@/components/ui/km-club-switcher';
 import { getShooterClubId, ermittleEinzelklasse, type KmAltersklasse } from '@/lib/utils/altersklassen';
+import { istMeldeschlussAbgelaufen, sortiereSaisons } from '@/lib/utils/km-meldeschluss';
 import { authFetch } from '@/lib/auth/authFetch';
 
 function KMMeldungenContent() {
@@ -275,13 +276,11 @@ function KMMeldungenContent() {
         setPendingMeldungen([]);
         loadData();
       } else if (duplicates > 0) {
-        // Browser-Alert für Duplikate
-        alert(`⚠️ Duplikat erkannt!\n\n${duplicates} Meldung(en) bereits vorhanden${successful > 0 ? `.\n${successful} neue Meldung(en) wurden erstellt` : ''}.`);
-        
         toast({ 
-          title: 'Duplikat erkannt', 
+          title: '⚠️ Duplikat erkannt', 
           description: `${duplicates} Meldung(en) bereits vorhanden. ${successful} neue Meldung(en) erstellt.`, 
-          variant: 'destructive' 
+          variant: 'destructive',
+          duration: 5000
         });
         
         // Nur erfolgreich gespeicherte aus Zwischenspeicher entfernen
@@ -406,13 +405,11 @@ function KMMeldungenContent() {
           setVmErgebnisse({});
           loadData();
         } else if (duplicates > 0) {
-          // Browser-Alert für sofortige Sichtbarkeit
-          alert(`⚠️ Duplikat erkannt!\n\n${duplicates} Meldung(en) bereits vorhanden${successful > 0 ? `.\n${successful} neue Meldung(en) wurden erstellt` : ''}.`);
-          
           toast({ 
-            title: 'Duplikat erkannt', 
+            title: '⚠️ Duplikat erkannt', 
             description: `${duplicates} Meldung(en) bereits vorhanden${successful > 0 ? `. ${successful} neue Meldung(en) erstellt` : ''}.`, 
-            variant: 'destructive' 
+            variant: 'destructive',
+            duration: 5000
           });
           // Formular NICHT zurücksetzen bei Duplikaten
           if (successful > 0) loadData(); // Nur Daten neu laden wenn etwas erfolgreich war
@@ -585,25 +582,9 @@ function KMMeldungenContent() {
                         required
                       >
                         <option value="">🔽 Bitte Saison wählen...</option>
-                        {saisons.map(saison => {
-                          const today = new Date();
-                          let isExpired = false;
-                          
-                          if (saison.meldeschluss) {
-                            const meldeschluss = saison.meldeschluss;
-                            let deadline;
-                            
-                            if (meldeschluss.includes('.') && meldeschluss.length > 6) {
-                              const [day, month, year] = meldeschluss.split('.');
-                              deadline = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                            } else {
-                              const [day, month] = meldeschluss.split('.');
-                              deadline = new Date(today.getFullYear(), parseInt(month) - 1, parseInt(day));
-                            }
-                            
-                            isExpired = today > deadline;
-                          }
-                          
+                        {sortiereSaisons(saisons).map(saison => {
+                          // Beim Melden: abgelaufene Saisons sind gesperrt (kein Melden nach Frist).
+                          const isExpired = istMeldeschlussAbgelaufen(saison);
                           return (
                             <option 
                               key={saison.id} 

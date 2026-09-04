@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { logError, logInfo } from '@/lib/utils/secure-logger';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { istMeldeschlussAbgelaufen, sortiereSaisons } from '@/lib/utils/km-meldeschluss';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useKMAuth } from '@/hooks/useKMAuth';
@@ -245,11 +247,16 @@ export default function KMUebersicht() {
                 required
               >
                 <option value="">🔽 Bitte Saison wählen...</option>
-                {saisons.map(saison => (
-                  <option key={saison.id} value={saison.id}>
-                    {saison.name}
-                  </option>
-                ))}
+                {sortiereSaisons(saisons).map(saison => {
+                  // In der Übersicht bleiben abgelaufene Saisons wählbar (Ansehen
+                  // alter Meldungen), werden aber als abgelaufen gekennzeichnet.
+                  const abgelaufen = istMeldeschlussAbgelaufen(saison);
+                  return (
+                    <option key={saison.id} value={saison.id}>
+                      {saison.name}{saison.disziplinTyp ? ` (${saison.disziplinTyp})` : ''}{abgelaufen ? ' — abgelaufen' : ''}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           </div>
@@ -551,6 +558,11 @@ export default function KMUebersicht() {
                             
                             return (
                               <>
+                                {isExpired && (
+                                  <Badge variant="outline" className="w-full sm:w-auto justify-center border-amber-300 bg-amber-50 text-amber-700">
+                                    ⏳ Meldeschluss abgelaufen{canEdit ? ' (nur Orga/Admin)' : ''}
+                                  </Badge>
+                                )}
                                 <Button 
                                   size="sm" 
                                   variant="outline"
