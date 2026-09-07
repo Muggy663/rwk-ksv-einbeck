@@ -27,9 +27,11 @@ Vieles ist bereits vorhanden — teils automatisch, teils manuell:
 - [x] **Auf-/Abstieg BERECHNEN** (`season-transition-service.ts` → `calculateLeagueStandings`,
       `generatePromotionRelegationSuggestions`): Tabellenstände + Regelwerk RWK-Ordnung §16
       (Meister auf, Letzter ab, Platz 2/Vorletzter mit Ringvergleich, Abmeldungen,
-      offene Gruppen LG/LP, Ligaverkleinerung). Seite `/admin/promotion-relegation` mit
-      PDF-Export und Bestätigen-Checkboxen. **ABER:** `applyPromotionRelegation` verschiebt
-      noch KEINE Teams (nur Logging) → Umsetzung ist offen/manuell.
+      Ligaverkleinerung). Seite `/admin/promotion-relegation` mit PDF-Export und Checkboxen.
+- [x] **Auf-/Abstieg ANWENDEN** (`applyPromotionRelegation`): verschiebt bestätigte Teams
+      real in die Nachbarliga der Ziel-Saison (Matching via sourceTeamId + Liga-Rang,
+      innerhalb derselben Disziplin). LGA/LPA-Auflage haben wieder Auf-/Abstieg.
+      Bezirksliga-Relegation bleibt vorerst manuell.
 - [x] **Neue Saison anlegen + Ligen/Teams kopieren** (`createNewSeason`): automatischer Batch;
       neue Vereine in niedrigste Liga (§7). **ABER:** schreibt `status:'Geplant'`
       (nicht im Status-Enum → Inkonsistenz); keine Neueinteilung nach Auf/Abstieg.
@@ -61,11 +63,19 @@ Vieles ist bereits vorhanden — teils automatisch, teils manuell:
 ### [x] B. Saison-Status "Geplant" konsistent gemacht — ERLEDIGT
 - `createNewSeason` schreibt jetzt "Vorbereitung" statt des nicht existierenden "Geplant".
 
-### [ ] C. Auf-/Abstieg ANWENDEN (Team-Verschiebung implementieren)
-- `applyPromotionRelegation` real umsetzen: bestätigte Vorschläge verschieben Teams in die
-  Ziel-Ligen der neuen Saison (leagueId aktualisieren).
-- Bleibt Freigabe-gesteuert: RWK-Leiter bestätigt Vorschläge, dann Umsetzung per Klick.
-- Aufwand: mittel–groß. Das Regelwerk existiert schon; nur die Umsetzung fehlt.
+### [x] C. Auf-/Abstieg ANWENDEN (Team-Verschiebung) — ERLEDIGT
+- `applyPromotionRelegation` real umgesetzt: bestätigte Vorschläge verschieben Teams in die
+  Nachbarliga der Ziel-Saison (leagueId + leagueType aktualisiert), innerhalb derselben
+  Disziplin-Kategorie (kein Sprung über Disziplingrenzen).
+- Matching: Team über `sourceTeamId` (Rückverweis aus createNewSeason), Zielliga über
+  `order` (Liga-Rang), nicht über den Namen.
+- Ziel-Saison-Dropdown im Auf-/Abstiegs-Bereich ergänzt; Rückmeldung zeigt verschobene/
+  übersprungene Teams. Freigabe-gesteuert (RWK-Leiter bestätigt, dann Anwenden).
+- LGA/LPA-Fix: LG-Auflage-Ligen haben wieder Auf-/Abstieg; offene Klassen bleiben ausgenommen.
+- **Bewusste Auslassung (später/manuell):** Bezirksliga-Rückkehrer/Relegation (§16 Abs. 2).
+- **Wichtig für den ersten echten Lauf:** Ziel-Saison zuvor per „Saisonwechsel" erstellen
+  (kopiert Teams 1:1 inkl. sourceTeamId). Auf-/Abstieg wirkt nur auf so erstellte Saisons,
+  da ältere Teams keinen sourceTeamId-Rückverweis haben.
 
 ### [ ] D. Terminbasierte Ergebnis-Erinnerung
 - Durchgangs-Termine als Datenbasis anlegen (pro Saison/Liga oder zentral).

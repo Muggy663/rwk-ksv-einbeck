@@ -60,7 +60,7 @@ export default function SeasonTransitionPage() {
   const { user } = useAuth();
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [selectedSourceSeason, setSelectedSourceSeason] = useState<string>('');
-  const [selectedTargetSeason] = useState<string>('');
+  const [selectedTargetSeason, setSelectedTargetSeason] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [leagues, setLeagues] = useState<League[]>([]);
@@ -241,12 +241,15 @@ export default function SeasonTransitionPage() {
 
     setIsProcessing(true);
     try {
-      await applyPromotionRelegation(allConfirmed, selectedTargetSeason);
+      const res = await applyPromotionRelegation(allConfirmed, selectedTargetSeason);
       
       toast({
         title: 'Auf-/Abstiege angewendet',
-        description: `${allConfirmed.length} Änderungen wurden erfolgreich vorgenommen.`,
+        description: `${res.moved} Mannschaft(en) verschoben${res.skipped.length ? `, ${res.skipped.length} übersprungen` : ''}.`,
       });
+      if (res.skipped.length > 0) {
+        logError('Auf-/Abstieg übersprungen:', res.skipped);
+      }
       
       setShowAllLeagues(false);
       setAllLeagueSuggestions(new Map());
@@ -485,12 +488,15 @@ export default function SeasonTransitionPage() {
 
     setIsProcessing(true);
     try {
-      await applyPromotionRelegation(suggestions, selectedTargetSeason);
+      const res = await applyPromotionRelegation(suggestions, selectedTargetSeason);
       
       toast({
         title: 'Auf-/Abstiege angewendet',
-        description: `${confirmedSuggestions.length} Änderungen wurden erfolgreich vorgenommen.`,
+        description: `${res.moved} Mannschaft(en) verschoben${res.skipped.length ? `, ${res.skipped.length} übersprungen` : ''}.`,
       });
+      if (res.skipped.length > 0) {
+        logError('Auf-/Abstieg übersprungen:', res.skipped);
+      }
       
       setShowSuggestions(false);
       setSuggestions([]);
@@ -579,6 +585,34 @@ export default function SeasonTransitionPage() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              {/* Ziel-Saison: wohin die bestätigten Auf-/Abstiege angewendet werden */}
+              <div className="space-y-2">
+                <Label htmlFor="targetSeasonSelect">Ziel-Saison (für „Bestätigte anwenden")</Label>
+                <Select
+                  value={selectedTargetSeason}
+                  onValueChange={setSelectedTargetSeason}
+                  disabled={isLoading || isProcessing}
+                >
+                  <SelectTrigger id="targetSeasonSelect">
+                    <SelectValue placeholder="Ziel-Saison auswählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {seasons
+                      .filter(s => s.id !== selectedSourceSeason)
+                      .map(season => (
+                        <SelectItem key={season.id} value={season.id}>
+                          {season.name} ({season.competitionYear}){season.status ? ` – ${season.status}` : ''}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Die neue Saison zuerst unter „Saisonwechsel" erstellen (kopiert die Mannschaften 1:1).
+                  Hier auswählen, damit die bestätigten Auf-/Abstiege dort angewendet werden – die
+                  Quell-Saison bleibt unverändert.
+                </p>
               </div>
 
               {/* Abmeldungen verwalten */}

@@ -4,6 +4,7 @@ import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
 import { collection, getDocs, query, where, doc, writeBatch } from 'firebase/firestore';
 import { SubstitutionService } from './substitution-service';
 import { TeamCalculationService } from './team-calculation-service';
+import { getDisciplineCategory } from '@/types/rwk';
 
 export interface TeamStanding {
   teamId: string;
@@ -153,6 +154,32 @@ export async function calculateLeagueStandings(leagueId: string, competitionYear
 }
 
 /**
+ * Bestimmt, ob eine Liga eine "offene Klasse" ohne Auf-/Abstieg ist.
+ * Laut RWK-Ordnung §6/§16: LG Freihand, Luftpistole (LP/LPA) und KK-Sportpistole
+ * sind offene Klassen. LG AUFLAGE (LGA) und KK-Gewehr Auflage (Ligen mit
+ * Kreisoberliga/Kreisliga/Kreisklassen) haben SEHR WOHL Auf-/Abstieg.
+ *
+ * Wichtig: Nicht allein am Namen "luftgewehr" festmachen — sonst würde die
+ * LG-Auflage-Liga fälschlich als offene Klasse behandelt.
+ */
+function istOffeneKlasse(league: { type?: string; name?: string } | null | undefined): boolean {
+  if (!league) return false;
+  const type = (league.type || '').toUpperCase();
+  const name = (league.name || '').toLowerCase();
+
+  // Auflage-Ligen haben immer Auf-/Abstieg (Kreisoberliga/Kreisliga/Kreisklassen).
+  const istAuflage = type === 'LGA' || type === 'LPA' || name.includes('auflage');
+  if (istAuflage) return false;
+
+  // Echte offene Klassen: Luftgewehr Freihand, Luftpistole, KK-Sportpistole.
+  if (type === 'LG' || type === 'LGS' || type === 'LP' || type === 'KKP') return true;
+  if (name.includes('freihand')) return true;
+  if (name.includes('pistole')) return true;
+
+  return false;
+}
+
+/**
  * Generiert Auf-/Abstiegsvorschläge basierend auf RWK-Ordnung §16
  * Berücksichtigt Abmeldungen und Ligagrößen-Anpassungen
  */
@@ -216,11 +243,9 @@ export async function generatePromotionRelegationSuggestions(
           reason = 'Nach Meldeschluss abgemeldet - verbleibt (niedrigste Liga)';
         }
       }
-      // Meister steigt auf (außer höchste Liga oder offene Gruppen LG/LP)
+      // Meister steigt auf (außer höchste Liga oder offene Klassen)
       else if (team.position === 1) {
-        const isOpenGroup = currentLeague.type === 'LG' || currentLeague.type === 'LP' || 
-                           currentLeague.name.toLowerCase().includes('pistole') ||
-                           currentLeague.name.toLowerCase().includes('luftgewehr');
+        const isOpenGroup = istOffeneKlasse(currentLeague);
         if (isOpenGroup) {
           reason = 'Meister - verbleibt (offene Gruppe, keine Auf-/Abstiege)';
         } else if (higherLeague && !currentLeague.name.includes('Kreisoberliga')) {
@@ -231,10 +256,8 @@ export async function generatePromotionRelegationSuggestions(
           reason = 'Meister - verbleibt (höchste Liga)';
         }
       } else if (team.position === totalTeams) {
-        // Letzter steigt ab (außer bei Ligaverkleinerung, offene Gruppen LG/LP oder niedrigste Liga)
-        const isOpenGroup = currentLeague.type === 'LG' || currentLeague.type === 'LP' || 
-                           currentLeague.name.toLowerCase().includes('pistole') ||
-                           currentLeague.name.toLowerCase().includes('luftgewehr');
+        // Letzter steigt ab (außer bei Ligaverkleinerung, offene Klassen oder niedrigste Liga)
+        const isOpenGroup = istOffeneKlasse(currentLeague);
         if (isOpenGroup) {
           reason = 'Letzter Platz - verbleibt (offene Gruppe, keine Auf-/Abstiege)';
         } else if (currentLeague.name.toLowerCase().includes('2. kreisklasse')) {
@@ -251,9 +274,7 @@ export async function generatePromotionRelegationSuggestions(
           reason = 'Letzter Platz - verbleibt (niedrigste Liga)';
         }
       } else if (team.position === 2 && higherLeague) {
-        const isOpenGroup = currentLeague.type === 'LG' || currentLeague.type === 'LP' || 
-                           currentLeague.name.toLowerCase().includes('pistole') ||
-                           currentLeague.name.toLowerCase().includes('luftgewehr');
+        const isOpenGroup = istOffeneKlasse(currentLeague);
         if (isOpenGroup) {
           reason = 'Zweiter - verbleibt (offene Gruppe, keine Auf-/Abstiege)';
         } else {
@@ -278,9 +299,7 @@ export async function generatePromotionRelegationSuggestions(
         }
         }
       } else if (team.position === totalTeams - 1 && lowerLeague) {
-        const isOpenGroup = currentLeague.type === 'LG' || currentLeague.type === 'LP' || 
-                           currentLeague.name.toLowerCase().includes('pistole') ||
-                           currentLeague.name.toLowerCase().includes('luftgewehr');
+        const isOpenGroup = istOffeneKlasse(currentLeague);
         const isLowestLeague = currentLeague.name.toLowerCase().includes('2. kreisklasse');
         if (isOpenGroup || isLowestLeague) {
           reason = isOpenGroup ? 'Vorletzter - verbleibt (offene Gruppe, keine Auf-/Abstiege)' : 'Vorletzter - verbleibt (niedrigste Liga)';
@@ -374,6 +393,10 @@ export async function createNewSeason(
     
     const leagueMapping = new Map(); // Alte ID -> Neue ID
     
+    // Merkt sich je Quell-Liga-ID die order (Liga-Rang), damit Teams später ihren
+    // vorherigen Rang kennen (für die Auf-/Abstiegs-Anwendung).
+    const leagueOrderMap = new Map<string, number>();
+
     for (const leagueDoc of sourceLeaguesSnapshot.docs) {
       const leagueData = leagueDoc.data();
       const newLeagueRef = doc(collection(db, 'rwk_leagues'));
@@ -385,6 +408,7 @@ export async function createNewSeason(
       });
       
       leagueMapping.set(leagueDoc.id, newLeagueRef.id);
+      leagueOrderMap.set(leagueDoc.id, (leagueData as any).order ?? 0);
     }
 
     // Teams kopieren (ohne Ergebnisse)
@@ -417,7 +441,10 @@ export async function createNewSeason(
           seasonId: newSeasonRef.id,
           leagueId: newLeagueId,
           competitionYear: targetYear,
-          isNewClub: newClubs.includes(teamData.clubId) // Markierung für neue Vereine
+          isNewClub: newClubs.includes(teamData.clubId), // Markierung für neue Vereine
+          // Rückverweise für die spätere Auf-/Abstiegs-Anwendung:
+          sourceTeamId: teamDoc.id,                                // Team-ID aus der Quell-Saison
+          previousOrder: leagueOrderMap.get(teamData.leagueId) ?? null, // Liga-Rang der Vorsaison
         });
       }
     }
@@ -459,29 +486,109 @@ export async function createNewSeason(
   }
 }
 
+export interface ApplyResult {
+  moved: number;                 // erfolgreich verschobene Teams
+  skipped: string[];             // Vorschläge, die nicht angewendet werden konnten (mit Grund)
+}
+
 /**
- * Wendet bestätigte Auf-/Abstiegsvorschläge an
+ * Wendet bestätigte Auf-/Abstiegsvorschläge auf die ZIEL-Saison an.
+ *
+ * Voraussetzung: Die Ziel-Saison wurde per createNewSeason erstellt, d. h. ihre
+ * Teams tragen `sourceTeamId` (Verweis auf das Team der Quell-Saison) und stehen
+ * zunächst in derselben Liga wie in der Vorsaison. Diese Funktion verschiebt die
+ * bestätigten Teams um genau eine Liga-Stufe (Rang über `order`):
+ *   promote  -> nächsthöhere Liga (order - 1)
+ *   relegate -> nächstniedrigere Liga (order + 1)
+ *
+ * Matching:
+ *   Team    : Ziel-Team mit sourceTeamId === suggestion.teamId
+ *   Zielliga: Nachbarliga über order (nicht über den Namen, robuster)
  */
 export async function applyPromotionRelegation(
   suggestions: PromotionRelegationRule[],
-  _targetSeasonId: string
-): Promise<void> {
+  targetSeasonId: string
+): Promise<ApplyResult> {
+  if (!targetSeasonId) {
+    throw new Error('Keine Ziel-Saison angegeben.');
+  }
+
   try {
-    const batch = writeBatch(db);
-    const confirmedSuggestions = suggestions.filter(s => s.confirmed);
-    
-    for (const suggestion of confirmedSuggestions) {
-      if (suggestion.action === 'promote' || suggestion.action === 'relegate') {
-        // Team in neue Liga verschieben
-        // Hier würde die Logik zum Verschieben der Teams implementiert
-        // Das ist komplex, da neue Liga-IDs gefunden werden müssen
-        
-        // Für jetzt: Nur Logging
-        logDebug(`${suggestion.action}: ${suggestion.teamName} -> ${suggestion.targetLeague}`);
-      }
+    const confirmed = suggestions.filter(
+      (s) => s.confirmed && (s.action === 'promote' || s.action === 'relegate')
+    );
+    const result: ApplyResult = { moved: 0, skipped: [] };
+    if (confirmed.length === 0) {
+      return result;
     }
-    
-    await batch.commit();
+
+    // Ziel-Ligen laden (nach order sortiert = höchste zuerst)
+    const leaguesSnap = await getDocs(
+      query(collection(db, 'rwk_leagues'), where('seasonId', '==', targetSeasonId))
+    );
+    const targetLeagues = leaguesSnap.docs
+      .map((d) => ({ id: d.id, name: (d.data() as any).name as string, type: (d.data() as any).type as string, order: (d.data() as any).order ?? 0 }))
+      .sort((a, b) => a.order - b.order);
+
+    // Disziplin-Kategorie (KK vs. LG/LP) einer Liga, damit Auf-/Abstieg nur
+    // innerhalb derselben Disziplin erfolgt und nicht versehentlich in eine
+    // benachbarte Liga einer anderen Disziplin springt.
+    const kategorie = (type?: string): string => getDisciplineCategory(type as any) || 'unbekannt';
+
+    // Ziel-Teams laden (mit Rückverweis sourceTeamId)
+    const teamsSnap = await getDocs(
+      query(collection(db, 'rwk_teams'), where('seasonId', '==', targetSeasonId))
+    );
+    // Map: sourceTeamId -> { docId, leagueId }
+    const bySourceId = new Map<string, { docId: string; leagueId: string | null }>();
+    teamsSnap.docs.forEach((d) => {
+      const data = d.data() as any;
+      if (data.sourceTeamId) {
+        bySourceId.set(data.sourceTeamId, { docId: d.id, leagueId: data.leagueId ?? null });
+      }
+    });
+
+    const batch = writeBatch(db);
+
+    for (const s of confirmed) {
+      const targetTeam = bySourceId.get(s.teamId);
+      if (!targetTeam) {
+        result.skipped.push(`${s.teamName}: kein Team in Ziel-Saison gefunden`);
+        continue;
+      }
+      // Aktuelle Liga (und deren order) des Ziel-Teams bestimmen
+      const currentLeague = targetLeagues.find((l) => l.id === targetTeam.leagueId);
+      if (!currentLeague) {
+        result.skipped.push(`${s.teamName}: aktuelle Liga in Ziel-Saison nicht gefunden`);
+        continue;
+      }
+      // Nächste Liga GLEICHER Disziplin-Kategorie in Auf-/Abstiegsrichtung suchen.
+      // promote = nächstkleinere order (höhere Liga), relegate = nächstgrößere order.
+      const cat = kategorie(currentLeague.type);
+      const kandidaten = targetLeagues.filter((l) => kategorie(l.type) === cat);
+      const zielLiga =
+        s.action === 'promote'
+          ? [...kandidaten].reverse().find((l) => l.order < currentLeague.order) // höchste order unterhalb → nächsthöhere Liga
+          : kandidaten.find((l) => l.order > currentLeague.order);               // kleinste order oberhalb → nächstniedrigere Liga
+      if (!zielLiga) {
+        result.skipped.push(
+          `${s.teamName}: keine ${s.action === 'promote' ? 'höhere' : 'niedrigere'} Liga vorhanden`
+        );
+        continue;
+      }
+
+      batch.update(doc(db, 'rwk_teams', targetTeam.docId), {
+        leagueId: zielLiga.id,
+        leagueType: zielLiga.type,
+      });
+      result.moved += 1;
+      logDebug(`${s.action}: ${s.teamName} -> ${zielLiga.name}`);
+    }
+
+    if (result.moved > 0) {
+      await batch.commit();
+    }
+    return result;
   } catch (error) {
     logError('Error applying promotion/relegation:', error);
     throw error;
