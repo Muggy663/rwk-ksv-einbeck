@@ -33,6 +33,7 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 ---
 
 ## Version 3.0.1
+- **📧 Bestätigungs-E-Mail beim Mannschaft-Anlegen**: Wer eine neue RWK-Mannschaft anlegt, erhält jetzt zusätzlich zum RWK-Leiter selbst eine Kopie der Benachrichtigung per E-Mail (mit „Angelegt von")
 - **🔐 Automatische Abmeldung repariert (auch in der App)**: Die Abmeldung nach 10 Minuten Inaktivität funktioniert jetzt zuverlässig — auch in der Android-/iOS-App. Bisher basierte sie auf einem Timer, der im Hintergrund (App minimiert oder Bildschirm gesperrt) pausierte und beim Zurückkehren fälschlich neu startete, sodass praktisch nie abgemeldet wurde. Jetzt wird die tatsächlich vergangene Zeit seit der letzten Aktivität gemessen und beim Wiederöffnen der App geprüft
 - **🔒 Kreismeisterschafts-Schnittstellen abgesichert**: Alle schreibenden KM-Funktionen (Meldungen anlegen/ändern/löschen/verschieben, Ergebnisse speichern und importieren, Mannschaften generieren/bearbeiten/löschen, Disziplinen, Jahre/Saisons, Altersklassen, Startlisten, David21-Import, Mannschaftsregeln) prüfen jetzt serverseitig Anmeldung und KM-Berechtigung — vorher waren einige ohne echte Prüfung erreichbar. Zusätzlich wurde ein unsicherer „Pseudo-Anmelde"-Weg beim KM-Melden durch echte Token-Prüfung ersetzt
 - **🐛 Bugfix Mannschaften generieren**: Beim automatischen Erstellen von KM-Mannschaften wurden die Mannschaftsregeln am falschen Ort gesucht und daher nicht angewandt — jetzt werden die konfigurierten Regeln korrekt geladen und berücksichtigt

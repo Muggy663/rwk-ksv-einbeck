@@ -35,6 +35,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription as UiAlertDescription } from "@/components/ui/alert"; // Renamed to avoid conflict
 import { useVereinAuth } from '@/app/verein/layout';
+import { useAuth } from '@/hooks/use-auth';
 import type { Season, League, Club, Team, Shooter, TeamValidationInfo, FirestoreLeagueSpecificDiscipline } from '@/types/rwk';
 import { MAX_SHOOTERS_PER_TEAM, getDisciplineCategory } from '@/types/rwk';
 import { db } from '@/lib/firebase/config';
@@ -61,6 +62,7 @@ export default function VereinMannschaftenPage() {
     assignedClubId, // Single assigned club ID from context
     currentClubId // Multi-Verein aktiver Club
   } = useVereinAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const [activeClubId, setActiveClubId] = useState<string | null>(null);
@@ -713,8 +715,20 @@ Verein: ${clubName}
 Saison: ${seasonName}
 Disziplin: ${dataForNewTeam.leagueType || 'Nicht angegeben'}
 Schützen: ${selectedShooterIdsInForm.length}
-Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}`);
-          emailData.append('recipients', JSON.stringify([{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}]));
+Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}
+
+Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
+          // Empfänger: RWK-Leiter immer, zusätzlich der anlegende Nutzer (Kopie/Bestätigung)
+          const recipients = [{name: 'RWK-Leiter', email: 'rwk-leiter-ksve@gmx.de'}];
+          const creatorName = user?.displayName || user?.email || 'Unbekannt';
+          if (
+            user?.email &&
+            user.email !== 'admin@rwk-einbeck.de' &&
+            user.email.toLowerCase() !== 'rwk-leiter-ksve@gmx.de'
+          ) {
+            recipients.push({ name: creatorName, email: user.email });
+          }
+          emailData.append('recipients', JSON.stringify(recipients));
           
           await fetch('/api/send-email', {
             method: 'POST',
