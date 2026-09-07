@@ -1,6 +1,9 @@
 // src/app/api/cron/meldeschluss-reminder/route.ts
-// Täglicher Cron (Vercel): verschickt einmalig eine Erinnerungs-E-Mail an
-// Sportleiter und KM-Orga, wenn ein Meldeschluss (RWK oder KM) in ~7 Tagen liegt.
+// Täglicher Cron (Vercel):
+// 1) verschickt einmalig eine Erinnerungs-E-Mail an Sportleiter, Mannschaftsführer
+//    und KM-Orga, wenn ein Meldeschluss (RWK oder KM) in ~7 Tagen liegt.
+// 2) schließt automatisch das RWK-Meldefenster, wenn der Meldeschluss vorbei ist
+//    (Status "Anmeldung möglich" -> "Vorbereitung") und meldet dies dem RWK-Leiter.
 // Absicherung über CRON_SECRET (Vercel sendet automatisch Authorization: Bearer $CRON_SECRET).
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
@@ -222,6 +225,75 @@ function buildEmail(
   return { subject, text, html };
 }
 
+/**
+ * Schließt automatisch RWK-Meldefenster, deren Meldeschluss vorbei ist:
+ * Status "Anmeldung möglich" -> "Vorbereitung". Meldet dem RWK-Leiter je
+ * geschlossener Saison die Anzahl gemeldeter Mannschaften.
+ * Gibt die Namen der geschlossenen Saisons zurück.
+ */
+async function schliesseAbgelaufeneRwkFenster(jetzt: Date, resend: Resend): Promise<string[]> {
+  const geschlossen: string[] = [];
+  try {
+    const snap = await adminDb
+      .collection('seasons')
+      .where('status', '==', 'Anmeldung möglich')
+      .get();
+
+    for (const d of snap.docs) {
+      const s = d.data() as any;
+      const deadline = parseMeldeschluss(s.meldeschluss);
+      // Nur schließen, wenn ein gültiger Meldeschluss existiert und er vorbei ist.
+      if (!deadline || jetzt.getTime() <= deadline.getTime()) continue;
+
+      // Status zurück auf "Vorbereitung" -> Meldefenster ist zu, Anmeldung gesperrt.
+      await adminDb.collection('seasons').doc(d.id).update({ status: 'Vorbereitung' });
+
+      // Gemeldete Mannschaften dieser Saison zählen (nur echte Mannschaften, >=3 Schützen)
+      let mannschaften = 0;
+      try {
+        const teamsSnap = await adminDb
+          .collection('rwk_teams')
+          .where('seasonId', '==', d.id)
+          .get();
+        mannschaften = teamsSnap.docs.filter((t) => ((t.data() as any).shooterIds?.length || 0) >= 3).length;
+      } catch (teamErr) {
+        logError(`Cron Fenster schließen: Teams zählen fehlgeschlagen (${d.id})`, teamErr);
+      }
+
+      const name = s.name || 'RWK-Saison';
+      geschlossen.push(name);
+      logInfo(`Cron: RWK-Meldefenster geschlossen (${name}, ${mannschaften} Mannschaften)`);
+
+      // Zusammenfassungs-Mail an den RWK-Leiter
+      if (process.env.RESEND_API_KEY) {
+        const datum = formatDatum(deadline);
+        const text =
+          `Das Meldefenster wurde automatisch geschlossen.\r\n\r\n` +
+          `Saison: ${name}\r\n` +
+          `Meldeschluss: ${datum}\r\n` +
+          `Gemeldete Mannschaften: ${mannschaften}\r\n\r\n` +
+          `Die Saison steht jetzt wieder auf Status "Vorbereitung" (keine weiteren Meldungen möglich).\r\n` +
+          `Nächster Schritt: Mannschaften den Ligen zuordnen und die Saison auf "Laufend" setzen.`;
+        try {
+          await resend.emails.send({
+            from: RESEND_FROM,
+            to: [RESEND_REPLY_TO],
+            subject: `✅ Meldefenster geschlossen: ${name} (${mannschaften} Mannschaften)`,
+            text,
+            html: text.replace(/\r\n/g, '<br>'),
+            replyTo: RESEND_REPLY_TO,
+          });
+        } catch (mailErr) {
+          logError(`Cron Fenster schließen: Zusammenfassungs-Mail fehlgeschlagen (${d.id})`, mailErr);
+        }
+      }
+    }
+  } catch (error) {
+    logError('Cron: RWK-Meldefenster schließen fehlgeschlagen', error);
+  }
+  return geschlossen;
+}
+
 export async function GET(request: NextRequest) {
   // Absicherung: nur mit gültigem CRON_SECRET aufrufbar
   const secret = process.env.CRON_SECRET;
@@ -238,11 +310,19 @@ export async function GET(request: NextRequest) {
 
   const jetzt = new Date();
 
+  // Aufgabe 2: abgelaufene RWK-Meldefenster automatisch schließen (unabhängig von Erinnerungen)
+  const geschlosseneFenster = await schliesseAbgelaufeneRwkFenster(jetzt, resend);
+
   try {
     const faellige = await ladeFaelligeSaisons(jetzt);
     if (faellige.length === 0) {
       logInfo('Cron Meldeschluss: keine fälligen Saisons im Erinnerungsfenster');
-      return NextResponse.json({ success: true, sent: 0, message: 'Keine fälligen Meldeschlüsse.' });
+      return NextResponse.json({
+        success: true,
+        sent: 0,
+        geschlossen: geschlosseneFenster,
+        message: 'Keine fälligen Meldeschlüsse.',
+      });
     }
 
     // Bereits versendete Erinnerungen herausfiltern (einmalig pro Saison)
@@ -255,13 +335,13 @@ export async function GET(request: NextRequest) {
 
     if (offene.length === 0) {
       logInfo('Cron Meldeschluss: alle fälligen Erinnerungen bereits versendet');
-      return NextResponse.json({ success: true, sent: 0, message: 'Bereits erinnert.' });
+      return NextResponse.json({ success: true, sent: 0, geschlossen: geschlosseneFenster, message: 'Bereits erinnert.' });
     }
 
     const empfaenger = await ladeEmpfaenger();
     if (empfaenger.length === 0) {
       logInfo('Cron Meldeschluss: keine Empfänger (Sportleiter/KM-Orga) gefunden');
-      return NextResponse.json({ success: true, sent: 0, message: 'Keine Empfänger.' });
+      return NextResponse.json({ success: true, sent: 0, geschlossen: geschlosseneFenster, message: 'Keine Empfänger.' });
     }
 
     // Signatur aus admin_settings/email_signature laden (wie beim regulären E-Mail-Versand)
@@ -322,6 +402,7 @@ export async function GET(request: NextRequest) {
       success: true,
       sent: versendet,
       recipients: empfaenger.length,
+      geschlossen: geschlosseneFenster,
       message: `${versendet} Erinnerung(en) versendet.`,
     });
   } catch (error) {
