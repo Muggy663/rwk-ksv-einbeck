@@ -67,8 +67,12 @@ Vieles ist bereits vorhanden — teils automatisch, teils manuell:
 - `applyPromotionRelegation` real umgesetzt: bestätigte Vorschläge verschieben Teams in die
   Nachbarliga der Ziel-Saison (leagueId + leagueType aktualisiert), innerhalb derselben
   Disziplin-Kategorie (kein Sprung über Disziplingrenzen).
-- Matching: Team über `sourceTeamId` (Rückverweis aus createNewSeason), Zielliga über
+- Matching: Team über `sourceTeamId` (Rückverweis aus createNewSeason), Fallback über
+  Mannschaftsname (für bereits gemeldete Ziel-Saisons ohne Rückverweis); Zielliga über
   `order` (Liga-Rang), nicht über den Namen.
+- **Sicherheit:** Es werden NUR real gemeldete Ziel-Teams umsortiert (update). Keine Teams
+  werden angelegt oder gelöscht; nicht mehr gemeldete Vorjahres-Teams werden übersprungen.
+  (Kettenwirkung bei Rückzügen nach §16 bleibt Urteil des RWK-Leiters.)
 - Ziel-Saison-Dropdown im Auf-/Abstiegs-Bereich ergänzt; Rückmeldung zeigt verschobene/
   übersprungene Teams. Freigabe-gesteuert (RWK-Leiter bestätigt, dann Anwenden).
 - LGA/LPA-Fix: LG-Auflage-Ligen haben wieder Auf-/Abstieg; offene Klassen bleiben ausgenommen.

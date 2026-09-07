@@ -535,25 +535,36 @@ export async function applyPromotionRelegation(
     // benachbarte Liga einer anderen Disziplin springt.
     const kategorie = (type?: string): string => getDisciplineCategory(type as any) || 'unbekannt';
 
-    // Ziel-Teams laden (mit Rückverweis sourceTeamId)
+    // Ziel-Teams laden. Es werden AUSSCHLIESSLICH die real in der Ziel-Saison
+    // vorhandenen (= gemeldeten) Mannschaften berücksichtigt. Diese Funktion
+    // aktualisiert nur deren Liga-Zuordnung (update) — sie legt KEINE Teams an
+    // und löscht keine. Nicht gemeldete Vorjahres-Teams werden übersprungen.
     const teamsSnap = await getDocs(
       query(collection(db, 'rwk_teams'), where('seasonId', '==', targetSeasonId))
     );
-    // Map: sourceTeamId -> { docId, leagueId }
-    const bySourceId = new Map<string, { docId: string; leagueId: string | null }>();
+    // Nur echte Mannschaften (>=3 Schützen) — Einzelschützen ignorieren.
+    interface ZielTeam { docId: string; leagueId: string | null }
+    const bySourceId = new Map<string, ZielTeam>();       // primär: sourceTeamId-Verweis
+    const byName = new Map<string, ZielTeam>();            // Fallback: normalisierter Mannschaftsname
+    const normName = (n?: string) => (n || '').trim().toLowerCase().replace(/\s+/g, ' ');
     teamsSnap.docs.forEach((d) => {
       const data = d.data() as any;
-      if (data.sourceTeamId) {
-        bySourceId.set(data.sourceTeamId, { docId: d.id, leagueId: data.leagueId ?? null });
-      }
+      if ((data.shooterIds?.length || 0) < 3) return; // keine echte Mannschaft
+      const eintrag: ZielTeam = { docId: d.id, leagueId: data.leagueId ?? null };
+      if (data.sourceTeamId) bySourceId.set(data.sourceTeamId, eintrag);
+      const key = normName(data.name);
+      if (key && !byName.has(key)) byName.set(key, eintrag);
     });
 
     const batch = writeBatch(db);
 
     for (const s of confirmed) {
-      const targetTeam = bySourceId.get(s.teamId);
+      // 1. Match über sourceTeamId (eindeutig, wenn Ziel-Saison per Saisonwechsel entstand)
+      // 2. Fallback: Match über den Mannschaftsnamen (für bereits gemeldete Ziel-Saisons)
+      const targetTeam = bySourceId.get(s.teamId) || byName.get(normName(s.teamName));
       if (!targetTeam) {
-        result.skipped.push(`${s.teamName}: kein Team in Ziel-Saison gefunden`);
+        // Team der Vorsaison ist in der Ziel-Saison NICHT gemeldet -> nicht anfassen.
+        result.skipped.push(`${s.teamName}: in Ziel-Saison nicht gemeldet – übersprungen`);
         continue;
       }
       // Aktuelle Liga (und deren order) des Ziel-Teams bestimmen
