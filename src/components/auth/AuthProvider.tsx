@@ -25,95 +25,109 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [appPermissionsError, setAppPermissionsError] = useState<string | null>(null);
 
   const { toast } = useToast();
-  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [timeLeft, setTimeLeft] = useState(10 * 60); // 10 Minuten in Sekunden
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Zeitstempel (ms) der letzten Benutzeraktivität. Grundlage für die
+  // Ablaufberechnung – funktioniert auch, wenn Timer im Hintergrund pausiert
+  // wurden (z. B. native App minimiert oder Bildschirm gesperrt).
+  const lastActivityRef = useRef<number>(Date.now());
+  // Ref auf signOut, damit Timer-Callbacks immer die aktuelle Funktion nutzen
+  const signOutRef = useRef<() => Promise<void>>(async () => {});
 
-  // Funktion zum Zurücksetzen des Inaktivitäts-Timers
+  // Setzt nur den Aktivitäts-Zeitstempel zurück (kein vollständiger Timer-Neuaufbau).
+  // Der laufende Countdown-Interval berechnet die Restzeit selbst aus diesem Wert.
   const resetInactivityTimer = useCallback(() => {
-    if (inactivityTimerRef.current) {
-      clearTimeout(inactivityTimerRef.current);
-      inactivityTimerRef.current = null;
-    }
-    if (countdownTimerRef.current) {
-      clearInterval(countdownTimerRef.current);
-      countdownTimerRef.current = null;
-    }
-    
-    // Nur Timer setzen, wenn ein Benutzer angemeldet ist
-    if (user) {
-      // Reset countdown in next tick to avoid setState during render
-      setTimeout(() => {
-        setTimeLeft(10 * 60);
-      }, 0);
-      
-      // Countdown Timer - zurück auf 1 Sekunde für sichtbare Änderungen
-      countdownTimerRef.current = setInterval(() => {
-        setTimeLeft(prev => {
-          const newTime = Math.max(0, prev - 1);
-          return newTime;
-        });
-      }, 1000);
-      
-      // Logout Timer
-      inactivityTimerRef.current = setTimeout(() => {
-        signOut();
-        toast({ 
-          title: "Automatische Abmeldung", 
-          description: "Sie wurden aufgrund von Inaktivität automatisch abgemeldet.", 
-          variant: "default" 
-        });
-      }, INACTIVITY_TIMEOUT);
-    }
-  }, [user, toast]);
+    lastActivityRef.current = Date.now();
+    setTimeLeft(Math.floor(INACTIVITY_TIMEOUT / 1000));
+  }, []);
 
-  // Event-Listener für Benutzeraktivität
+  // Prüft, ob seit der letzten Aktivität real mehr Zeit als das Timeout
+  // vergangen ist, und meldet ggf. ab. Wird periodisch UND beim Wiederaufwachen
+  // der App aufgerufen.
+  const checkInactivity = useCallback(() => {
+    const elapsed = Date.now() - lastActivityRef.current;
+    const remainingMs = INACTIVITY_TIMEOUT - elapsed;
+
+    if (remainingMs <= 0) {
+      signOutRef.current();
+      toast({
+        title: "Automatische Abmeldung",
+        description: "Sie wurden aufgrund von Inaktivität automatisch abgemeldet.",
+        variant: "default"
+      });
+      return;
+    }
+    setTimeLeft(Math.max(0, Math.ceil(remainingMs / 1000)));
+  }, [toast]);
+
+  // Event-Listener für Benutzeraktivität + Ablaufprüfung
   useEffect(() => {
     if (!user) return;
-    
-    // Benutzeraktivitäten überwachen
-    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click', 'focus', 'blur'];
-    
+
+    // Startzeitpunkt bei Anmeldung/User-Wechsel
+    lastActivityRef.current = Date.now();
+    setTimeLeft(Math.floor(INACTIVITY_TIMEOUT / 1000));
+
+    // Benutzeraktivitäten überwachen. focus/blur bewusst NICHT dabei:
+    // Rückkehr aus dem Hintergrund (native App) darf nicht als Aktivität
+    // zählen, sondern muss den Ablauf prüfen.
+    const activityEvents = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+
     const handleUserActivity = () => {
-      if (user) {
-        resetInactivityTimer();
-      }
+      lastActivityRef.current = Date.now();
     };
-    
-    // Event-Listener hinzufügen
+
     activityEvents.forEach(event => {
       window.addEventListener(event, handleUserActivity, true);
     });
-    
-    // API-Calls als Aktivität überwachen
+
+    // API-Calls als Aktivität werten
     const originalFetch = window.fetch;
     window.fetch = function(...args) {
-      if (user) {
-        resetInactivityTimer();
-      }
+      lastActivityRef.current = Date.now();
       return originalFetch.apply(this, args);
     };
-    
-    // Initial Timer setzen
-    resetInactivityTimer();
-    
-    // Cleanup
-    return () => {
-      if (inactivityTimerRef.current) {
-        clearTimeout(inactivityTimerRef.current);
+
+    // Periodische Ablaufprüfung (jede Sekunde) – berechnet Restzeit aus echtem
+    // Zeitstempel, nicht durch stures Runterzählen.
+    countdownTimerRef.current = setInterval(checkInactivity, 1000);
+
+    // Beim Wiedersichtbarwerden (Tab-Wechsel / App aus Hintergrund) sofort prüfen,
+    // da Timer im Hintergrund pausiert gewesen sein können.
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkInactivity();
       }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Capacitor: App-Rückkehr aus dem Hintergrund abfangen (Android/iOS)
+    let removeAppListener: (() => void) | null = null;
+    if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.()) {
+      import('@capacitor/app')
+        .then(({ App }) => {
+          App.addListener('appStateChange', ({ isActive }) => {
+            if (isActive) checkInactivity();
+          }).then((handle) => {
+            removeAppListener = () => handle.remove();
+          });
+        })
+        .catch(() => { /* Plugin nicht verfügbar – Web-Fallback über visibilitychange greift */ });
+    }
+
+    return () => {
       if (countdownTimerRef.current) {
         clearInterval(countdownTimerRef.current);
+        countdownTimerRef.current = null;
       }
-      
       activityEvents.forEach(event => {
-        window.removeEventListener(event, handleUserActivity);
+        window.removeEventListener(event, handleUserActivity, true);
       });
-      
-      // Restore original fetch
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (removeAppListener) removeAppListener();
       window.fetch = originalFetch;
     };
-  }, [user, resetInactivityTimer]);
+  }, [user, checkInactivity]);
 
   const fetchUserAppPermissions = useCallback(async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
@@ -238,11 +252,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     setError(null);
     try {
-      // Timer löschen beim Abmelden
-      if (inactivityTimerRef.current) {
-        clearTimeout(inactivityTimerRef.current);
-        inactivityTimerRef.current = null;
-      }
+      // Countdown-Timer beim Abmelden stoppen
       if (countdownTimerRef.current) {
         clearInterval(countdownTimerRef.current);
         countdownTimerRef.current = null;
@@ -259,6 +269,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       toast({ title: "Abmeldefehler", description: err.message, variant: "destructive" });
     }
   };
+
+  // signOutRef stets aktuell halten, damit die Inaktivitätsprüfung die
+  // korrekte signOut-Funktion aufruft (vermeidet stale closures).
+  useEffect(() => {
+    signOutRef.current = signOut;
+  });
 
   // Neue Funktion zum Ändern des Passworts
   const changePassword = async (currentPassword: string, newPassword: string) => {
