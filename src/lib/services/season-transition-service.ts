@@ -514,9 +514,9 @@ export async function applyPromotionRelegation(
   }
 
   try {
-    const confirmed = suggestions.filter(
-      (s) => s.confirmed && (s.action === 'promote' || s.action === 'relegate')
-    );
+    // Alle bestätigten Vorschläge (auch 'stay'): Verbleiber müssen ebenfalls ihrer
+    // (Vorjahres-)Liga zugeordnet werden, falls das gemeldete Team noch keine hat.
+    const confirmed = suggestions.filter((s) => s.confirmed);
     const result: ApplyResult = { moved: 0, skipped: [] };
     if (confirmed.length === 0) {
       return result;
@@ -529,6 +529,10 @@ export async function applyPromotionRelegation(
     const targetLeagues = leaguesSnap.docs
       .map((d) => ({ id: d.id, name: (d.data() as any).name as string, type: (d.data() as any).type as string, order: (d.data() as any).order ?? 0 }))
       .sort((a, b) => a.order - b.order);
+
+    // Ziel-Liga per Name finden (für Vorjahres-Startpunkt, wenn Team noch keine Liga hat).
+    const normLiga = (n?: string) => (n || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    const ligaByName = new Map(targetLeagues.map((l) => [normLiga(l.name), l]));
 
     // Disziplin-Kategorie (KK vs. LG/LP) einer Liga, damit Auf-/Abstieg nur
     // innerhalb derselben Disziplin erfolgt und nicht versehentlich in eine
@@ -567,24 +571,39 @@ export async function applyPromotionRelegation(
         result.skipped.push(`${s.teamName}: in Ziel-Saison nicht gemeldet – übersprungen`);
         continue;
       }
-      // Aktuelle Liga (und deren order) des Ziel-Teams bestimmen
-      const currentLeague = targetLeagues.find((l) => l.id === targetTeam.leagueId);
-      if (!currentLeague) {
-        result.skipped.push(`${s.teamName}: aktuelle Liga in Ziel-Saison nicht gefunden`);
+      // Start-Liga bestimmen: entweder die bereits gesetzte Liga des Ziel-Teams,
+      // oder – wenn noch keine gesetzt ist – die Vorjahresliga aus dem Vorschlag
+      // (currentLeague-Name), da die Ligen in beiden Saisons gleich heißen.
+      let startLiga = targetTeam.leagueId
+        ? targetLeagues.find((l) => l.id === targetTeam.leagueId)
+        : ligaByName.get(normLiga(s.currentLeague));
+      if (!startLiga) {
+        result.skipped.push(`${s.teamName}: Vorjahresliga „${s.currentLeague}" in Ziel-Saison nicht gefunden`);
         continue;
       }
-      // Nächste Liga GLEICHER Disziplin-Kategorie in Auf-/Abstiegsrichtung suchen.
-      // promote = nächstkleinere order (höhere Liga), relegate = nächstgrößere order.
-      const cat = kategorie(currentLeague.type);
-      const kandidaten = targetLeagues.filter((l) => kategorie(l.type) === cat);
-      const zielLiga =
-        s.action === 'promote'
-          ? [...kandidaten].reverse().find((l) => l.order < currentLeague.order) // höchste order unterhalb → nächsthöhere Liga
-          : kandidaten.find((l) => l.order > currentLeague.order);               // kleinste order oberhalb → nächstniedrigere Liga
-      if (!zielLiga) {
-        result.skipped.push(
-          `${s.teamName}: keine ${s.action === 'promote' ? 'höhere' : 'niedrigere'} Liga vorhanden`
-        );
+
+      // Zielliga bestimmen
+      let zielLiga = startLiga;
+      if (s.action === 'promote' || s.action === 'relegate') {
+        // Nächste Liga GLEICHER Disziplin-Kategorie in Auf-/Abstiegsrichtung.
+        const cat = kategorie(startLiga.type);
+        const kandidaten = targetLeagues.filter((l) => kategorie(l.type) === cat);
+        const nachbar =
+          s.action === 'promote'
+            ? [...kandidaten].reverse().find((l) => l.order < startLiga!.order) // nächsthöhere Liga
+            : kandidaten.find((l) => l.order > startLiga!.order);              // nächstniedrigere Liga
+        if (!nachbar) {
+          result.skipped.push(
+            `${s.teamName}: keine ${s.action === 'promote' ? 'höhere' : 'niedrigere'} Liga vorhanden`
+          );
+          continue;
+        }
+        zielLiga = nachbar;
+      }
+
+      // Bei 'stay' nur zuweisen, wenn das Team noch keine (korrekte) Liga hat –
+      // sonst nichts tun (keine unnötigen Schreibvorgänge).
+      if (targetTeam.leagueId === zielLiga.id) {
         continue;
       }
 

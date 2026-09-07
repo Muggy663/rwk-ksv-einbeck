@@ -73,6 +73,11 @@ Vieles ist bereits vorhanden — teils automatisch, teils manuell:
 - **Sicherheit:** Es werden NUR real gemeldete Ziel-Teams umsortiert (update). Keine Teams
   werden angelegt oder gelöscht; nicht mehr gemeldete Vorjahres-Teams werden übersprungen.
   (Kettenwirkung bei Rückzügen nach §16 bleibt Urteil des RWK-Leiters.)
+- **Startpunkt-Automatik (Weg 2):** Gemeldete Teams ohne zugewiesene Liga werden über ihre
+  Vorjahresliga (Name-Match) als Ausgangspunkt eingeordnet; auch 'stay'-Teams werden so
+  ihrer Liga zugewiesen. Manuelles Vorsortieren der Auflage-Ligen entfällt.
+- **Neuzugänge** (Teams ohne Vorjahresbezug) tauchen in keinem Vorschlag auf und müssen
+  weiterhin manuell der (untersten) Liga zugewiesen werden (§7).
 - Ziel-Saison-Dropdown im Auf-/Abstiegs-Bereich ergänzt; Rückmeldung zeigt verschobene/
   übersprungene Teams. Freigabe-gesteuert (RWK-Leiter bestätigt, dann Anwenden).
 - LGA/LPA-Fix: LG-Auflage-Ligen haben wieder Auf-/Abstieg; offene Klassen bleiben ausgenommen.
