@@ -14,7 +14,6 @@ import { logError, logInfo } from '@/lib/utils/secure-logger';
 // Da pro Saison nur EINMAL gesendet wird (Flag), gibt es keine Doppelmails.
 const REMINDER_MIN_DAYS = 5;
 const REMINDER_MAX_DAYS = 8;
-const REMINDER_TARGET_DAYS = 7;
 
 const REMINDERS_COLLECTION = 'meldeschluss_reminders';
 const RESEND_FROM = process.env.RESEND_FROM_EMAIL || 'RWK Einbeck <noreply@rwk-einbeck.de>';
@@ -34,8 +33,8 @@ interface SaisonReminder {
 }
 
 /**
- * Lädt alle Nutzer mit Rolle Sportleiter oder KM-Orga aus user_permissions.
- * Rollen-Ableitung analog src/lib/permissions/memberPermissions.ts.
+ * Lädt alle Nutzer mit Rolle Sportleiter, Mannschaftsführer oder KM-Orga
+ * aus user_permissions. Rollen-Ableitung analog src/lib/permissions/memberPermissions.ts.
  */
 async function ladeEmpfaenger(): Promise<Empfaenger[]> {
   const snap = await adminDb.collection('user_permissions').get();
@@ -51,6 +50,8 @@ async function ladeEmpfaenger(): Promise<Empfaenger[]> {
     const kvRoles = u.kvRoles ? Object.values(u.kvRoles as Record<string, string>) : [];
 
     const isSportleiter = clubRoles.includes('SPORTLEITER');
+    const isMannschaftsfuehrer =
+      clubRoles.includes('MANNSCHAFTSFUEHRER') || u.role === 'mannschaftsfuehrer';
     const isKmOrga =
       kvRoles.includes('KV_KM_ORGA') ||
       kvRoles.includes('KV_WETTKAMPFLEITER') ||
@@ -58,7 +59,7 @@ async function ladeEmpfaenger(): Promise<Empfaenger[]> {
       u.role === 'km_orga' ||
       email.toLowerCase() === 'stephanie.buenger@gmx.de';
 
-    if (isSportleiter || isKmOrga) {
+    if (isSportleiter || isMannschaftsfuehrer || isKmOrga) {
       const lower = email.toLowerCase();
       if (!map.has(lower)) {
         map.set(lower, { email, name: u.displayName || email });
@@ -129,6 +130,98 @@ function formatDatum(d: Date): string {
   });
 }
 
+/** HTML-Escaping für Signatur-Text, damit Sonderzeichen sicher dargestellt werden. */
+function escapeHtml(input: string): string {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/**
+ * Baut Betreff, Plaintext und (ansprechendes) HTML für eine Erinnerungsmail.
+ * signature: Freitext-Signatur aus admin_settings/email_signature (optional).
+ */
+function buildEmail(
+  s: SaisonReminder,
+  jetzt: Date,
+  signature: string
+): { subject: string; text: string; html: string } {
+  const tageBis = Math.max(1, Math.ceil((s.deadline.getTime() - jetzt.getTime()) / (24 * 60 * 60 * 1000)));
+  const bereichLang = s.bereich === 'RWK' ? 'Rundenwettkampf' : 'Kreismeisterschaft';
+  const datum = formatDatum(s.deadline);
+  const url = `https://rwk-einbeck.de${s.href}`;
+  const tageText = tageBis === 1 ? 'morgen' : `in ${tageBis} Tagen`;
+
+  const subject = `⏰ Erinnerung: Meldeschluss ${s.bereich} am ${datum}`;
+
+  const sigText = signature.trim();
+
+  const text =
+    `Hallo,\r\n\r\n` +
+    `dies ist eine automatische Erinnerung: Der Meldeschluss für "${s.titel}" (${bereichLang}) ist ${tageText}.\r\n\r\n` +
+    `Meldeschluss: ${datum}\r\n` +
+    `Bereich: ${bereichLang}\r\n\r\n` +
+    `Bitte trage deine Meldungen rechtzeitig ein:\r\n${url}\r\n\r\n` +
+    `Diese E-Mail geht an alle Sportleiter, Mannschaftsführer und die KM-Organisation.` +
+    (sigText ? `\r\n\r\n${sigText}` : '');
+
+  // Signatur als eigener HTML-Block (Freitext → Zeilenumbrüche zu <br>)
+  const sigHtml = sigText
+    ? `<div style="font-size:13px;color:#64748b;line-height:1.6;margin-top:8px;">${escapeHtml(sigText).replace(/\r?\n/g, '<br>')}</div>`
+    : '';
+
+  const badgeFarbe = s.bereich === 'RWK' ? '#1d4ed8' : '#7c3aed';
+  const html = `<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f1f5f9;padding:24px 0;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <tr>
+          <td style="background-color:#0f172a;padding:28px 32px;">
+            <div style="font-size:22px;font-weight:700;color:#ffffff;">🎯 RWK Einbeck</div>
+            <div style="font-size:13px;color:#94a3b8;margin-top:4px;">Automatische Meldeschluss-Erinnerung</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px;">
+            <span style="display:inline-block;background-color:${badgeFarbe};color:#ffffff;font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;letter-spacing:0.3px;">${s.bereich} · ${bereichLang}</span>
+            <h1 style="font-size:20px;color:#0f172a;margin:16px 0 8px;">Der Meldeschluss ist ${tageText}</h1>
+            <p style="font-size:15px;color:#475569;line-height:1.6;margin:0 0 24px;">
+              Für <strong style="color:#0f172a;">${s.titel}</strong> läuft die Meldefrist bald ab. Bitte trage deine Meldungen rechtzeitig ein.
+            </p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:24px;">
+              <tr><td style="padding:16px 20px;">
+                <div style="font-size:13px;color:#64748b;">Meldeschluss</div>
+                <div style="font-size:18px;font-weight:700;color:#0f172a;margin-top:2px;">${datum}</div>
+              </td></tr>
+            </table>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+              <tr><td style="border-radius:8px;background-color:${badgeFarbe};">
+                <a href="${url}" style="display:inline-block;padding:13px 28px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">Jetzt Meldungen eintragen →</a>
+              </td></tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 32px;background-color:#f8fafc;border-top:1px solid #e2e8f0;">
+            <p style="font-size:12px;color:#94a3b8;line-height:1.6;margin:0;">
+              Diese E-Mail geht automatisch an alle Sportleiter, Mannschaftsführer und die KM-Organisation.
+            </p>
+            ${sigHtml}
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  return { subject, text, html };
+}
+
 export async function GET(request: NextRequest) {
   // Absicherung: nur mit gültigem CRON_SECRET aufrufbar
   const secret = process.env.CRON_SECRET;
@@ -171,20 +264,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, sent: 0, message: 'Keine Empfänger.' });
     }
 
+    // Signatur aus admin_settings/email_signature laden (wie beim regulären E-Mail-Versand)
+    let signature = '';
+    try {
+      const sigDoc = await adminDb.collection('admin_settings').doc('email_signature').get();
+      if (sigDoc.exists) {
+        signature = (sigDoc.data() as any)?.signature || '';
+      }
+    } catch (sigErr) {
+      logError('Cron Meldeschluss: Signatur konnte nicht geladen werden', sigErr);
+    }
+
     let versendet = 0;
 
     for (const s of offene) {
-      const betreff = `⏰ Erinnerung: Meldeschluss ${s.bereich} am ${formatDatum(s.deadline)}`;
-      const text =
-        `Hallo,\r\n\r\n` +
-        `dies ist eine automatische Erinnerung: Der Meldeschluss für "${s.titel}" (${s.bereich}) ` +
-        `ist in etwa ${REMINDER_TARGET_DAYS} Tagen.\r\n\r\n` +
-        `Meldeschluss: ${formatDatum(s.deadline)}\r\n` +
-        `Bereich: ${s.bereich === 'RWK' ? 'Rundenwettkampf' : 'Kreismeisterschaft'}\r\n\r\n` +
-        `Bitte denke daran, deine Meldungen rechtzeitig einzutragen:\r\n` +
-        `https://rwk-einbeck.de${s.href}\r\n\r\n` +
-        `Diese E-Mail geht an alle Sportleiter und die KM-Organisation.`;
-      const html = text.replace(/\r\n/g, '<br>');
+      const { subject, text, html } = buildEmail(s, jetzt, signature);
 
       // Versand in Batches à 25 (Resend-Limit / gute Praxis)
       const batchSize = 25;
@@ -195,7 +289,7 @@ export async function GET(request: NextRequest) {
           await resend.emails.send({
             from: RESEND_FROM,
             to: batch.map((e) => e.email),
-            subject: betreff,
+            subject,
             text,
             html,
             replyTo: RESEND_REPLY_TO,
@@ -206,6 +300,8 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // "Gesendet"-Flag nur setzen, wenn der Versand erfolgreich war,
+      // damit bei einem Fehler am Folgetag erneut versucht wird.
       // "Gesendet"-Flag nur setzen, wenn der Versand erfolgreich war,
       // damit bei einem Fehler am Folgetag erneut versucht wird.
       if (saisonErfolg) {

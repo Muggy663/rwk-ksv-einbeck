@@ -33,7 +33,7 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 ---
 
 ## Version 3.0.2
-- **⏰ Automatische Meldeschluss-Erinnerung**: Rund eine Woche vor einem Meldeschluss (RWK und KM) erhalten alle Sportleiter und die KM-Organisation automatisch eine Erinnerungs-E-Mail. Der Versand erfolgt einmalig pro Saison über einen täglichen Cron-Job
+- **⏰ Automatische Meldeschluss-Erinnerung**: Rund eine Woche vor einem Meldeschluss (RWK und KM) erhalten alle Sportleiter, Mannschaftsführer und die KM-Organisation automatisch eine gestaltete Erinnerungs-E-Mail (inkl. hinterlegter Signatur). Der Versand erfolgt einmalig pro Saison über einen täglichen Cron-Job
 - **📧 Bestätigungs-E-Mail beim Mannschaft-Anlegen**: Wer eine neue RWK-Mannschaft anlegt, erhält jetzt zusätzlich zum RWK-Leiter selbst eine Kopie der Benachrichtigung per E-Mail (mit „Angelegt von")
 - **🔐 Automatische Abmeldung repariert (auch in der App)**: Die Abmeldung nach 10 Minuten Inaktivität funktioniert jetzt zuverlässig — auch in der Android-/iOS-App. Bisher basierte sie auf einem Timer, der im Hintergrund (App minimiert oder Bildschirm gesperrt) pausierte und beim Zurückkehren fälschlich neu startete, sodass praktisch nie abgemeldet wurde. Jetzt wird die tatsächlich vergangene Zeit seit der letzten Aktivität gemessen und beim Wiederöffnen der App geprüft
 - **🧹 Aufgeräumt**: Ungenutzte Wartungs-Komponente mit veraltetem Meldeschluss-Datum entfernt; Footer-Ausrichtung am Desktop korrigiert
