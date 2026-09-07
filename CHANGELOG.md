@@ -32,10 +32,15 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 
 ---
 
-## Version 3.0.1
+## Version 3.0.2
 - **⏰ Automatische Meldeschluss-Erinnerung**: Rund eine Woche vor einem Meldeschluss (RWK und KM) erhalten alle Sportleiter und die KM-Organisation automatisch eine Erinnerungs-E-Mail. Der Versand erfolgt einmalig pro Saison über einen täglichen Cron-Job
 - **📧 Bestätigungs-E-Mail beim Mannschaft-Anlegen**: Wer eine neue RWK-Mannschaft anlegt, erhält jetzt zusätzlich zum RWK-Leiter selbst eine Kopie der Benachrichtigung per E-Mail (mit „Angelegt von")
 - **🔐 Automatische Abmeldung repariert (auch in der App)**: Die Abmeldung nach 10 Minuten Inaktivität funktioniert jetzt zuverlässig — auch in der Android-/iOS-App. Bisher basierte sie auf einem Timer, der im Hintergrund (App minimiert oder Bildschirm gesperrt) pausierte und beim Zurückkehren fälschlich neu startete, sodass praktisch nie abgemeldet wurde. Jetzt wird die tatsächlich vergangene Zeit seit der letzten Aktivität gemessen und beim Wiederöffnen der App geprüft
+- **🧹 Aufgeräumt**: Ungenutzte Wartungs-Komponente mit veraltetem Meldeschluss-Datum entfernt; Footer-Ausrichtung am Desktop korrigiert
+
+---
+
+## Version 3.0.1
 - **🔒 Kreismeisterschafts-Schnittstellen abgesichert**: Alle schreibenden KM-Funktionen (Meldungen anlegen/ändern/löschen/verschieben, Ergebnisse speichern und importieren, Mannschaften generieren/bearbeiten/löschen, Disziplinen, Jahre/Saisons, Altersklassen, Startlisten, David21-Import, Mannschaftsregeln) prüfen jetzt serverseitig Anmeldung und KM-Berechtigung — vorher waren einige ohne echte Prüfung erreichbar. Zusätzlich wurde ein unsicherer „Pseudo-Anmelde"-Weg beim KM-Melden durch echte Token-Prüfung ersetzt
 - **🐛 Bugfix Mannschaften generieren**: Beim automatischen Erstellen von KM-Mannschaften wurden die Mannschaftsregeln am falschen Ort gesucht und daher nicht angewandt — jetzt werden die konfigurierten Regeln korrekt geladen und berücksichtigt
 - **🎯 Altersklassen jetzt einheitlich (eine Quelle für alles)**: Die Wettkampfklasse eines Schützen wird jetzt überall aus derselben, im KM-Bereich gepflegten Altersklassen-Tabelle abgeleitet — beim Melden, in der KM-Orga-Übersicht, bei der Mannschaftsbildung und in den Startlisten inkl. PDF. Zuvor rechnete jede Seite eigenständig (und teils widersprüchlich). Grundlage ist immer das Jahr der jeweiligen Saison, nicht mehr das aktuelle Kalenderjahr
