@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/cron/meldeschluss-reminder",
+      "schedule": "0 7 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
