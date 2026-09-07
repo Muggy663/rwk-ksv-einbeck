@@ -8,6 +8,7 @@ export interface Season {
   status: 'Vorbereitung' | 'Anmeldung möglich' | 'Laufend' | 'Abgeschlossen';
   startDate?: Date;
   endDate?: Date;
+  meldestart?: string;   // Meldefenster-Öffnung (ISO "YYYY-MM-DD"); Cron öffnet ab diesem Tag automatisch
   meldeschluss?: string; // Meldeschluss-Datum (ISO "YYYY-MM-DD"), v.a. bei Status "Anmeldung möglich"
 }
 

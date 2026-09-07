@@ -18,9 +18,11 @@ Vieles ist bereits vorhanden — teils automatisch, teils manuell:
 - [x] **Täglicher Vercel-Cron** (`/api/cron/meldeschluss-reminder`), abgesichert per `CRON_SECRET`
 - [x] **Meldeschluss-Erinnerung** 7 Tage vorher (RWK+KM) an Sportleiter, Mannschaftsführer,
       KM-Orga — gestaltete HTML-Mail inkl. Signatur; einmalig pro Saison (Flag)
+- [x] **Meldefenster automatisch ÖFFNEN** (RWK): Feld `meldestart`; Cron setzt Status
+      "Vorbereitung" → "Anmeldung möglich" am Meldestart-Tag; Info-Mail an Empfängerkreis
 - [x] **Meldefenster automatisch SCHLIESSEN** (RWK): Cron setzt Status "Anmeldung möglich"
       → "Vorbereitung", wenn Meldeschluss vorbei; Zusammenfassungs-Mail an RWK-Leiter
-      mit Anzahl gemeldeter Mannschaften **(NEU – dieser Commit)**
+      mit Anzahl gemeldeter Mannschaften
 - [x] **Meldefenster-Banner** auf Startseite (RWK+KM)
 - [x] **Auf-/Abstieg BERECHNEN** (`season-transition-service.ts` → `calculateLeagueStandings`,
       `generatePromotionRelegationSuggestions`): Tabellenstände + Regelwerk RWK-Ordnung §16
@@ -48,18 +50,16 @@ Vieles ist bereits vorhanden — teils automatisch, teils manuell:
 
 ## OFFENE SCHRITTE (nach Priorität)
 
-### [ ] A. Meldefenster automatisch ÖFFNEN (Gegenstück zum Schließen)
-- Feld `meldestart` (Datum) pro Saison ergänzen (Admin-Formular + Typ).
+### [x] A. Meldefenster automatisch ÖFFNEN (Gegenstück zum Schließen) — ERLEDIGT
+- Feld `meldestart` (ISO) im Season-Typ + Admin-Formular (sichtbar bei Status "Vorbereitung").
 - Cron: wenn `heute >= meldestart` und Status "Vorbereitung" → "Anmeldung möglich".
-- Info-Mail "Meldefenster offen" an Empfängerkreis.
-- **Frage Öffnungszeitpunkt:** 4–6 Wochen vor Wettkampfbeginn; so gewählt, dass sich das
-  Fenster nicht zu lange mit dem anderen Wettkampf (LD/KK) überschneidet. → siehe unten.
-- Aufwand: klein. Nächster logischer Schritt.
+- Info-Mail "Meldefenster offen" an Sportleiter/Mannschaftsführer/KM-Orga, inkl. Hinweis
+  auf tägliche Öffnung/Schließung gegen 09:00 Uhr.
+- Öffnungszeitpunkt-Faustregel: **4 Wochen vor Wettkampfbeginn** (LD ab 01.10. → ~18.08.;
+  KK ab 01.05. → ~18.03.). Meldeschluss laut RWK-Ordnung: LD 15.09., KK 15.04.
 
-### [ ] B. Saison-Status "Geplant" konsistent machen
-- Entweder "Geplant" ins Status-Enum aufnehmen ODER `createNewSeason` auf "Vorbereitung"
-  umstellen. Sonst hakt die Auto-Öffnen-Logik (Schritt A) an inkonsistenten Status.
-- Aufwand: sehr klein, aber wichtig als Fundament.
+### [x] B. Saison-Status "Geplant" konsistent gemacht — ERLEDIGT
+- `createNewSeason` schreibt jetzt "Vorbereitung" statt des nicht existierenden "Geplant".
 
 ### [ ] C. Auf-/Abstieg ANWENDEN (Team-Verschiebung implementieren)
 - `applyPromotionRelegation` real umsetzen: bestätigte Vorschläge verschieben Teams in die

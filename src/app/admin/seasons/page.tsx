@@ -147,6 +147,8 @@ export default function AdminSeasonsPage() {
       name: seasonName,
       // Meldeschluss nur bei "Anmeldung möglich" speichern, sonst leeren.
       meldeschluss: currentSeason.status === 'Anmeldung möglich' ? (currentSeason.meldeschluss || '') : '',
+      // Meldestart (Auto-Öffnen) nur in der Planungsphase "Vorbereitung" sinnvoll.
+      meldestart: currentSeason.status === 'Vorbereitung' ? (currentSeason.meldestart || '') : '',
     };
 
     setIsLoading(true);
@@ -383,6 +385,22 @@ export default function AdminSeasonsPage() {
                       className="col-span-3"
                   />
                 </div>
+                {currentSeason.status === 'Vorbereitung' && (
+                  <div className="grid grid-cols-4 items-start gap-4">
+                    <Label htmlFor="meldestart" className="text-right pt-2">Meldestart</Label>
+                    <div className="col-span-3">
+                      <Input
+                        id="meldestart"
+                        type="date"
+                        value={currentSeason.meldestart || ''}
+                        onChange={(e) => setCurrentSeason(prev => prev ? ({ ...prev, meldestart: e.target.value }) : prev)}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Optional: An diesem Tag öffnet das Meldefenster automatisch (Status wechselt auf „Anmeldung möglich"). Empfehlung: 4 Wochen vor Wettkampfbeginn (Luftdruck ab 01.10. → ca. 18.08.; Kleinkaliber ab 01.05. → ca. 18.03.). Leer lassen, um manuell zu öffnen.
+                      </p>
+                    </div>
+                  </div>
+                )}
                 {currentSeason.status === 'Anmeldung möglich' && (
                   <div className="grid grid-cols-4 items-start gap-4">
                     <Label htmlFor="meldeschluss" className="text-right pt-2">Meldeschluss</Label>
@@ -394,7 +412,7 @@ export default function AdminSeasonsPage() {
                         onChange={(e) => setCurrentSeason(prev => prev ? ({ ...prev, meldeschluss: e.target.value }) : prev)}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Bis zu diesem Tag ist die Anmeldung möglich. Wird auf der Startseite als Meldefenster angezeigt.
+                        Bis zu diesem Tag ist die Anmeldung möglich (Luftdruck: 15.09., Kleinkaliber: 15.04.). Wird auf der Startseite als Meldefenster angezeigt und schließt automatisch nach Ablauf.
                       </p>
                     </div>
                   </div>

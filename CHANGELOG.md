@@ -33,6 +33,7 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 ---
 
 ## Version 3.0.2
+- **📣 RWK-Meldefenster öffnet automatisch**: Über das neue Feld „Meldestart" (Saisonverwaltung, sichtbar bei Status „Vorbereitung") öffnet der tägliche Cron das Meldefenster am hinterlegten Tag automatisch (Status → „Anmeldung möglich") und informiert Sportleiter, Mannschaftsführer und KM-Orga per E-Mail (inkl. Hinweis, dass Öffnung/Schließung täglich gegen 09:00 Uhr erfolgt). Empfehlung: 4 Wochen vor Wettkampfbeginn
 - **🔒 RWK-Meldefenster schließt automatisch**: Ist der Meldeschluss einer RWK-Saison vorbei, setzt der tägliche Cron den Status von „Anmeldung möglich" zurück auf „Vorbereitung" (keine weiteren Meldungen möglich) und schickt dem RWK-Leiter eine Zusammenfassung mit der Anzahl gemeldeter Mannschaften
 - **⏰ Automatische Meldeschluss-Erinnerung**: Rund eine Woche vor einem Meldeschluss (RWK und KM) erhalten alle Sportleiter, Mannschaftsführer und die KM-Organisation automatisch eine gestaltete Erinnerungs-E-Mail (inkl. hinterlegter Signatur). Der Versand erfolgt einmalig pro Saison über einen täglichen Cron-Job
 - **📧 Bestätigungs-E-Mail beim Mannschaft-Anlegen**: Wer eine neue RWK-Mannschaft anlegt, erhält jetzt zusätzlich zum RWK-Leiter selbst eine Kopie der Benachrichtigung per E-Mail (mit „Angelegt von")

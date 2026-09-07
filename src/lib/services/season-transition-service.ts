@@ -361,7 +361,7 @@ export async function createNewSeason(
     batch.set(newSeasonRef, {
       competitionYear: targetYear,
       type: targetType,
-      status: 'Geplant',
+      status: 'Vorbereitung',
       name: seasonName
     });
 

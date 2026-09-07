@@ -226,6 +226,77 @@ function buildEmail(
 }
 
 /**
+ * Öffnet automatisch RWK-Meldefenster, deren Meldestart erreicht ist:
+ * Status "Vorbereitung" -> "Anmeldung möglich". Informiert den Empfängerkreis
+ * (Sportleiter, Mannschaftsführer, KM-Orga) per E-Mail.
+ * Gibt die Namen der geöffneten Saisons zurück.
+ */
+async function oeffneFaelligeRwkFenster(
+  jetzt: Date,
+  resend: Resend,
+  empfaenger: Empfaenger[]
+): Promise<string[]> {
+  const geoeffnet: string[] = [];
+  try {
+    const snap = await adminDb
+      .collection('seasons')
+      .where('status', '==', 'Vorbereitung')
+      .get();
+
+    for (const d of snap.docs) {
+      const s = d.data() as any;
+      const start = parseMeldeschluss(s.meldestart); // parst ISO YYYY-MM-DD (Tagesende)
+      // Nur öffnen, wenn ein Meldestart gesetzt und erreicht/überschritten ist.
+      if (!start) continue;
+      // Öffnen ab dem Meldestart-Tag: sobald "jetzt" den Beginn dieses Tages erreicht.
+      const startTagesbeginn = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
+      if (jetzt.getTime() < startTagesbeginn.getTime()) continue;
+
+      // Status auf "Anmeldung möglich" setzen -> Meldefenster offen.
+      await adminDb.collection('seasons').doc(d.id).update({ status: 'Anmeldung möglich' });
+
+      const name = s.name || 'RWK-Saison';
+      geoeffnet.push(name);
+      logInfo(`Cron: RWK-Meldefenster geöffnet (${name})`);
+
+      // Info-Mail an den Empfängerkreis
+      if (process.env.RESEND_API_KEY && empfaenger.length > 0) {
+        const schlussText = s.meldeschluss
+          ? `Meldeschluss: ${formatDatum(parseMeldeschluss(s.meldeschluss) || jetzt)}\r\n`
+          : '';
+        const text =
+          `Hallo,\r\n\r\n` +
+          `das Meldefenster für "${name}" ist ab heute geöffnet – ihr könnt eure Mannschaften jetzt melden.\r\n\r\n` +
+          schlussText +
+          `\r\nMeldung eintragen:\r\nhttps://rwk-einbeck.de/verein/mannschaften\r\n\r\n` +
+          `Hinweis: Die automatische Öffnung/Schließung der Meldefenster erfolgt täglich gegen 09:00 Uhr.\r\n\r\n` +
+          `Diese E-Mail geht an alle Sportleiter, Mannschaftsführer und die KM-Organisation.`;
+        const html = text.replace(/\r\n/g, '<br>');
+        const batchSize = 25;
+        for (let i = 0; i < empfaenger.length; i += batchSize) {
+          const batch = empfaenger.slice(i, i + batchSize);
+          try {
+            await resend.emails.send({
+              from: RESEND_FROM,
+              to: batch.map((e) => e.email),
+              subject: `📣 Meldefenster geöffnet: ${name}`,
+              text,
+              html,
+              replyTo: RESEND_REPLY_TO,
+            });
+          } catch (mailErr) {
+            logError(`Cron Fenster öffnen: Info-Mail-Batch fehlgeschlagen (${d.id})`, mailErr);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    logError('Cron: RWK-Meldefenster öffnen fehlgeschlagen', error);
+  }
+  return geoeffnet;
+}
+
+/**
  * Schließt automatisch RWK-Meldefenster, deren Meldeschluss vorbei ist:
  * Status "Anmeldung möglich" -> "Vorbereitung". Meldet dem RWK-Leiter je
  * geschlossener Saison die Anzahl gemeldeter Mannschaften.
@@ -310,7 +381,14 @@ export async function GET(request: NextRequest) {
 
   const jetzt = new Date();
 
-  // Aufgabe 2: abgelaufene RWK-Meldefenster automatisch schließen (unabhängig von Erinnerungen)
+  // Empfängerkreis (Sportleiter, Mannschaftsführer, KM-Orga) einmal laden –
+  // für Auto-Öffnen-Info und Erinnerungen gleichermaßen genutzt.
+  const empfaenger = await ladeEmpfaenger();
+
+  // Aufgabe 2a: fällige RWK-Meldefenster automatisch ÖFFNEN (Meldestart erreicht)
+  const geoeffneteFenster = await oeffneFaelligeRwkFenster(jetzt, resend, empfaenger);
+
+  // Aufgabe 2b: abgelaufene RWK-Meldefenster automatisch SCHLIESSEN (Meldeschluss vorbei)
   const geschlosseneFenster = await schliesseAbgelaufeneRwkFenster(jetzt, resend);
 
   try {
@@ -320,6 +398,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         sent: 0,
+        geoeffnet: geoeffneteFenster,
         geschlossen: geschlosseneFenster,
         message: 'Keine fälligen Meldeschlüsse.',
       });
@@ -335,13 +414,12 @@ export async function GET(request: NextRequest) {
 
     if (offene.length === 0) {
       logInfo('Cron Meldeschluss: alle fälligen Erinnerungen bereits versendet');
-      return NextResponse.json({ success: true, sent: 0, geschlossen: geschlosseneFenster, message: 'Bereits erinnert.' });
+      return NextResponse.json({ success: true, sent: 0, geoeffnet: geoeffneteFenster, geschlossen: geschlosseneFenster, message: 'Bereits erinnert.' });
     }
 
-    const empfaenger = await ladeEmpfaenger();
     if (empfaenger.length === 0) {
       logInfo('Cron Meldeschluss: keine Empfänger (Sportleiter/KM-Orga) gefunden');
-      return NextResponse.json({ success: true, sent: 0, geschlossen: geschlosseneFenster, message: 'Keine Empfänger.' });
+      return NextResponse.json({ success: true, sent: 0, geoeffnet: geoeffneteFenster, geschlossen: geschlosseneFenster, message: 'Keine Empfänger.' });
     }
 
     // Signatur aus admin_settings/email_signature laden (wie beim regulären E-Mail-Versand)
@@ -402,6 +480,7 @@ export async function GET(request: NextRequest) {
       success: true,
       sent: versendet,
       recipients: empfaenger.length,
+      geoeffnet: geoeffneteFenster,
       geschlossen: geschlosseneFenster,
       message: `${versendet} Erinnerung(en) versendet.`,
     });
