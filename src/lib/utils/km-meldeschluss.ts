@@ -24,7 +24,10 @@ export function parseMeldeschluss(meldeschluss?: string | null): Date | null {
   const iso = meldeschluss.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (iso) {
     const [, jahrStr, monatStr, tagStr] = iso;
-    return new Date(parseInt(jahrStr, 10), parseInt(monatStr, 10) - 1, parseInt(tagStr, 10), 23, 59, 59, 999);
+    // Ende des Meldeschluss-Tags in UTC (23:59:59), damit der Kalendertag
+    // zeitzonenunabhängig stabil bleibt (Server läuft in UTC, Anzeige/Format
+    // muss ebenfalls UTC verwenden).
+    return new Date(Date.UTC(parseInt(jahrStr, 10), parseInt(monatStr, 10) - 1, parseInt(tagStr, 10), 23, 59, 59, 999));
   }
 
   const teile = meldeschluss.split('.').map((t) => t.trim()).filter((t) => t !== '');
@@ -37,8 +40,8 @@ export function parseMeldeschluss(meldeschluss?: string | null): Date | null {
   const jahr = teile.length >= 3 && teile[2] ? parseInt(teile[2], 10) : new Date().getFullYear();
   if (isNaN(jahr)) return null;
 
-  // Ende des Meldeschluss-Tags (23:59:59), damit der Tag selbst noch gültig ist.
-  return new Date(jahr, monat - 1, tag, 23, 59, 59, 999);
+  // Ende des Meldeschluss-Tags (23:59:59) in UTC — Kalendertag bleibt stabil.
+  return new Date(Date.UTC(jahr, monat - 1, tag, 23, 59, 59, 999));
 }
 
 /**

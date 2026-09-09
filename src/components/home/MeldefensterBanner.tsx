@@ -24,7 +24,8 @@ interface Meldefenster {
 const EINE_WOCHE_MS = 7 * 24 * 60 * 60 * 1000;
 
 function formatDatum(d: Date): string {
-  return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  // UTC, passend zum UTC-Tagesende aus parseMeldeschluss (stabiler Kalendertag).
+  return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
 }
 
 export function MeldefensterBanner() {

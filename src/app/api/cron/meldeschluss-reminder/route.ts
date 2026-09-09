@@ -125,11 +125,13 @@ async function ladeFaelligeSaisons(jetzt: Date): Promise<SaisonReminder[]> {
 }
 
 function formatDatum(d: Date): string {
+  // UTC, weil parseMeldeschluss den Meldeschluss als UTC-Tagesende baut.
+  // So bleibt der angezeigte Kalendertag stabil (kein +1-Tag durch Zeitzone).
   return d.toLocaleDateString('de-DE', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-    timeZone: 'Europe/Berlin',
+    timeZone: 'UTC',
   });
 }
 
@@ -150,7 +152,9 @@ function buildEmail(
   jetzt: Date,
   signature: string
 ): { subject: string; text: string; html: string } {
-  const tageBis = Math.max(1, Math.ceil((s.deadline.getTime() - jetzt.getTime()) / (24 * 60 * 60 * 1000)));
+  // Resttage als reine Kalendertag-Differenz in UTC (kein Aufrunden durch Uhrzeit).
+  const tagWert = (d: Date) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const tageBis = Math.max(1, Math.round((tagWert(s.deadline) - tagWert(jetzt)) / (24 * 60 * 60 * 1000)));
   const bereichLang = s.bereich === 'RWK' ? 'Rundenwettkampf' : 'Kreismeisterschaft';
   const datum = formatDatum(s.deadline);
   const url = `https://rwk-einbeck.de${s.href}`;
