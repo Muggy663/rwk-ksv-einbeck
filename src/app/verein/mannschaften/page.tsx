@@ -939,6 +939,12 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
     return type;
   };
 
+  // Erkennt eine Einzelmeldung: Name endet auf "Einzel" ODER weniger als 3 Schützen.
+  const istEinzel = (team: Team): boolean => {
+    if (/einzel$/i.test((team.name || '').trim())) return true;
+    return (team.shooterIds?.length || 0) > 0 && (team.shooterIds?.length || 0) < 3;
+  };
+
   const toggleTeamExpansion = async (teamId: string, shooterIds: string[]) => {
     const newExpanded = new Set(expandedTeams);
     
@@ -1158,16 +1164,6 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                 {!selectedSeasonId && " Bitte wählen Sie zuerst eine Saison."}
               </CardDescription>
             </div>
-            {isVereinsvertreter && selectedSeasonId && activeClubId && !isReadOnly && (
-              <Button
-                  onClick={handleAddNewTeam}
-                  disabled={isLoadingTeams || isSubmittingForm}
-                  className="bg-green-600 hover:bg-green-700 text-white font-medium whitespace-nowrap"
-                  size="default"
-              >
-                  <PlusCircle className="mr-2 h-5 w-5" /> Neue Mannschaft
-              </Button>
-            )}
             {isReadOnly && selectedSeasonId && (
               <div className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded px-3 py-2">
                 ℹ️ Saison läuft – nur Anzeige möglich
@@ -1198,8 +1194,8 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                 {teamsOfActiveClub.map((team) => (
                   <React.Fragment key={team.id}>
                     <TableRow>
-                      <TableCell label="Name" className="font-medium">
-                        <div className="flex items-center gap-2">
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1212,7 +1208,12 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                               <ChevronRight className="h-4 w-4" />
                             }
                           </Button>
-                          {team.name}
+                          <span>{team.name}</span>
+                          {istEinzel(team) && (
+                            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-medium whitespace-nowrap">
+                              Einzel
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                     <TableCell label="Liga" hideOnMobile>{getLeagueNameDisplay(team.leagueId)}</TableCell>

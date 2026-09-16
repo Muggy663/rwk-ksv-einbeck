@@ -446,6 +446,12 @@ export default function AdminTeamsPage() {
     return allClubsGlobal.find(c => c.id === clubId)?.name || 'Unbek. Verein';
   };
 
+  // Erkennt eine Einzelmeldung: Name endet auf "Einzel" ODER weniger als 3 Schützen.
+  const istEinzel = (team: Team): boolean => {
+    if (/einzel$/i.test((team.name || '').trim())) return true;
+    return (team.shooterIds?.length || 0) > 0 && (team.shooterIds?.length || 0) < 3;
+  };
+
   const toggleTeamExpansion = async (teamId: string, shooterIds: string[]) => {
     const newExpanded = new Set(expandedTeams);
     
@@ -671,8 +677,8 @@ export default function AdminTeamsPage() {
                 {teamsForDisplay.map((team) => (
                   <React.Fragment key={team.id}>
                     <TableRow>
-                      <TableCell label="Name" className="font-medium">
-                        <div className="flex items-center gap-2">
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -685,7 +691,12 @@ export default function AdminTeamsPage() {
                               <ChevronRight className="h-4 w-4" />
                             }
                           </Button>
-                          {team.name}
+                          <span>{team.name}</span>
+                          {istEinzel(team) && (
+                            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-medium whitespace-nowrap">
+                              Einzel
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                     <TableCell label="Verein" hideOnMobile>{getClubName(team.clubId)}</TableCell>
