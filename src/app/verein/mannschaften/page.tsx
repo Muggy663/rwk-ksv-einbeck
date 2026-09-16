@@ -867,6 +867,33 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
     setCurrentTeam(prev => prev ? ({ ...prev, name: newTeamName }) : null);
   };
 
+  // Römische Zahlen für die automatische Nummerierung (pro Disziplin).
+  const ROEMISCH = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+
+  // Ermittelt die nächste freie Mannschaftsstärke für eine Disziplin (leagueType)
+  // beim aktiven Verein – zählt bereits vorhandene Mannschaften DERSELBEN Disziplin.
+  const naechsteStaerkeFuerDisziplin = (leagueType: string): string => {
+    const anzahlGleicheDisziplin = teamsOfActiveClub.filter((t) => {
+      if (t.leagueType !== leagueType) return false;
+      // Einzelmeldungen nicht mitzählen (die haben keine reguläre Nummer)
+      return !/einzel$/i.test((t.name || '').trim());
+    }).length;
+    return ROEMISCH[anzahlGleicheDisziplin] || String(anzahlGleicheDisziplin + 1);
+  };
+
+  // Handler für die Disziplin-Auswahl: schlägt beim NEUanlegen automatisch die
+  // nächste freie Nummer + den passenden Namen für diese Disziplin vor.
+  const handleDisciplineChange = (value: string) => {
+    setCurrentTeam(prev => prev ? ({ ...prev, leagueType: value as FirestoreLeagueSpecificDiscipline }) : null);
+    if (formMode !== 'new' || !value) return;
+
+    const staerke = naechsteStaerkeFuerDisziplin(value);
+    setTeamStrength(staerke);
+    const newTeamName = generateTeamName(activeClubName, staerke);
+    setSuggestedTeamName(newTeamName);
+    setCurrentTeam(prev => prev ? ({ ...prev, leagueType: value as FirestoreLeagueSpecificDiscipline, name: newTeamName }) : null);
+  };
+
  const handleShooterSelectionChange = (shooterId: string, isChecked: boolean) => {
     if (!isVereinsvertreter || isSubmittingForm || isLoadingDialogData) return;
 
@@ -1431,7 +1458,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                     <UiAlertDescription>
                         {isReadOnly && !isAdmin
                           ? "🔒 Saison läuft – nur Kontaktdaten des Mannschaftsführers können geändert werden."
-                          : "Hinweis zur Mannschaftsstärke: Bitte wählen Sie die Stärke Ihrer Mannschaft aus (I für die stärkste, II für die zweitstärkste usw.). Der Mannschaftsname wird automatisch vorgeschlagen. Die Ligazuweisung erfolgt durch den Rundenwettkampfleiter."
+                          : "So legen Sie eine Mannschaft an: 1. Disziplin wählen (Luftgewehr Auflage, Luftgewehr Freihand oder Luftpistole). 2. Die Mannschaftsstärke (I, II, III …) wird automatisch vorgeschlagen – WICHTIG: Sie zählt PRO DISZIPLIN getrennt. Beispiel: erste Freihand-Mannschaft = I, erste Auflage-Mannschaft ebenfalls = I. Der Name wird automatisch gebildet; die Ligazuweisung erfolgt durch den Rundenwettkampfleiter."
                         }
                     </UiAlertDescription>
                 </Alert>
@@ -1439,38 +1466,15 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
                     <div className="space-y-1.5">
                         <div className="flex items-center">
-                          <Label htmlFor="vvm-teamStrengthDialog">Mannschaftsstärke</Label>
+                          <Label htmlFor="vvm-teamDisciplineDialog">1. Disziplin</Label>
                           <HelpTooltip 
-                            text="Wählen Sie die Stärke Ihrer Mannschaft (I für die stärkste, II für die zweitstärkste usw.)." 
-                            className="ml-2"
-                          />
-                        </div>
-                        <NativeSelect
-                          value={teamStrength}
-                          onValueChange={handleTeamStrengthChange}
-                          placeholder="Mannschaftsstärke wählen"
-                          disabled={isReadOnly && !isAdmin}
-                          options={[
-                            { value: "I", label: "I (Erste Mannschaft)" },
-                            { value: "II", label: "II (Zweite Mannschaft)" },
-                            { value: "III", label: "III (Dritte Mannschaft)" },
-                            { value: "IV", label: "IV (Vierte Mannschaft)" },
-                            { value: "V", label: "V (Fünfte Mannschaft)" },
-                            { value: "Einzel", label: "Einzel (Einzelstarter)" }
-                          ]}
-                        />
-                    </div>
-                    <div className="space-y-1.5">
-                        <div className="flex items-center">
-                          <Label htmlFor="vvm-teamDisciplineDialog">Disziplin</Label>
-                          <HelpTooltip 
-                            text="Wählen Sie die Disziplin, in der diese Mannschaft antreten soll." 
+                            text="Wählen Sie zuerst die Disziplin. Danach wird die passende Mannschaftsstärke automatisch vorgeschlagen." 
                             className="ml-2"
                           />
                         </div>
                         <NativeSelect
                           value={currentTeam?.leagueType || ""}
-                          onValueChange={(value) => setCurrentTeam(prev => prev ? {...prev, leagueType: value as FirestoreLeagueSpecificDiscipline} : null)}
+                          onValueChange={handleDisciplineChange}
                           required
                           placeholder="Disziplin wählen"
                           disabled={isReadOnly && !isAdmin}
@@ -1480,6 +1484,29 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                             { value: "LGA", label: "Luftgewehr Auflage" },
                             { value: "LGS", label: "Luftgewehr Stehend (Freihand)" },
                             { value: "LP", label: "Luftpistole" }
+                          ]}
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <div className="flex items-center">
+                          <Label htmlFor="vvm-teamStrengthDialog">2. Mannschaftsstärke (pro Disziplin)</Label>
+                          <HelpTooltip 
+                            text="Zählt getrennt je Disziplin: Ihre erste Freihand-Mannschaft ist I, Ihre erste Auflage-Mannschaft ebenfalls I. Der Vorschlag richtet sich nach Ihren bereits gemeldeten Mannschaften dieser Disziplin." 
+                            className="ml-2"
+                          />
+                        </div>
+                        <NativeSelect
+                          value={teamStrength}
+                          onValueChange={handleTeamStrengthChange}
+                          placeholder={currentTeam?.leagueType ? "Mannschaftsstärke wählen" : "Zuerst Disziplin wählen"}
+                          disabled={(isReadOnly && !isAdmin) || !currentTeam?.leagueType}
+                          options={[
+                            { value: "I", label: "I (Erste Mannschaft)" },
+                            { value: "II", label: "II (Zweite Mannschaft)" },
+                            { value: "III", label: "III (Dritte Mannschaft)" },
+                            { value: "IV", label: "IV (Vierte Mannschaft)" },
+                            { value: "V", label: "V (Fünfte Mannschaft)" },
+                            { value: "Einzel", label: "Einzel (Einzelstarter)" }
                           ]}
                         />
                     </div>

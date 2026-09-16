@@ -33,6 +33,7 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 ---
 
 ## Version 3.0.3
+- **🧭 Mannschaft anlegen führt Schritt für Schritt**: Im Vereinsbereich wählt man jetzt zuerst die Disziplin, dann wird die Mannschaftsstärke automatisch vorgeschlagen — und zwar korrekt PRO Disziplin gezählt (erste Freihand-Mannschaft = I, erste Auflage-Mannschaft ebenfalls = I). So wird nicht mehr versehentlich über verschiedene Disziplinen hinweg durchnummeriert. Der Mannschaftsname bleibt schlicht (z. B. „Einbecker SGi I"), ohne Disziplin-Zusatz. Mit erklärendem Hinweis für neue Nutzer
 - **📋 „Meldungen abgeschlossen"-Kennzeichen**: Nach dem automatischen Schließen des Meldefensters wird die Saison in der Saisonverwaltung mit einem Hinweis „Meldungen abgeschlossen" markiert (der Status bleibt „Vorbereitung"). Beim erneuten Öffnen oder beim Setzen auf „Laufend" verschwindet der Hinweis wieder
 - **📇 Schützen in der Mannschafts-Mail**: Die E-Mail beim Anlegen einer Mannschaft listet jetzt die gemeldeten Schützen namentlich auf (zur Kontrolle) — für den RWK-Leiter und den anlegenden Nutzer
 - **📋 Bessere Zusammenfassung nach Meldeschluss**: Die automatische „Meldefenster geschlossen"-E-Mail an den RWK-Leiter listet die gemeldeten Mannschaften jetzt nach Verein auf (plus Einzelmeldungen) und enthält direkte Links zu den nächsten Schritten (Auf-/Abstieg, Mannschaften, Saisonstatus)
