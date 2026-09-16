@@ -1443,7 +1443,8 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                             { value: "II", label: "II (Zweite Mannschaft)" },
                             { value: "III", label: "III (Dritte Mannschaft)" },
                             { value: "IV", label: "IV (Vierte Mannschaft)" },
-                            { value: "V", label: "V (Fünfte Mannschaft)" }
+                            { value: "V", label: "V (Fünfte Mannschaft)" },
+                            { value: "Einzel", label: "Einzel (Einzelstarter)" }
                           ]}
                         />
                     </div>
