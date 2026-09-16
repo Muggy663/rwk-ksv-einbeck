@@ -1,12 +1,12 @@
 # 🎯 RWK Einbeck App
 
-**Version: 3.0.2** | **Android: 1.0.0** | **07.09.2026**
+**Version: 3.0.3** | **Android: 1.0.0** | **08.09.2026**
 
 > **Digitale Plattform für den deutschen Schießsport**
 
 Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeisterschaften (KM) und den digitalen Schießnachweis. Automatische Tabellen, KI-gestützte Ergebniserfassung und moderne Vereinsverwaltung.
 
-[![Version](https://img.shields.io/badge/Version-3.0.2-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-3.0.3-green?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_16_+_Firebase-blue?style=for-the-badge)](#)
 [![Design](https://img.shields.io/badge/Design-Glassmorphism-purple?style=for-the-badge)](#)
 
@@ -96,7 +96,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
-**Aktuell: Version 3.0.2 (07.09.2026)** – Automatische Meldeschluss-Erinnerung (RWK + KM) an Sportleiter und KM-Orga, Bestätigungs-E-Mail beim Mannschaft-Anlegen und zuverlässige automatische Abmeldung auch in der App. Baut auf 3.0.1 auf (zentrale Mitgliederliste, abgesicherte KM-Schnittstellen, einheitliche Altersklassen).
+**Aktuell: Version 3.0.3 (08.09.2026)** – Automatisierte Meldefenster (Öffnen/Schließen/Erinnerung), anwendbarer Auf-/Abstieg, Einzelstarter-Meldung im Vereinsbereich, gezielteres E-Mail-System und diverse Mobile-Verbesserungen. Baut auf 3.0.2/3.0.1 auf (zentrale Mitgliederliste, abgesicherte KM-Schnittstellen, einheitliche Altersklassen).
 
 ## 📸 Screenshots
 
@@ -136,7 +136,7 @@ Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
 **Copyright © 2025-2026 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 07.09.2026 - Version 3.0.2*
+*Letzte Aktualisierung: 08.09.2026 - Version 3.0.3*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 
