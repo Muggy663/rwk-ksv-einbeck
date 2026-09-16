@@ -88,9 +88,9 @@ export default function EmailSystemPage() {
           id: `email_${doc.id}`,
           name: data.name,
           email: data.email,
-          groups: [data.group || 'sportleiter'],
+          groups: ['meine_liste'],
           isActive: true,
-          role: data.role || 'vereinsvertreter'
+          role: 'meine_liste'
         });
       });
       
@@ -104,44 +104,32 @@ export default function EmailSystemPage() {
           // Prüfe ob E-Mail bereits existiert
           const existingContact = loadedContacts.find(c => c.email === data.email);
           if (!existingContact) {
-            // Bestimme Rolle aus neuen Club-Rollen oder Legacy-Rolle
-            let userRole = data.role || 'app_benutzer';
-            let groups = [userRole];
-            
-            // Neue Club-Rollen prüfen
-            if (data.clubRoles && Object.keys(data.clubRoles).length > 0) {
-              const clubRoleValues = Object.values(data.clubRoles);
-              if (clubRoleValues.includes('SPORTLEITER')) {
-                userRole = 'sportleiter';
-                groups = ['sportleiter'];
-              } else if (clubRoleValues.includes('VORSTAND')) {
-                userRole = 'vorstand';
-                groups = ['vorstand'];
-              } else if (clubRoleValues.includes('KASSENWART')) {
-                userRole = 'kassenwart';
-                groups = ['kassenwart'];
-              } else if (clubRoleValues.includes('SCHRIFTFUEHRER')) {
-                userRole = 'schriftfuehrer';
-                groups = ['schriftfuehrer'];
-              } else if (clubRoleValues.includes('MANNSCHAFTSFUEHRER')) {
-                userRole = 'mannschaftsfuehrer';
-                groups = ['mannschaftsfuehrer'];
-              }
-            }
-            
-            // KV-Rollen prüfen
-            if (data.kvRole) {
-              if (data.kvRole === 'KV_WETTKAMPFLEITER') {
-                userRole = 'kv_wettkampfleiter';
-                groups = ['kv_wettkampfleiter'];
-              }
-            }
-            
+            // Rolle aus den tatsächlichen Berechtigungen ableiten.
+            // Reihenfolge: KV-Orga > Sportleiter > Mannschaftsführer > (sonst) app_benutzer.
+            const clubRoleValues = data.clubRoles ? Object.values(data.clubRoles) : [];
+            const kvRoleValues = data.kvRoles ? Object.values(data.kvRoles) : [];
+
+            const istKvOrga =
+              kvRoleValues.includes('KV_KM_ORGA') ||
+              kvRoleValues.includes('KV_WETTKAMPFLEITER') ||
+              data.kvRole === 'KV_KM_ORGA' ||
+              data.kvRole === 'KV_WETTKAMPFLEITER' ||
+              data.role === 'km_organisator' ||
+              data.role === 'km_orga';
+            const istSportleiter = clubRoleValues.includes('SPORTLEITER');
+            const istMannschaftsfuehrer =
+              clubRoleValues.includes('MANNSCHAFTSFUEHRER') || data.role === 'mannschaftsfuehrer';
+
+            let userRole = 'app_benutzer'; // reiner App-/Schießnachweis-Nutzer ohne RWK-Rolle
+            if (istKvOrga) userRole = 'kv_orga';
+            else if (istSportleiter) userRole = 'sportleiter';
+            else if (istMannschaftsfuehrer) userRole = 'mannschaftsfuehrer';
+
             loadedContacts.push({
               id: `user_${doc.id}`,
               name: data.displayName,
               email: data.email,
-              groups: groups,
+              groups: [userRole],
               isActive: data.isActive !== false,
               role: userRole,
               clubName: data.clubName
@@ -162,43 +150,37 @@ export default function EmailSystemPage() {
   };
 
   const loadGroups = async () => {
-    // Standard-Gruppen (erweitert für neue Rollen)
+    // Aktuelle Rollen des KSV Einbeck (Vorstand/Kassenwart/Schriftführer aus
+    // Vereinssoftware-Zeiten entfernt – gibt es im RWK nicht mehr).
     const defaultGroups: EmailGroup[] = [
       {
-        id: 'alle',
-        name: 'Alle Benutzer',
-        description: 'Alle registrierten Benutzer',
+        id: 'meine_liste',
+        name: 'Meine Liste (Sportleiter-Kontakte)',
+        description: 'Manuell gepflegte E-Mail-Liste (Kontakte-Tab)',
         contactIds: []
       },
-
       {
         id: 'sportleiter',
         name: 'Sportleiter',
-        description: 'Alle Sportleiter',
-        contactIds: []
-      },
-      {
-        id: 'vorstand',
-        name: 'Vorstand',
-        description: 'Vorstandsmitglieder',
-        contactIds: []
-      },
-      {
-        id: 'kassenwart',
-        name: 'Kassenwarte',
-        description: 'Alle Kassenwarte',
-        contactIds: []
-      },
-      {
-        id: 'kv_wettkampfleiter',
-        name: 'KV-Wettkampfleiter',
-        description: 'Kreisverband Wettkampfleiter',
+        description: 'App-Benutzer mit Rolle Sportleiter',
         contactIds: []
       },
       {
         id: 'mannschaftsfuehrer',
-        name: 'Mannschaftsführer (Legacy)',
-        description: 'Legacy Mannschaftsführer',
+        name: 'Mannschaftsführer',
+        description: 'App-Benutzer mit Rolle Mannschaftsführer',
+        contactIds: []
+      },
+      {
+        id: 'kv_orga',
+        name: 'KV-Orga',
+        description: 'Kreisverband-Organisation (KM-Orga / Wettkampfleiter)',
+        contactIds: []
+      },
+      {
+        id: 'alle',
+        name: 'Alle App-Benutzer',
+        description: 'Alle registrierten App-Benutzer (inkl. reiner Schießnachweis-Nutzer)',
         contactIds: []
       }
     ];
@@ -240,18 +222,16 @@ export default function EmailSystemPage() {
     
     switch (groupId) {
       case 'alle':
-        return filteredContacts;
-
+        // Alle App-Benutzer (aus user_permissions), NICHT die manuelle Liste.
+        return filteredContacts.filter(c => c.role !== 'meine_liste');
+      case 'meine_liste':
+        return filteredContacts.filter(c => c.role === 'meine_liste');
       case 'sportleiter':
         return filteredContacts.filter(c => c.role === 'sportleiter');
-      case 'vorstand':
-        return filteredContacts.filter(c => c.groups.includes('vorstand'));
-      case 'kassenwart':
-        return filteredContacts.filter(c => c.role === 'kassenwart');
-      case 'kv_wettkampfleiter':
-        return filteredContacts.filter(c => c.role === 'kv_wettkampfleiter');
       case 'mannschaftsfuehrer':
         return filteredContacts.filter(c => c.role === 'mannschaftsfuehrer');
+      case 'kv_orga':
+        return filteredContacts.filter(c => c.role === 'kv_orga');
       default:
         return [];
     }
@@ -856,30 +836,9 @@ export default function EmailSystemPage() {
                             onChange={(e) => setEditContact(prev => ({ ...prev, email: e.target.value }))}
                             placeholder="E-Mail"
                           />
-                          <div className="space-y-1">
-                            <Label className="text-xs">Gruppen:</Label>
-                            <div className="flex flex-wrap gap-1">
-                              {['sportleiter', 'vorstand', 'kassenwart', 'schriftfuehrer', 'mannschaftsfuehrer', 'kv_wettkampfleiter'].map(group => (
-                                <Button
-                                  key={group}
-                                  type="button"
-                                  size="sm"
-                                  variant={editContact.groups.includes(group) ? "default" : "outline"}
-                                  onClick={() => {
-                                    setEditContact(prev => ({
-                                      ...prev,
-                                      groups: prev.groups.includes(group)
-                                        ? prev.groups.filter(g => g !== group)
-                                        : [...prev.groups, group]
-                                    }));
-                                  }}
-                                  className="text-xs h-6"
-                                >
-                                  {group}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Gehört zur Gruppe „Meine Liste".
+                          </p>
                           <div className="flex gap-2">
                             <Button size="sm" onClick={saveEditContact}>
                               <Save className="h-4 w-4 mr-1" /> Speichern
@@ -951,38 +910,15 @@ export default function EmailSystemPage() {
                     placeholder="max@example.com"
                   />
                 </div>
-                <div>
-                  <Label>Gruppen</Label>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {['sportleiter', 'vorstand', 'kassenwart', 'schriftfuehrer', 'mannschaftsfuehrer', 'kv_wettkampfleiter'].map(group => (
-                      <Button
-                        key={group}
-                        type="button"
-                        size="sm"
-                        variant={newContact.groups.includes(group) ? "default" : "outline"}
-                        onClick={() => {
-                          setNewContact(prev => ({
-                            ...prev,
-                            groups: prev.groups.includes(group)
-                              ? prev.groups.filter(g => g !== group)
-                              : [...prev.groups, group]
-                          }));
-                        }}
-                        className="text-xs h-6"
-                      >
-                        {group}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
                 <Button onClick={addNewContact} className="w-full">
                   <Plus className="mr-2 h-4 w-4" />
-                  Kontakt hinzufügen
+                  Zu „Meine Liste" hinzufügen
                 </Button>
                 
                 <div className="text-xs text-muted-foreground mt-4 p-3 bg-muted rounded-md">
-                  <strong>Hinweis:</strong> Kontakte aus der Benutzerverwaltung werden automatisch geladen. 
-                  Hier können zusätzliche Kontakte (z.B. externe Personen) hinzugefügt werden.
+                  <strong>Hinweis:</strong> App-Benutzer (Sportleiter, Mannschaftsführer, KV-Orga) werden
+                  automatisch aus der Benutzerverwaltung geladen. Hier hinzugefügte Kontakte landen in der
+                  Gruppe „Meine Liste" – ideal für externe Personen ohne App-Konto.
                 </div>
               </CardContent>
             </Card>

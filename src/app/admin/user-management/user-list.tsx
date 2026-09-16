@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, Search, Loader2, UserCog, MailCheck } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
-import { collection, query, getDocs, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { UserPermission, Club } from '@/types/rwk';
 import {
@@ -98,13 +98,21 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
     
     setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'user_permissions', userToDelete.uid));
+      const { authFetch } = await import('@/lib/auth/authFetch');
+      const res = await authFetch('/api/admin/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: userToDelete.uid, email: userToDelete.email }),
+      });
+      if (!res.ok) {
+        throw new Error((await res.json().catch(() => ({})))?.error || 'Löschen fehlgeschlagen');
+      }
       setUsers(prevUsers => prevUsers.filter(user => user.uid !== userToDelete.uid));
       setFilteredUsers(prevUsers => prevUsers.filter(user => user.uid !== userToDelete.uid));
       
       toast({
-        title: 'Benutzer gelöscht',
-        description: `Die Berechtigungen für ${userToDelete.email} wurden gelöscht.`,
+        title: 'Benutzer vollständig gelöscht',
+        description: `${userToDelete.email} wurde inkl. Login-Zugang und Verteiler-Eintrag entfernt.`,
       });
     } catch (error) {
       logError('Error deleting user:', error);
@@ -376,10 +384,12 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Benutzerberechtigungen löschen?</AlertDialogTitle>
+              <AlertDialogTitle>Benutzer vollständig löschen?</AlertDialogTitle>
               <AlertDialogDescription>
-                Möchten Sie die Berechtigungen für {userToDelete?.email} wirklich löschen? 
-                Dies entfernt nur die Berechtigungen in der App, nicht den Benutzer aus Firebase Authentication.
+                Möchten Sie {userToDelete?.email} wirklich vollständig löschen?
+                Dies entfernt die App-Berechtigungen, etwaige KM-Berechtigungen, den Verteiler-Eintrag
+                (E-Mail-Liste) und den Login-Zugang (Firebase Authentication). Diese Aktion kann nicht
+                rückgängig gemacht werden. Der Nutzer kann sich danach nur durch erneute Registrierung wieder anmelden.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
