@@ -323,16 +323,45 @@ async function schliesseAbgelaufeneRwkFenster(jetzt: Date, resend: Resend): Prom
       // Status zurück auf "Vorbereitung" -> Meldefenster ist zu, Anmeldung gesperrt.
       await adminDb.collection('seasons').doc(d.id).update({ status: 'Vorbereitung' });
 
-      // Gemeldete Mannschaften dieser Saison zählen (nur echte Mannschaften, >=3 Schützen)
+      // Gemeldete Mannschaften dieser Saison sammeln (nur echte Mannschaften, >=3 Schützen)
+      // und je Verein aufschlüsseln.
       let mannschaften = 0;
+      let einzel = 0;
+      const proVerein = new Map<string, number>();   // clubId -> Anzahl Mannschaften
       try {
         const teamsSnap = await adminDb
           .collection('rwk_teams')
           .where('seasonId', '==', d.id)
           .get();
-        mannschaften = teamsSnap.docs.filter((t) => ((t.data() as any).shooterIds?.length || 0) >= 3).length;
+        teamsSnap.docs.forEach((t) => {
+          const data = t.data() as any;
+          const anzahl = data.shooterIds?.length || 0;
+          if (anzahl >= 3) {
+            mannschaften += 1;
+            const cid = data.clubId || 'unbekannt';
+            proVerein.set(cid, (proVerein.get(cid) || 0) + 1);
+          } else if (anzahl > 0) {
+            einzel += 1;
+          }
+        });
       } catch (teamErr) {
         logError(`Cron Fenster schließen: Teams zählen fehlgeschlagen (${d.id})`, teamErr);
+      }
+
+      // Vereinsnamen auflösen für die Aufschlüsselung
+      let vereinsZeilen = '';
+      try {
+        if (proVerein.size > 0) {
+          const clubsSnap = await adminDb.collection('clubs').get();
+          const clubName = new Map<string, string>();
+          clubsSnap.docs.forEach((c) => clubName.set(c.id, (c.data() as any).name || c.id));
+          vereinsZeilen = Array.from(proVerein.entries())
+            .map(([cid, anz]) => `  • ${clubName.get(cid) || 'Unbekannter Verein'}: ${anz}`)
+            .sort()
+            .join('\r\n');
+        }
+      } catch (clubErr) {
+        logError(`Cron Fenster schließen: Vereinsnamen fehlgeschlagen (${d.id})`, clubErr);
       }
 
       const name = s.name || 'RWK-Saison';
@@ -346,9 +375,18 @@ async function schliesseAbgelaufeneRwkFenster(jetzt: Date, resend: Resend): Prom
           `Das Meldefenster wurde automatisch geschlossen.\r\n\r\n` +
           `Saison: ${name}\r\n` +
           `Meldeschluss: ${datum}\r\n` +
-          `Gemeldete Mannschaften: ${mannschaften}\r\n\r\n` +
-          `Die Saison steht jetzt wieder auf Status "Vorbereitung" (keine weiteren Meldungen möglich).\r\n` +
-          `Nächster Schritt: Mannschaften den Ligen zuordnen und die Saison auf "Laufend" setzen.`;
+          `Gemeldete Mannschaften: ${mannschaften}` +
+          (einzel > 0 ? ` (zusätzlich ${einzel} Einzelmeldung${einzel === 1 ? '' : 'en'})` : '') +
+          `\r\n` +
+          (vereinsZeilen ? `\r\nAufschlüsselung nach Verein:\r\n${vereinsZeilen}\r\n` : '') +
+          `\r\nDie Saison steht jetzt auf Status "Vorbereitung" (keine weiteren Meldungen möglich).\r\n\r\n` +
+          `Nächste Schritte:\r\n` +
+          `1. Auf-/Abstieg anwenden und Mannschaften den Ligen zuordnen:\r\n` +
+          `   https://rwk-einbeck.de/admin/promotion-relegation\r\n` +
+          `2. Mannschaften prüfen/nachbearbeiten:\r\n` +
+          `   https://rwk-einbeck.de/admin/teams\r\n` +
+          `3. Saison anschließend auf "Laufend" setzen:\r\n` +
+          `   https://rwk-einbeck.de/admin/seasons`;
         try {
           await resend.emails.send({
             from: RESEND_FROM,
