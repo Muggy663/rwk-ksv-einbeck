@@ -149,7 +149,12 @@ export default function AdminSeasonsPage() {
       meldeschluss: currentSeason.status === 'Anmeldung möglich' ? (currentSeason.meldeschluss || '') : '',
       // Meldestart (Auto-Öffnen) nur in der Planungsphase "Vorbereitung" sinnvoll.
       meldestart: currentSeason.status === 'Vorbereitung' ? (currentSeason.meldestart || '') : '',
-    };
+      // "Meldungen abgeschlossen"-Kennzeichen: nur solange Status "Vorbereitung" ist
+      // UND es zuvor gesetzt wurde. Beim Öffnen (Anmeldung möglich) / Laufend / Abgeschlossen
+      // wird es zurückgesetzt.
+      meldungenGeschlossen:
+        currentSeason.status === 'Vorbereitung' ? ((currentSeason as any).meldungenGeschlossen || false) : false,
+    } as any;
 
     setIsLoading(true);
     try {
@@ -254,9 +259,14 @@ export default function AdminSeasonsPage() {
                 {seasons.map((season) => (
                   <Card key={season.id} className="p-4">
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
                         <h3 className="font-medium">{season.name}</h3>
-                        <span className="text-sm px-2 py-1 bg-blue-100 text-blue-700 rounded">{season.status}</span>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {(season as any).meldungenGeschlossen && (
+                            <span className="text-xs px-2 py-1 bg-amber-100 text-amber-800 rounded font-medium">📋 Meldungen abgeschlossen</span>
+                          )}
+                          <span className="text-sm px-2 py-1 bg-blue-100 text-blue-700 rounded">{season.status}</span>
+                        </div>
                       </div>
                       <div className="space-y-1 text-sm">
                         <div><span className="font-medium">Jahr:</span> {season.competitionYear}</div>
@@ -301,7 +311,14 @@ export default function AdminSeasonsPage() {
                         <TableCell>{season.competitionYear}</TableCell>
                         <TableCell>{season.type}</TableCell>
                         <TableCell>{season.name}</TableCell>
-                        <TableCell>{season.status}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <span>{season.status}</span>
+                            {(season as any).meldungenGeschlossen && (
+                              <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-medium whitespace-nowrap">📋 Meldungen abgeschlossen</span>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-2 justify-end">
                             <Button variant="outline" size="sm" onClick={() => navigateToLeagues(season.id)} className="text-xs">

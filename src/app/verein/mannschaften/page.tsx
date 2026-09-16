@@ -706,6 +706,15 @@ export default function VereinMannschaftenPage() {
           const clubName = allClubsGlobal.find(c => c.id === activeClubId)?.name || 'Unbekannter Verein';
           const seasonName = allSeasons.find(s => s.id === selectedSeasonId)?.name || 'Unbekannte Saison';
           
+          // Namen der gemeldeten Schützen zur Kontrolle auflisten
+          const schuetzenNamen = selectedShooterIdsInForm.map((sid, idx) => {
+            const sh = allClubShootersForDialog.find(s => s.id === sid);
+            const anzeige = sh
+              ? (sh.firstName && sh.lastName ? `${sh.firstName} ${sh.lastName}` : (sh.name || 'Unbekannt'))
+              : 'Unbekannt';
+            return `  ${idx + 1}. ${anzeige}`;
+          }).join('\n');
+
           const emailData = new FormData();
           emailData.append('subject', `🆕 Neue Mannschaft angelegt: ${dataForNewTeam.name}`);
           emailData.append('message', `Neue Mannschaft wurde angelegt:
@@ -714,8 +723,10 @@ Mannschaft: ${dataForNewTeam.name}
 Verein: ${clubName}
 Saison: ${seasonName}
 Disziplin: ${dataForNewTeam.leagueType || 'Nicht angegeben'}
-Schützen: ${selectedShooterIdsInForm.length}
 Außer Konkurrenz: ${dataForNewTeam.outOfCompetition ? 'Ja' : 'Nein'}
+
+Gemeldete Schützen (${selectedShooterIdsInForm.length}):
+${schuetzenNamen || '  (keine Schützen ausgewählt)'}
 
 Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
           // Empfänger: RWK-Leiter immer, zusätzlich der anlegende Nutzer (Kopie/Bestätigung)

@@ -257,7 +257,12 @@ async function oeffneFaelligeRwkFenster(
       if (jetzt.getTime() < startTagesbeginn.getTime()) continue;
 
       // Status auf "Anmeldung möglich" setzen -> Meldefenster offen.
-      await adminDb.collection('seasons').doc(d.id).update({ status: 'Anmeldung möglich' });
+      // Ein evtl. vorhandenes "Meldungen abgeschlossen"-Flag wieder entfernen.
+      await adminDb.collection('seasons').doc(d.id).update({
+        status: 'Anmeldung möglich',
+        meldungenGeschlossen: FieldValue.delete(),
+        meldungenGeschlossenAm: FieldValue.delete(),
+      });
 
       const name = s.name || 'RWK-Saison';
       geoeffnet.push(name);
@@ -321,7 +326,13 @@ async function schliesseAbgelaufeneRwkFenster(jetzt: Date, resend: Resend): Prom
       if (!deadline || jetzt.getTime() <= deadline.getTime()) continue;
 
       // Status zurück auf "Vorbereitung" -> Meldefenster ist zu, Anmeldung gesperrt.
-      await adminDb.collection('seasons').doc(d.id).update({ status: 'Vorbereitung' });
+      // Zusätzlich ein kosmetisches Flag setzen, damit die Saisonliste "Meldungen
+      // abgeschlossen" anzeigen kann (Status-Wert selbst bleibt unverändert).
+      await adminDb.collection('seasons').doc(d.id).update({
+        status: 'Vorbereitung',
+        meldungenGeschlossen: true,
+        meldungenGeschlossenAm: FieldValue.serverTimestamp(),
+      });
 
       // Gemeldete Mannschaften dieser Saison sammeln (nur echte Mannschaften, >=3 Schützen)
       // und je Verein aufschlüsseln.
