@@ -24,6 +24,8 @@ interface EmailContact {
   isActive: boolean;
   role?: string;
   clubName?: string;
+  source: 'app' | 'liste';   // Herkunft: App-Benutzer (user_permissions) oder manuelle Liste (email_contacts)
+  appRole?: string;          // tatsächliche App-Rolle (sportleiter/mannschaftsfuehrer/kv_orga/app_benutzer), falls source='app'
 }
 
 interface EmailGroup {
@@ -65,7 +67,8 @@ export default function EmailSystemPage() {
   const [editContact, setEditContact] = useState({
     name: '',
     email: '',
-    groups: [] as string[]
+    groups: [] as string[],
+    extraGroups: [] as string[]   // zusätzliche Rollen-Gruppen für einen Listen-Kontakt
   });
 
   useEffect(() => {
@@ -88,9 +91,12 @@ export default function EmailSystemPage() {
           id: `email_${doc.id}`,
           name: data.name,
           email: data.email,
-          groups: ['meine_liste'],
+          // Manuelle Liste gehört immer zu 'meine_liste'; zusätzliche Gruppen
+          // können optional pro Kontakt gespeichert sein (Overrides).
+          groups: ['meine_liste', ...(Array.isArray(data.extraGroups) ? data.extraGroups : [])],
           isActive: true,
-          role: 'meine_liste'
+          role: 'meine_liste',
+          source: 'liste'
         });
       });
       
@@ -116,7 +122,9 @@ export default function EmailSystemPage() {
               data.kvRole === 'KV_WETTKAMPFLEITER' ||
               data.role === 'km_organisator' ||
               data.role === 'km_orga';
-            const istSportleiter = clubRoleValues.includes('SPORTLEITER');
+            // Sportleiter: neue clubRoles-Struktur ODER Legacy role='vereinsvertreter'
+            const istSportleiter =
+              clubRoleValues.includes('SPORTLEITER') || data.role === 'vereinsvertreter';
             const istMannschaftsfuehrer =
               clubRoleValues.includes('MANNSCHAFTSFUEHRER') || data.role === 'mannschaftsfuehrer';
 
@@ -132,7 +140,9 @@ export default function EmailSystemPage() {
               groups: [userRole],
               isActive: data.isActive !== false,
               role: userRole,
-              clubName: data.clubName
+              clubName: data.clubName,
+              source: 'app',
+              appRole: userRole
             });
           }
         }
@@ -215,6 +225,18 @@ export default function EmailSystemPage() {
     }
     
     return filtered;
+  };
+
+  // Lesbares Label für eine Rollen-/Gruppen-ID.
+  const rollenLabel = (id?: string): string => {
+    switch (id) {
+      case 'sportleiter': return 'App: Sportleiter';
+      case 'mannschaftsfuehrer': return 'App: Mannschaftsführer';
+      case 'kv_orga': return 'App: KV-Orga';
+      case 'app_benutzer': return 'App-Benutzer (ohne RWK-Rolle)';
+      case 'meine_liste': return 'Meine Liste';
+      default: return id || '';
+    }
   };
 
   const getContactsByGroup = (groupId: string): EmailContact[] => {
@@ -373,7 +395,9 @@ export default function EmailSystemPage() {
       setEditContact({
         name: contact.name,
         email: contact.email,
-        groups: contact.groups
+        groups: contact.groups,
+        // zusätzliche Rollen-Gruppen (ohne die feste 'meine_liste')
+        extraGroups: contact.groups.filter((g) => g !== 'meine_liste')
       });
     }
   };
@@ -386,7 +410,7 @@ export default function EmailSystemPage() {
       await updateDoc(doc(db, 'email_contacts', docId), {
         name: editContact.name,
         email: editContact.email,
-        groups: editContact.groups,
+        extraGroups: editContact.extraGroups,   // Overrides speichern
         updatedAt: new Date()
       });
       
@@ -836,9 +860,30 @@ export default function EmailSystemPage() {
                             onChange={(e) => setEditContact(prev => ({ ...prev, email: e.target.value }))}
                             placeholder="E-Mail"
                           />
-                          <p className="text-xs text-muted-foreground">
-                            Gehört zur Gruppe „Meine Liste".
-                          </p>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Gehört zu „Meine Liste". Zusätzlich zu Gruppe(n) hinzufügen:</Label>
+                            <div className="flex flex-wrap gap-1">
+                              {['sportleiter', 'mannschaftsfuehrer', 'kv_orga'].map((group) => (
+                                <Button
+                                  key={group}
+                                  type="button"
+                                  size="sm"
+                                  variant={editContact.extraGroups.includes(group) ? 'default' : 'outline'}
+                                  onClick={() =>
+                                    setEditContact((prev) => ({
+                                      ...prev,
+                                      extraGroups: prev.extraGroups.includes(group)
+                                        ? prev.extraGroups.filter((g) => g !== group)
+                                        : [...prev.extraGroups, group],
+                                    }))
+                                  }
+                                  className="text-xs h-6"
+                                >
+                                  {rollenLabel(group)}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
                           <div className="flex gap-2">
                             <Button size="sm" onClick={saveEditContact}>
                               <Save className="h-4 w-4 mr-1" /> Speichern
@@ -853,12 +898,30 @@ export default function EmailSystemPage() {
                           <div>
                             <div className="font-medium">{contact.name}</div>
                             <div className="text-sm text-muted-foreground">{contact.email}</div>
-                            <div className="flex gap-1 mt-1">
-                              {contact.groups.map(group => (
-                                <Badge key={group} variant="secondary" className="text-xs">
-                                  {group}
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {contact.source === 'app' ? (
+                                <Badge
+                                  className={`text-xs ${
+                                    contact.appRole === 'app_benutzer'
+                                      ? 'bg-gray-200 text-gray-700'
+                                      : 'bg-blue-100 text-blue-800'
+                                  }`}
+                                >
+                                  {rollenLabel(contact.appRole)}
                                 </Badge>
-                              ))}
+                              ) : (
+                                <Badge className="text-xs bg-amber-100 text-amber-800">
+                                  Nur E-Mail-Liste (kein App-Konto)
+                                </Badge>
+                              )}
+                              {/* Zusätzliche manuelle Gruppen-Zuordnungen anzeigen */}
+                              {contact.groups
+                                .filter((g) => g !== 'meine_liste' && g !== contact.appRole)
+                                .map((group) => (
+                                  <Badge key={group} variant="outline" className="text-xs">
+                                    + {rollenLabel(group)}
+                                  </Badge>
+                                ))}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
