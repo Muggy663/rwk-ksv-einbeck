@@ -1,7 +1,7 @@
 // src/components/ui/responsive-dialog.tsx
 "use client";
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
@@ -28,6 +28,17 @@ export function ResponsiveDialog({
   className
 }: ResponsiveDialogProps) {
   const { isMobile, isTablet } = useMobileDetection();
+
+  // Body-Scroll-Lock, solange der mobile Vollbild-Dialog offen ist –
+  // verhindert, dass die Hintergrundseite scrollt ("Fenster springt nach oben").
+  useEffect(() => {
+    if (isMobile && open) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+    return undefined;
+  }, [isMobile, open]);
 
   if (isMobile) {
     if (!open) return null;
