@@ -26,6 +26,8 @@ interface EmailContact {
   clubName?: string;
   source: 'app' | 'liste';   // Herkunft: App-Benutzer (user_permissions) oder manuelle Liste (email_contacts)
   appRole?: string;          // tatsächliche App-Rolle (sportleiter/mannschaftsfuehrer/kv_orga/app_benutzer), falls source='app'
+  inMeineListe?: boolean;    // true, wenn zusätzlich in der manuellen E-Mail-Liste vorhanden
+  emailDocId?: string;       // Dokument-ID in email_contacts (für Bearbeiten/Löschen), falls vorhanden
 }
 
 interface EmailGroup {
@@ -80,71 +82,86 @@ export default function EmailSystemPage() {
   const loadContacts = async () => {
     try {
       const loadedContacts: EmailContact[] = [];
-      
-      // 1. Lade Sportleiter aus email_contacts
-      const emailContactsQuery = query(collection(db, 'email_contacts'), orderBy('name', 'asc'));
-      const emailContactsSnapshot = await getDocs(emailContactsQuery);
-      
-      emailContactsSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        loadedContacts.push({
-          id: `email_${doc.id}`,
-          name: data.name,
-          email: data.email,
-          // Manuelle Liste gehört immer zu 'meine_liste'; zusätzliche Gruppen
-          // können optional pro Kontakt gespeichert sein (Overrides).
-          groups: ['meine_liste', ...(Array.isArray(data.extraGroups) ? data.extraGroups : [])],
-          isActive: true,
-          role: 'meine_liste',
-          source: 'liste'
-        });
-      });
-      
-      // 2. Lade App-Benutzer aus user_permissions
-      const userPermissionsQuery = query(collection(db, 'user_permissions'));
-      const userPermissionsSnapshot = await getDocs(userPermissionsQuery);
-      
+      const byEmail = new Map<string, EmailContact>(); // E-Mail (lowercase) -> Kontakt
+
+      // 1. App-Benutzer aus user_permissions laden — das ist die "Wahrheit" für Rollen.
+      const userPermissionsSnapshot = await getDocs(query(collection(db, 'user_permissions')));
+
       userPermissionsSnapshot.docs.forEach(doc => {
         const data = doc.data();
-        if (data.email && data.displayName && data.email !== 'admin@rwk-einbeck.de') {
-          // Prüfe ob E-Mail bereits existiert
-          const existingContact = loadedContacts.find(c => c.email === data.email);
-          if (!existingContact) {
-            // Rolle aus den tatsächlichen Berechtigungen ableiten.
-            // Reihenfolge: KV-Orga > Sportleiter > Mannschaftsführer > (sonst) app_benutzer.
-            const clubRoleValues = data.clubRoles ? Object.values(data.clubRoles) : [];
-            const kvRoleValues = data.kvRoles ? Object.values(data.kvRoles) : [];
+        if (!data.email || !data.displayName || data.email === 'admin@rwk-einbeck.de') return;
 
-            const istKvOrga =
-              kvRoleValues.includes('KV_KM_ORGA') ||
-              kvRoleValues.includes('KV_WETTKAMPFLEITER') ||
-              data.kvRole === 'KV_KM_ORGA' ||
-              data.kvRole === 'KV_WETTKAMPFLEITER' ||
-              data.role === 'km_organisator' ||
-              data.role === 'km_orga';
-            // Sportleiter: neue clubRoles-Struktur ODER Legacy role='vereinsvertreter'
-            const istSportleiter =
-              clubRoleValues.includes('SPORTLEITER') || data.role === 'vereinsvertreter';
-            const istMannschaftsfuehrer =
-              clubRoleValues.includes('MANNSCHAFTSFUEHRER') || data.role === 'mannschaftsfuehrer';
+        // Rolle aus den tatsächlichen Berechtigungen ableiten.
+        // Reihenfolge: KV-Orga > Sportleiter > Mannschaftsführer > (sonst) app_benutzer.
+        const clubRoleValues = data.clubRoles ? Object.values(data.clubRoles) : [];
+        const kvRoleValues = data.kvRoles ? Object.values(data.kvRoles) : [];
 
-            let userRole = 'app_benutzer'; // reiner App-/Schießnachweis-Nutzer ohne RWK-Rolle
-            if (istKvOrga) userRole = 'kv_orga';
-            else if (istSportleiter) userRole = 'sportleiter';
-            else if (istMannschaftsfuehrer) userRole = 'mannschaftsfuehrer';
+        const istKvOrga =
+          kvRoleValues.includes('KV_KM_ORGA') ||
+          kvRoleValues.includes('KV_WETTKAMPFLEITER') ||
+          data.kvRole === 'KV_KM_ORGA' ||
+          data.kvRole === 'KV_WETTKAMPFLEITER' ||
+          data.role === 'km_organisator' ||
+          data.role === 'km_orga';
+        // Sportleiter: neue clubRoles-Struktur ODER Legacy role='vereinsvertreter'
+        const istSportleiter =
+          clubRoleValues.includes('SPORTLEITER') || data.role === 'vereinsvertreter';
+        const istMannschaftsfuehrer =
+          clubRoleValues.includes('MANNSCHAFTSFUEHRER') || data.role === 'mannschaftsfuehrer';
 
-            loadedContacts.push({
-              id: `user_${doc.id}`,
-              name: data.displayName,
-              email: data.email,
-              groups: [userRole],
-              isActive: data.isActive !== false,
-              role: userRole,
-              clubName: data.clubName,
-              source: 'app',
-              appRole: userRole
-            });
-          }
+        let userRole = 'app_benutzer'; // reiner App-/Schießnachweis-Nutzer ohne RWK-Rolle
+        if (istKvOrga) userRole = 'kv_orga';
+        else if (istSportleiter) userRole = 'sportleiter';
+        else if (istMannschaftsfuehrer) userRole = 'mannschaftsfuehrer';
+
+        const kontakt: EmailContact = {
+          id: `user_${doc.id}`,
+          name: data.displayName,
+          email: data.email,
+          groups: [userRole],
+          isActive: data.isActive !== false,
+          role: userRole,
+          clubName: data.clubName,
+          source: 'app',
+          appRole: userRole
+        };
+        loadedContacts.push(kontakt);
+        byEmail.set(data.email.toLowerCase(), kontakt);
+      });
+
+      // 2. Manuelle Liste (email_contacts) laden und mit App-Benutzern zusammenführen.
+      const emailContactsSnapshot = await getDocs(
+        query(collection(db, 'email_contacts'), orderBy('name', 'asc'))
+      );
+
+      emailContactsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (!data.email) return;
+        const extra = Array.isArray(data.extraGroups) ? data.extraGroups : [];
+        const vorhanden = byEmail.get(data.email.toLowerCase());
+
+        if (vorhanden) {
+          // Gleiche E-Mail wie ein App-Benutzer -> NICHT duplizieren.
+          // App-Rolle bleibt führend; nur als "auch in Meiner Liste" markieren.
+          vorhanden.inMeineListe = true;
+          vorhanden.emailDocId = doc.id;
+          if (!vorhanden.groups.includes('meine_liste')) vorhanden.groups.push('meine_liste');
+          extra.forEach((g: string) => { if (!vorhanden.groups.includes(g)) vorhanden.groups.push(g); });
+        } else {
+          // Reiner E-Mail-Kontakt ohne App-Konto.
+          const kontakt: EmailContact = {
+            id: `email_${doc.id}`,
+            name: data.name,
+            email: data.email,
+            groups: ['meine_liste', ...extra],
+            isActive: true,
+            role: 'meine_liste',
+            source: 'liste',
+            inMeineListe: true,
+            emailDocId: doc.id
+          };
+          loadedContacts.push(kontakt);
+          byEmail.set(data.email.toLowerCase(), kontakt);
         }
       });
 
@@ -390,24 +407,23 @@ export default function EmailSystemPage() {
   };
 
   const startEditContact = (contact: EmailContact) => {
-    if (contact.id.startsWith('email_')) {
-      setEditingContact(contact.id);
-      setEditContact({
-        name: contact.name,
-        email: contact.email,
-        groups: contact.groups,
-        // zusätzliche Rollen-Gruppen (ohne die feste 'meine_liste')
-        extraGroups: contact.groups.filter((g) => g !== 'meine_liste')
-      });
-    }
+    // Bearbeitet wird immer der email_contacts-Eintrag (per emailDocId).
+    if (!contact.emailDocId) return;
+    setEditingContact(contact.emailDocId);
+    setEditContact({
+      name: contact.name,
+      email: contact.email,
+      groups: contact.groups,
+      // zusätzliche Rollen-Gruppen (ohne die feste 'meine_liste')
+      extraGroups: contact.groups.filter((g) => g !== 'meine_liste')
+    });
   };
 
   const saveEditContact = async () => {
     if (!editingContact || !editContact.name || !editContact.email) return;
     
     try {
-      const docId = editingContact.replace('email_', '');
-      await updateDoc(doc(db, 'email_contacts', docId), {
+      await updateDoc(doc(db, 'email_contacts', editingContact), {
         name: editContact.name,
         email: editContact.email,
         extraGroups: editContact.extraGroups,   // Overrides speichern
@@ -430,8 +446,8 @@ export default function EmailSystemPage() {
     }
   };
 
-  const deleteContact = async (contactId: string) => {
-    if (!contactId.startsWith('email_')) {
+  const deleteContact = async (emailDocId: string) => {
+    if (!emailDocId) {
       toast({
         title: 'Fehler',
         description: 'Nur manuell hinzugefügte Kontakte können gelöscht werden.',
@@ -440,11 +456,10 @@ export default function EmailSystemPage() {
       return;
     }
     
-    if (!confirm('Kontakt wirklich löschen?')) return;
+    if (!confirm('Aus „Meine Liste" entfernen?')) return;
     
     try {
-      const docId = contactId.replace('email_', '');
-      await deleteDoc(doc(db, 'email_contacts', docId));
+      await deleteDoc(doc(db, 'email_contacts', emailDocId));
       
       toast({
         title: 'Kontakt gelöscht',
@@ -914,6 +929,12 @@ export default function EmailSystemPage() {
                                   Nur E-Mail-Liste (kein App-Konto)
                                 </Badge>
                               )}
+                              {/* App-Benutzer, der zusätzlich in der manuellen Liste steht */}
+                              {contact.source === 'app' && contact.inMeineListe && (
+                                <Badge variant="outline" className="text-xs border-amber-300 text-amber-700">
+                                  auch in „Meine Liste"
+                                </Badge>
+                              )}
                               {/* Zusätzliche manuelle Gruppen-Zuordnungen anzeigen */}
                               {contact.groups
                                 .filter((g) => g !== 'meine_liste' && g !== contact.appRole)
@@ -930,12 +951,13 @@ export default function EmailSystemPage() {
                             ) : (
                               <Badge variant="secondary">Inaktiv</Badge>
                             )}
-                            {contact.id.startsWith('email_') && (
+                            {/* Bearbeiten/Löschen nur für den manuellen Listen-Eintrag (email_contacts) */}
+                            {contact.emailDocId && (
                               <>
-                                <Button size="sm" variant="ghost" onClick={() => startEditContact(contact)}>
+                                <Button size="sm" variant="ghost" title="Listen-Eintrag bearbeiten" onClick={() => startEditContact(contact)}>
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button size="sm" variant="ghost" onClick={() => deleteContact(contact.id)} className="text-red-600 hover:text-red-800">
+                                <Button size="sm" variant="ghost" title="Aus Meiner Liste entfernen" onClick={() => deleteContact(contact.emailDocId!)} className="text-red-600 hover:text-red-800">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </>
