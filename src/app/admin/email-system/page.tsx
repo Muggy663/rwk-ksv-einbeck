@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Mail, Users, FileText, Send, Plus, Trash2, Edit, Save, X } from 'lucide-react';
+import { Mail, Users, FileText, Send, Plus, Trash2, Edit, Save, X, Search, UserCog } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, addDoc, query, where, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
@@ -56,6 +56,12 @@ export default function EmailSystemPage() {
   const [leagues, setLeagues] = useState<any[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<string>('alle');
   const [isLoading, setIsLoading] = useState(false);
+  // Kontakte-Tab: Suche + Rollenfilter
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactRoleFilter, setContactRoleFilter] = useState<string>('alle');
+  // Verfassen-Tab: Suche + Rollenfilter für die Einzelkontakt-Auswahl
+  const [pickerSearch, setPickerSearch] = useState('');
+  const [pickerRoleFilter, setPickerRoleFilter] = useState<string>('alle');
   
   // New Contact Form
   const [newContact, setNewContact] = useState({
@@ -242,6 +248,43 @@ export default function EmailSystemPage() {
     }
     
     return filtered;
+  };
+
+  // Kontakte für den Kontakte-Tab, gefiltert nach Suchtext und Rollenfilter.
+  const getFilteredContactList = (): EmailContact[] => {
+    const q = contactSearch.trim().toLowerCase();
+    return contacts.filter((c) => {
+      // Textsuche über Name + E-Mail
+      if (q && !(`${c.name} ${c.email}`.toLowerCase().includes(q))) return false;
+      // Rollenfilter
+      switch (contactRoleFilter) {
+        case 'alle': return true;
+        case 'sportleiter': return c.appRole === 'sportleiter';
+        case 'mannschaftsfuehrer': return c.appRole === 'mannschaftsfuehrer';
+        case 'kv_orga': return c.appRole === 'kv_orga';
+        case 'app_benutzer': return c.appRole === 'app_benutzer';
+        case 'nur_liste': return c.source === 'liste';   // reine E-Mail-Kontakte (Kreissportleiterin-Verteiler)
+        default: return true;
+      }
+    });
+  };
+
+  // Kontakte für die Einzelauswahl im Verfassen-Tab (eigene Suche/Filter).
+  const getPickerContacts = (): EmailContact[] => {
+    const q = pickerSearch.trim().toLowerCase();
+    return contacts.filter((c) => {
+      if (!c.isActive) return false;
+      if (q && !(`${c.name} ${c.email}`.toLowerCase().includes(q))) return false;
+      switch (pickerRoleFilter) {
+        case 'alle': return true;
+        case 'sportleiter': return c.appRole === 'sportleiter';
+        case 'mannschaftsfuehrer': return c.appRole === 'mannschaftsfuehrer';
+        case 'kv_orga': return c.appRole === 'kv_orga';
+        case 'app_benutzer': return c.appRole === 'app_benutzer';
+        case 'nur_liste': return c.source === 'liste';
+        default: return true;
+      }
+    });
   };
 
   // Lesbares Label für eine Rollen-/Gruppen-ID.
@@ -768,9 +811,65 @@ export default function EmailSystemPage() {
                 </div>
 
                 <div>
-                  <Label>Einzelne Kontakte</Label>
-                  <div className="space-y-2 mt-2 max-h-32 overflow-y-auto border rounded-md p-2">
-                    {getFilteredContacts().map(contact => (
+                  <Label>Einzelne Kontakte gezielt hinzufügen</Label>
+                  {/* Suche + Rollenfilter, damit man z.B. gezielt die Kreissportleiterin-
+                      Kontakte (Nur E-Mail-Liste) findet und dazunimmt. */}
+                  <div className="mt-2 space-y-2">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Kontakt suchen..."
+                        className="pl-8 h-9"
+                        value={pickerSearch}
+                        onChange={(e) => setPickerSearch(e.target.value)}
+                      />
+                    </div>
+                    <Select value={pickerRoleFilter} onValueChange={setPickerRoleFilter}>
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Rolle filtern" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="alle">Alle Kontakte</SelectItem>
+                        <SelectItem value="sportleiter">Nur Sportleiter</SelectItem>
+                        <SelectItem value="mannschaftsfuehrer">Nur Mannschaftsführer</SelectItem>
+                        <SelectItem value="kv_orga">Nur KV-Orga</SelectItem>
+                        <SelectItem value="app_benutzer">Nur App-Benutzer (ohne Rolle)</SelectItem>
+                        <SelectItem value="nur_liste">Nur E-Mail-Liste (Kreissportleiterin)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {/* Alle aktuell gefilterten auf einmal hinzufügen/entfernen */}
+                    <div className="flex gap-2">
+                      <Button
+                        type="button" size="sm" variant="outline" className="text-xs flex-1"
+                        onClick={() => {
+                          const ids = getPickerContacts().map((c) => c.id);
+                          setEmailData(prev => ({
+                            ...prev,
+                            selectedContacts: Array.from(new Set([...prev.selectedContacts, ...ids]))
+                          }));
+                        }}
+                      >
+                        Alle sichtbaren hinzufügen
+                      </Button>
+                      <Button
+                        type="button" size="sm" variant="ghost" className="text-xs"
+                        onClick={() => {
+                          const ids = new Set(getPickerContacts().map((c) => c.id));
+                          setEmailData(prev => ({
+                            ...prev,
+                            selectedContacts: prev.selectedContacts.filter((id) => !ids.has(id))
+                          }));
+                        }}
+                      >
+                        Entfernen
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2 mt-2 max-h-40 overflow-y-auto border rounded-md p-2">
+                    {getPickerContacts().length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-2">Keine Kontakte gefunden.</p>
+                    )}
+                    {getPickerContacts().map(contact => (
                       <div key={contact.id} className="flex items-center space-x-2">
                         <Checkbox
                           id={`contact-${contact.id}`}
@@ -791,7 +890,7 @@ export default function EmailSystemPage() {
                         />
                         <Label htmlFor={`contact-${contact.id}`} className="text-xs">
                           {contact.name} ({contact.email})
-                          {contact.role && <span className="text-muted-foreground"> - {contact.role}</span>}
+                          <span className="text-muted-foreground"> — {rollenLabel(contact.appRole || contact.role)}</span>
                         </Label>
                       </div>
                     ))}
@@ -857,11 +956,38 @@ export default function EmailSystemPage() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Kontakte ({contacts.length})</CardTitle>
+                <CardTitle>Kontakte ({getFilteredContactList().length} / {contacts.length})</CardTitle>
+                <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Name oder E-Mail suchen..."
+                      className="pl-8"
+                      value={contactSearch}
+                      onChange={(e) => setContactSearch(e.target.value)}
+                    />
+                  </div>
+                  <Select value={contactRoleFilter} onValueChange={setContactRoleFilter}>
+                    <SelectTrigger className="w-full sm:w-56">
+                      <SelectValue placeholder="Rolle filtern" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="alle">Alle Kontakte</SelectItem>
+                      <SelectItem value="sportleiter">Nur Sportleiter</SelectItem>
+                      <SelectItem value="mannschaftsfuehrer">Nur Mannschaftsführer</SelectItem>
+                      <SelectItem value="kv_orga">Nur KV-Orga</SelectItem>
+                      <SelectItem value="app_benutzer">Nur App-Benutzer (ohne Rolle)</SelectItem>
+                      <SelectItem value="nur_liste">Nur E-Mail-Liste (ohne App-Konto)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {contacts.map(contact => (
+                  {getFilteredContactList().length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-6">Keine Kontakte gefunden.</p>
+                  )}
+                  {getFilteredContactList().map(contact => (
                     <div key={contact.id} className="flex items-center justify-between p-3 border rounded-lg">
                       {editingContact === contact.id ? (
                         <div className="flex-1 space-y-2">
@@ -961,6 +1087,14 @@ export default function EmailSystemPage() {
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </>
+                            )}
+                            {/* Reiner App-Benutzer ohne Listen-Eintrag: Verwaltung in der Benutzerverwaltung */}
+                            {contact.source === 'app' && !contact.emailDocId && (
+                              <Link href="/admin/user-management" title="In der Benutzerverwaltung verwalten/löschen">
+                                <Button size="sm" variant="ghost" className="text-muted-foreground">
+                                  <UserCog className="h-4 w-4" />
+                                </Button>
+                              </Link>
                             )}
                           </div>
                         </>

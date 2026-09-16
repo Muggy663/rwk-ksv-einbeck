@@ -33,6 +33,7 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 ---
 
 ## Version 3.0.2
+- **📧 E-Mail-System gezielter**: Der Kontakte-Tab hat jetzt Suche und einen Rollenfilter (Sportleiter / Mannschaftsführer / KV-Orga / App-Benutzer / nur E-Mail-Liste). Beim Verfassen lassen sich Gruppen frei kombinieren und zusätzlich einzelne Kontakte über Suche/Filter gezielt dazunehmen (inkl. „Alle sichtbaren hinzufügen" — praktisch für die Kontakte der Kreissportleiterin). App-Benutzer werden im Kontakte-Tab mit Verweis auf die Benutzerverwaltung angezeigt (löschen/verwalten dort)
 - **🎯 Einzelstarter wieder meldbar (Vereinsbereich)**: Beim Anlegen einer Mannschaft unter „Meine Mannschaften" kann bei der Mannschaftsstärke jetzt wieder „Einzel" gewählt werden — vorher war diese Option nur im Admin-Bereich verfügbar
 - **🏷️ Einzelmeldungen klar gekennzeichnet**: In der Mannschaftsliste (Verein und Admin) wird eine Einzelmeldung jetzt mit einem eigenen „Einzel"-Badge angezeigt — man muss nicht mehr auf die Schützenzahl schauen
 - **🧹 Doppelter Button entfernt**: Der „Neue Mannschaft"-Button erschien auf der Vereinsseite doppelt; jetzt nur noch einmal
