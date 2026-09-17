@@ -561,9 +561,10 @@ export async function applyPromotionRelegation(
     // Nur echte Mannschaften (>=3 Schützen) — Einzelschützen ignorieren.
     // previousOrder = Liga-Rang der Vorsaison (nur bei per Saisonwechsel erzeugten
     // Teams gesetzt); wird als stabiler, idempotenter Startpunkt bevorzugt.
-    interface ZielTeam { docId: string; leagueId: string | null; previousOrder: number | null }
+    interface ZielTeam { docId: string; leagueId: string | null; previousOrder: number | null; name: string; clubId: string }
     const bySourceId = new Map<string, ZielTeam>();       // primär: sourceTeamId-Verweis
     const byName = new Map<string, ZielTeam>();            // Fallback: normalisierter Mannschaftsname
+    const alleZielTeams: ZielTeam[] = [];                  // für die Vereins-Rangfolge-Korrektur
     // Robuste Mannschaftsnamen-Normalisierung für den Fallback-Abgleich zwischen den
     // Saisons: gleicht typische Schreibvarianten an, damit z. B.
     // "SSC Avendshausen eV. I" und "SSC Avendshausen e.V. I" als gleich gelten.
@@ -581,13 +582,27 @@ export async function applyPromotionRelegation(
         docId: d.id,
         leagueId: data.leagueId ?? null,
         previousOrder: typeof data.previousOrder === 'number' ? data.previousOrder : null,
+        name: data.name || '',
+        clubId: data.clubId || '',
       };
       if (data.sourceTeamId) bySourceId.set(data.sourceTeamId, eintrag);
       const key = normName(data.name);
       if (key && !byName.has(key)) byName.set(key, eintrag);
+      alleZielTeams.push(eintrag);
     });
 
-    const batch = writeBatch(db);
+    // Finale Ligazuordnung je Team (docId -> Ziel-Liga). Wird erst NACH der
+    // Vereins-Rangfolge-Korrektur in die DB geschrieben, damit beides zusammenpasst.
+    type ZielLigaInfo = { id: string; name: string; type: string; order: number };
+    const finaleZuordnung = new Map<string, ZielLigaInfo>();
+    // Startwert = aktuelle leagueId jedes Teams (falls es nicht in den Vorschlägen vorkommt,
+    // bleibt es dort stehen, wo es ist).
+    for (const t of alleZielTeams) {
+      if (t.leagueId) {
+        const l = targetLeagues.find((x) => x.id === t.leagueId);
+        if (l) finaleZuordnung.set(t.docId, { id: l.id, name: l.name, type: l.type, order: l.order });
+      }
+    }
 
     for (const s of confirmed) {
       // 1. Match über sourceTeamId (eindeutig, wenn Ziel-Saison per Saisonwechsel entstand)
@@ -643,20 +658,61 @@ export async function applyPromotionRelegation(
         zielLiga = nachbar;
       }
 
-      // Nur schreiben, wenn die (aus der Vorjahresliga berechnete) Zielliga von der
-      // aktuell gesetzten abweicht. Steht das Team schon korrekt, passiert nichts –
-      // dadurch ist wiederholtes Anwenden folgenlos (idempotent) und repariert
-      // zugleich frühere Fehlzuordnungen, da die Zielliga stets neu berechnet wird.
-      if (targetTeam.leagueId === zielLiga.id) {
-        continue;
-      }
+      // Aus dem Auf-/Abstieg berechnete Zielliga in der Zuordnungs-Map vormerken
+      // (noch nicht in die DB schreiben – erst nach der Rangfolge-Korrektur).
+      finaleZuordnung.set(targetTeam.docId, { id: zielLiga.id, name: zielLiga.name, type: zielLiga.type, order: zielLiga.order });
+      logDebug(`${s.action}: ${s.teamName} -> ${zielLiga.name}`);
+    }
 
-      batch.update(doc(db, 'rwk_teams', targetTeam.docId), {
-        leagueId: zielLiga.id,
-        leagueType: zielLiga.type,
+    // --- Vereins-Rangfolge-Korrektur ---------------------------------------
+    // Regel: Innerhalb eines Vereins muss die Mannschaftsstärke die Liga-Reihenfolge
+    // bestimmen — I mindestens so hoch wie II, II wie III usw. Da Vereine immer mit I
+    // beginnend melden, wird das durchgesetzt, indem pro Verein UND Disziplin-Kategorie
+    // die belegten Ligen nach Rang (höchste zuerst) den Mannschaften nach Römerzahl
+    // zugewiesen werden (I -> höchste belegte Liga, II -> nächste usw.). Reiner
+    // Platztausch der belegten Ligen — es entstehen keine neuen Ligabelegungen.
+    const roemToNum: Record<string, number> = { I: 1, II: 2, III: 3, IV: 4, V: 5 };
+    const roemischeStaerke = (name: string): number => {
+      const m = name.trim().match(/\b(IV|V|III|II|I)\s*$/); // Endung I..V (längere zuerst)
+      return m ? (roemToNum[m[1]] ?? 99) : 99;
+    };
+    // Gruppieren nach clubId + Disziplin-Kategorie
+    const gruppen = new Map<string, ZielTeam[]>();
+    for (const t of alleZielTeams) {
+      const zuord = finaleZuordnung.get(t.docId);
+      if (!zuord) continue;                       // Team ohne Liga -> nicht einbeziehen
+      if (roemischeStaerke(t.name) === 99) continue; // kein I..V-Suffix (z. B. Einzel) -> ignorieren
+      const cat = kategorie(zuord.type);
+      const key = `${t.clubId}|${cat}`;
+      if (!gruppen.has(key)) gruppen.set(key, []);
+      gruppen.get(key)!.push(t);
+    }
+    for (const teams of gruppen.values()) {
+      if (teams.length < 2) continue;
+      // Belegte Ligen dieser Gruppe (höchste zuerst = kleinste order)
+      const belegteLigen = teams
+        .map((t) => finaleZuordnung.get(t.docId)!)
+        .sort((a, b) => a.order - b.order);
+      // Mannschaften nach Römerzahl aufsteigend (I, II, III …)
+      const nachStaerke = [...teams].sort((a, b) => roemischeStaerke(a.name) - roemischeStaerke(b.name));
+      // Zuweisen: I -> höchste, II -> nächste …
+      nachStaerke.forEach((t, i) => {
+        finaleZuordnung.set(t.docId, belegteLigen[i]);
+      });
+    }
+    // -----------------------------------------------------------------------
+
+    // Änderungen schreiben: nur Teams, deren finale Liga von der aktuellen abweicht.
+    const batch = writeBatch(db);
+    for (const t of alleZielTeams) {
+      const ziel = finaleZuordnung.get(t.docId);
+      if (!ziel) continue;
+      if (t.leagueId === ziel.id) continue; // schon korrekt -> nichts tun (idempotent)
+      batch.update(doc(db, 'rwk_teams', t.docId), {
+        leagueId: ziel.id,
+        leagueType: ziel.type,
       });
       result.moved += 1;
-      logDebug(`${s.action}: ${s.teamName} -> ${zielLiga.name}`);
     }
 
     if (result.moved > 0) {
