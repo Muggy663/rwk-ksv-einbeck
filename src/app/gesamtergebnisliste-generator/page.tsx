@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
-import { BarChart3, Printer, ArrowLeft, FileText } from 'lucide-react';
+import { BarChart3, Printer, ArrowLeft, FileText, FileSpreadsheet, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { BackButton } from '@/components/ui/back-button';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import type { Season, League, Team } from '@/types/rwk';
+import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
+import { exportGesamtlisteExcel, exportGesamtlistePdf, type GesamtlisteExportData } from '@/lib/utils/gesamtliste-export';
 import Link from 'next/link';
 
 export default function GesamtergebnislisteGeneratorPage() {
@@ -23,6 +25,9 @@ export default function GesamtergebnislisteGeneratorPage() {
   const [selectedLeagueId, setSelectedLeagueId] = useState<string>('');
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
+  // Ergebnisse je Schütze/Durchgang (für Vorbefüllung im Export): Map shooterId -> { 1: ringe, 2: ... }
+  const [scoresByShooter, setScoresByShooter] = useState<Record<string, Record<number, number>>>({});
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -106,10 +111,56 @@ export default function GesamtergebnislisteGeneratorPage() {
           // Entferne sensible Kontaktdaten für öffentlichen Bereich
           captainName: team.captainName ? 'Mannschaftsführer' : '',
           captainPhone: '',
-          captainEmail: ''
+          captainEmail: '',
+          // Echte Kontaktdaten separat für den internen Export (nicht in der Anzeige verwendet)
+          _exportPhone: team.captainPhone || team.teamLeaderPhone || ''
         }));
         
         setTeams(teamsWithShooters);
+
+        // Vorhandene Ergebnisse laden (für Vorbefüllung im Export)
+        try {
+          const season = seasons.find(s => s.id === selectedSeasonId);
+          const league = leagues.find(l => l.id === selectedLeagueId);
+          const scoreMap: Record<string, Record<number, number>> = {};
+          let scoresSnap;
+          if (season?.competitionYear && league?.type) {
+            try {
+              const coll = getSeasonSpecificScoresCollection(season.competitionYear, league.type);
+              scoresSnap = await getDocs(query(
+                collection(db, coll),
+                where('leagueId', '==', selectedLeagueId),
+                where('competitionYear', '==', season.competitionYear)
+              ));
+            } catch {
+              scoresSnap = await getDocs(query(collection(db, 'rwk_scores'), where('leagueId', '==', selectedLeagueId)));
+            }
+          } else {
+            scoresSnap = await getDocs(query(collection(db, 'rwk_scores'), where('leagueId', '==', selectedLeagueId)));
+          }
+          // Dedup: pro shooterId+durchgang neuesten Eintrag (entryTimestamp) behalten
+          const dedup = new Map<string, any>();
+          scoresSnap.forEach(d => {
+            const sc: any = { id: d.id, ...d.data() };
+            const key = `${sc.shooterId}|${sc.durchgang}`;
+            const existing = dedup.get(key);
+            if (!existing) { dedup.set(key, sc); return; }
+            const a = sc.entryTimestamp?.seconds || 0;
+            const b = existing.entryTimestamp?.seconds || 0;
+            if (a > b) dedup.set(key, sc);
+          });
+          dedup.forEach(sc => {
+            if (!sc.shooterId || typeof sc.durchgang !== 'number') return;
+            if (sc.durchgang < 1 || sc.durchgang > 5) return;
+            if (typeof sc.totalRinge !== 'number') return;
+            if (!scoreMap[sc.shooterId]) scoreMap[sc.shooterId] = {};
+            scoreMap[sc.shooterId][sc.durchgang] = sc.totalRinge;
+          });
+          setScoresByShooter(scoreMap);
+        } catch (scoreErr) {
+          logError('Fehler beim Laden der Ergebnisse für den Export:', scoreErr);
+          setScoresByShooter({});
+        }
         
       } catch (error) {
         logError('Fehler beim Laden der Teams:', error);
@@ -129,6 +180,94 @@ export default function GesamtergebnislisteGeneratorPage() {
   const availableLeagues = leagues.filter(league => 
     !selectedSeasonId || league.seasonId === selectedSeasonId
   );
+
+  // Baut die Export-Datenstruktur aus den geladenen Teams + Ergebnissen
+  const buildExportData = (): GesamtlisteExportData => {
+    const season = seasons.find(s => s.id === selectedSeasonId);
+    const league = availableLeagues.find(l => l.id === selectedLeagueId);
+
+    // Abgabetermin analog zur Anzeige ermitteln
+    let abgabetermin = '';
+    if (season) {
+      if ((season as any).wettkampfende) {
+        const d = new Date((season as any).wettkampfende);
+        if (!isNaN(d.getTime())) abgabetermin = d.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+      }
+      if (!abgabetermin) {
+        const yearMatch = season.name.match(/(\d{4})/);
+        const year = yearMatch ? yearMatch[1] : '';
+        if (season.name.toLowerCase().includes('kleinkaliber')) abgabetermin = `15. August ${year}`;
+        else if (season.name.toLowerCase().includes('luftdruck')) abgabetermin = `1. März ${year}`;
+      }
+    }
+
+    const sortedTeams = [...teams].sort((a, b) => {
+      const aE = a.name.toLowerCase().includes('einzel');
+      const bE = b.name.toLowerCase().includes('einzel');
+      if (aE && !bE) return 1;
+      if (!aE && bE) return -1;
+      return a.name.localeCompare(b.name);
+    });
+
+    const mannschaften = sortedTeams.map(team => {
+      const isEinzel = team.name.toLowerCase().includes('einzel');
+      const shooters = (team as any).shooters || [];
+      const list = isEinzel ? shooters : shooters.slice(0, 3);
+      const schuetzen = (list.length > 0 ? list : [null, null, null].slice(0, isEinzel ? 1 : 3)).map((s: any) => {
+        const name = s ? ((s.firstName && s.lastName) ? `${s.firstName} ${s.lastName}` : (s.name || '')) : '';
+        const ringe: Record<number, number | undefined> = {};
+        if (s?.id && scoresByShooter[s.id]) {
+          for (let dg = 1; dg <= 5; dg++) {
+            const v = scoresByShooter[s.id][dg];
+            if (typeof v === 'number') ringe[dg] = v;
+          }
+        }
+        return { name, ringe };
+      });
+      return {
+        name: team.name,
+        telefon: (team as any)._exportPhone || '',
+        einzel: isEinzel,
+        schuetzen,
+      };
+    });
+
+    return {
+      kopf: {
+        sportjahr: season?.name || 'Rundenwettkampf',
+        liga: league?.name || 'Liga',
+        verband: 'Kreisschützenverband Einbeck',
+        abgabetermin: abgabetermin || undefined,
+      },
+      mannschaften,
+    };
+  };
+
+  const handleExcelExport = async () => {
+    setIsExporting(true);
+    try {
+      await exportGesamtlisteExcel(buildExportData());
+      toast({ title: 'Excel erstellt', description: 'Die Gesamtliste wurde als .xlsx heruntergeladen.' });
+    } catch (e) {
+      logError('Excel-Export fehlgeschlagen:', e);
+      toast({ title: 'Fehler', description: 'Excel konnte nicht erstellt werden.', variant: 'destructive' });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handlePdfExport = async () => {
+    setIsExporting(true);
+    try {
+      await exportGesamtlistePdf(buildExportData());
+      toast({ title: 'PDF erstellt', description: 'Die Gesamtliste wurde als PDF heruntergeladen.' });
+    } catch (e) {
+      logError('PDF-Export fehlgeschlagen:', e);
+      toast({ title: 'Fehler', description: 'PDF konnte nicht erstellt werden.', variant: 'destructive' });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="container mx-auto py-8 space-y-6">
@@ -249,6 +388,14 @@ export default function GesamtergebnislisteGeneratorPage() {
               }} disabled={!selectedSeasonId || !selectedLeagueId}>
                 <Printer className="mr-2 h-4 w-4" />
                 Drucken
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleExcelExport} disabled={!selectedSeasonId || !selectedLeagueId || isExporting}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Excel (mit Formeln)
+              </Button>
+              <Button variant="outline" size="sm" onClick={handlePdfExport} disabled={!selectedSeasonId || !selectedLeagueId || isExporting}>
+                <FileDown className="mr-2 h-4 w-4" />
+                PDF
               </Button>
             </div>
           </CardHeader>
