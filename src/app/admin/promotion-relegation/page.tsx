@@ -78,6 +78,10 @@ export default function SeasonTransitionPage() {
   const [zielLigen, setZielLigen] = useState<League[]>([]);
   const [showEinteilung, setShowEinteilung] = useState(false);
   const [isLoadingEinteilung, setIsLoadingEinteilung] = useState(false);
+  // Übersprungene Vorschläge aus dem letzten Anwenden (sichtbar in der UI ausgeben)
+  const [skippedInfo, setSkippedInfo] = useState<string[]>([]);
+  // Liga-ID, über der gerade ein Team schwebt (Drop-Highlight)
+  const [dragOverLeague, setDragOverLeague] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -253,6 +257,7 @@ export default function SeasonTransitionPage() {
         title: 'Auf-/Abstiege angewendet',
         description: `${res.moved} Mannschaft(en) verschoben${res.skipped.length ? `, ${res.skipped.length} übersprungen` : ''}.`,
       });
+      setSkippedInfo(res.skipped);
       if (res.skipped.length > 0) {
         // Übersprungene sind i.d.R. normal (nicht gemeldet / offene Klassen) -> Info, kein Fehler
         logDebug('Auf-/Abstieg übersprungen:', res.skipped.join(' | '));
@@ -561,6 +566,7 @@ export default function SeasonTransitionPage() {
         title: 'Auf-/Abstiege angewendet',
         description: `${res.moved} Mannschaft(en) verschoben${res.skipped.length ? `, ${res.skipped.length} übersprungen` : ''}.`,
       });
+      setSkippedInfo(res.skipped);
       if (res.skipped.length > 0) {
         logDebug('Auf-/Abstieg übersprungen:', res.skipped.join(' | '));
       }
@@ -1062,48 +1068,98 @@ export default function SeasonTransitionPage() {
                       <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Lade Einteilung…</div>
                     ) : (
                       <>
+                        {/* Übersprungene Mannschaften des letzten Anwendens – sichtbar ausgeben */}
+                        {skippedInfo.length > 0 && (
+                          <div className="p-3 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                            <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">
+                              {skippedInfo.length} Mannschaft(en) wurden nicht automatisch verschoben:
+                            </p>
+                            <ul className="text-xs text-amber-700 dark:text-amber-300 list-disc pl-5 space-y-0.5">
+                              {skippedInfo.map((msg, i) => <li key={i}>{msg}</li>)}
+                            </ul>
+                            <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
+                              Das ist meist normal (Mannschaft dieses Jahr nicht gemeldet oder offene Klasse ohne Auf-/Abstieg).
+                              Bei Bedarf unten manuell zuordnen.
+                            </p>
+                          </div>
+                        )}
+
+                        <p className="text-sm text-muted-foreground">
+                          Mannschaften per <strong>Drag &amp; Drop</strong> in eine andere Liga ziehen – oder am Handy das Dropdown nutzen. Änderungen werden sofort gespeichert.
+                        </p>
+
                         {/* Pro Liga (order-sortiert) + am Ende "Nicht zugewiesen" */}
                         {[...zielLigen, { id: '__none__', name: 'Nicht zugewiesen', type: '', competitionYear: 0, seasonId: '' } as League].map(liga => {
                           const teamsInLiga = ligaEinteilung.filter(t =>
                             liga.id === '__none__' ? !t.leagueId : t.leagueId === liga.id
                           );
-                          if (teamsInLiga.length === 0) return null;
                           const istNichtZugewiesen = liga.id === '__none__';
+                          // "Nicht zugewiesen" immer anzeigen (als Drop-Ziel), andere nur mit Teams
+                          if (teamsInLiga.length === 0 && !istNichtZugewiesen) return null;
+                          const istDropZiel = liga.id !== '__none__';
+                          const highlight = dragOverLeague === liga.id;
                           return (
-                            <div key={liga.id} className={`border rounded-lg p-4 ${istNichtZugewiesen ? 'border-amber-300 bg-amber-50 dark:bg-amber-950/20' : ''}`}>
+                            <div
+                              key={liga.id}
+                              onDragOver={(e) => { if (istDropZiel || istNichtZugewiesen) { e.preventDefault(); setDragOverLeague(liga.id); } }}
+                              onDragLeave={() => setDragOverLeague(prev => prev === liga.id ? null : prev)}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                setDragOverLeague(null);
+                                const docId = e.dataTransfer.getData('text/plain');
+                                if (!docId) return;
+                                // "Nicht zugewiesen" als Ziel = Liga entfernen ('')
+                                changeTeamLeague(docId, liga.id === '__none__' ? '' : liga.id);
+                              }}
+                              className={`border rounded-lg p-4 transition-all ${
+                                highlight ? 'border-primary ring-2 ring-primary/40 bg-primary/5' :
+                                istNichtZugewiesen ? 'border-amber-300 bg-amber-50 dark:bg-amber-950/20' : ''
+                              }`}
+                            >
                               <h4 className={`font-semibold text-base mb-3 ${istNichtZugewiesen ? 'text-amber-700 dark:text-amber-300' : 'text-primary'}`}>
                                 {liga.name}{liga.type ? ` (${liga.type})` : ''} — {teamsInLiga.length} {teamsInLiga.length === 1 ? 'Mannschaft' : 'Mannschaften'}
                               </h4>
-                              <div className="space-y-2">
-                                {teamsInLiga.map(t => (
-                                  <div key={t.docId} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between border-b last:border-b-0 pb-2 last:pb-0">
-                                    <div className="min-w-0">
-                                      <span className="font-medium">{t.name}</span>
-                                      {t.isEinzel && <Badge variant="secondary" className="ml-2">Einzel</Badge>}
-                                      <span className="text-sm text-muted-foreground ml-2">{t.clubName}</span>
+                              {teamsInLiga.length === 0 ? (
+                                <p className="text-xs text-muted-foreground italic">Mannschaft hierher ziehen…</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {teamsInLiga.map(t => (
+                                    <div
+                                      key={t.docId}
+                                      draggable
+                                      onDragStart={(e) => { e.dataTransfer.setData('text/plain', t.docId); e.currentTarget.style.opacity = '0.5'; }}
+                                      onDragEnd={(e) => { e.currentTarget.style.opacity = '1'; }}
+                                      className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between border rounded-md bg-card px-3 py-2 cursor-grab active:cursor-grabbing hover:bg-accent/50"
+                                    >
+                                      <div className="min-w-0 flex items-center gap-2">
+                                        <span className="text-muted-foreground select-none">⠿</span>
+                                        <span className="font-medium">{t.name}</span>
+                                        {t.isEinzel && <Badge variant="secondary">Einzel</Badge>}
+                                        <span className="text-sm text-muted-foreground">{t.clubName}</span>
+                                      </div>
+                                      <div className="w-full sm:w-56 sm:hidden">
+                                        <Select value={t.leagueId || ''} onValueChange={(v) => changeTeamLeague(t.docId, v)}>
+                                          <SelectTrigger>
+                                            <SelectValue placeholder="Liga wählen" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {zielLigen.map(l => (
+                                              <SelectItem key={l.id} value={l.id}>{l.name} ({l.type})</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
                                     </div>
-                                    <div className="w-full sm:w-64">
-                                      <Select value={t.leagueId || ''} onValueChange={(v) => changeTeamLeague(t.docId, v)}>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Liga wählen" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {zielLigen.map(l => (
-                                            <SelectItem key={l.id} value={l.id}>{l.name} ({l.type})</SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
                         <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
                           <p className="text-sm text-blue-800 dark:text-blue-200">
                             <strong>Tipp:</strong> Neu gemeldete Mannschaften ohne Vorjahr erscheinen unter „Nicht zugewiesen".
-                            Ordnen Sie sie über das Dropdown der passenden Liga zu (neue Mannschaften starten laut RWK-Ordnung in der niedrigsten Liga).
+                            Ziehen Sie sie in die passende Liga (neue Mannschaften starten laut RWK-Ordnung in der niedrigsten Liga).
                             Wenn alles stimmt, kann die Saison unter „Saisonverwaltung" auf „Laufend" gesetzt werden.
                           </p>
                         </div>
