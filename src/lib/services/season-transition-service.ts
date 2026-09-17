@@ -531,7 +531,10 @@ export async function applyPromotionRelegation(
       .sort((a, b) => a.order - b.order);
 
     // Ziel-Liga per Name finden (für Vorjahres-Startpunkt, wenn Team noch keine Liga hat).
-    const normLiga = (n?: string) => (n || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    // Robust gegen unterschiedliche Leerzeichen-Schreibweisen zwischen den Saisons,
+    // z. B. "2. Kreisklasse" (Quelle) vs. "2.Kreisklasse" (Ziel): alle Leerzeichen
+    // werden entfernt, damit der Name-Vergleich nicht an Formatierungen scheitert.
+    const normLiga = (n?: string) => (n || '').trim().toLowerCase().replace(/\s+/g, '');
     const ligaByName = new Map(targetLeagues.map((l) => [normLiga(l.name), l]));
 
     // Disziplin-Kategorie (KK vs. LG/LP) einer Liga, damit Auf-/Abstieg nur
@@ -547,14 +550,29 @@ export async function applyPromotionRelegation(
       query(collection(db, 'rwk_teams'), where('seasonId', '==', targetSeasonId))
     );
     // Nur echte Mannschaften (>=3 Schützen) — Einzelschützen ignorieren.
-    interface ZielTeam { docId: string; leagueId: string | null }
+    // previousOrder = Liga-Rang der Vorsaison (nur bei per Saisonwechsel erzeugten
+    // Teams gesetzt); wird als stabiler, idempotenter Startpunkt bevorzugt.
+    interface ZielTeam { docId: string; leagueId: string | null; previousOrder: number | null }
     const bySourceId = new Map<string, ZielTeam>();       // primär: sourceTeamId-Verweis
     const byName = new Map<string, ZielTeam>();            // Fallback: normalisierter Mannschaftsname
-    const normName = (n?: string) => (n || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    // Robuste Mannschaftsnamen-Normalisierung für den Fallback-Abgleich zwischen den
+    // Saisons: gleicht typische Schreibvarianten an, damit z. B.
+    // "SSC Avendshausen eV. I" und "SSC Avendshausen e.V. I" als gleich gelten.
+    //  - "e.V."/"eV."/"e. V." -> "ev"
+    //  - alle übrigen Punkte und Leerzeichen entfernen
+    const normName = (n?: string) =>
+      (n || '')
+        .toLowerCase()
+        .replace(/e\.?\s*v\.?/g, 'ev') // e.V. / eV. / e. V. vereinheitlichen
+        .replace(/[.\s]/g, '');         // Punkte und Leerzeichen entfernen
     teamsSnap.docs.forEach((d) => {
       const data = d.data() as any;
       if ((data.shooterIds?.length || 0) < 3) return; // keine echte Mannschaft
-      const eintrag: ZielTeam = { docId: d.id, leagueId: data.leagueId ?? null };
+      const eintrag: ZielTeam = {
+        docId: d.id,
+        leagueId: data.leagueId ?? null,
+        previousOrder: typeof data.previousOrder === 'number' ? data.previousOrder : null,
+      };
       if (data.sourceTeamId) bySourceId.set(data.sourceTeamId, eintrag);
       const key = normName(data.name);
       if (key && !byName.has(key)) byName.set(key, eintrag);
@@ -571,12 +589,22 @@ export async function applyPromotionRelegation(
         result.skipped.push(`${s.teamName}: in Ziel-Saison nicht gemeldet – übersprungen`);
         continue;
       }
-      // Start-Liga bestimmen: entweder die bereits gesetzte Liga des Ziel-Teams,
-      // oder – wenn noch keine gesetzt ist – die Vorjahresliga aus dem Vorschlag
-      // (currentLeague-Name), da die Ligen in beiden Saisons gleich heißen.
-      let startLiga = targetTeam.leagueId
-        ? targetLeagues.find((l) => l.id === targetTeam.leagueId)
-        : ligaByName.get(normLiga(s.currentLeague));
+      // Start-Liga bestimmen — IMMER aus der Vorjahresangabe, NIE aus der bereits
+      // gesetzten leagueId. Nur so ist das Anwenden idempotent: Egal wie oft man
+      // klickt, es wird immer relativ zur Vorjahresliga (nicht zur schon bewegten
+      // aktuellen Liga) gerechnet. Sonst würden Teams bei jedem Klick kumulativ
+      // weiterwandern.
+      //   1) previousOrder (Rang der Vorsaison, bei Saisonwechsel gesetzt) — stabilster Wert
+      //   2) Fallback: Vorjahresliga-Name aus dem Vorschlag (currentLeague),
+      //      da die Ligen in Quell- und Ziel-Saison gleich heißen.
+      let startLiga =
+        targetTeam.previousOrder !== null
+          ? targetLeagues.find((l) => l.order === targetTeam.previousOrder)
+          : ligaByName.get(normLiga(s.currentLeague));
+      if (!startLiga) {
+        // Letzter Fallback: Name aus dem Vorschlag, falls previousOrder ins Leere lief.
+        startLiga = ligaByName.get(normLiga(s.currentLeague));
+      }
       if (!startLiga) {
         result.skipped.push(`${s.teamName}: Vorjahresliga „${s.currentLeague}" in Ziel-Saison nicht gefunden`);
         continue;
@@ -601,8 +629,10 @@ export async function applyPromotionRelegation(
         zielLiga = nachbar;
       }
 
-      // Bei 'stay' nur zuweisen, wenn das Team noch keine (korrekte) Liga hat –
-      // sonst nichts tun (keine unnötigen Schreibvorgänge).
+      // Nur schreiben, wenn die (aus der Vorjahresliga berechnete) Zielliga von der
+      // aktuell gesetzten abweicht. Steht das Team schon korrekt, passiert nichts –
+      // dadurch ist wiederholtes Anwenden folgenlos (idempotent) und repariert
+      // zugleich frühere Fehlzuordnungen, da die Zielliga stets neu berechnet wird.
       if (targetTeam.leagueId === zielLiga.id) {
         continue;
       }
