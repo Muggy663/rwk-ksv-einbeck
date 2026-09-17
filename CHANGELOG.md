@@ -1,34 +1,6 @@
 # 📋 Changelog – RWK Einbeck App
 
-Alle Versionen und Änderungen in chronologischer Reihenfolge.
-
----
-
-## Version 3.0.0
-- **👥 Zentrale Mitgliederliste (RWK + KM)**: Es gibt jetzt EINE gemeinsame Mitgliederliste unter `/mitglieder` für beide Bereiche — ein Datenbestand, eine Ansicht. Die Liste zeigt alle Stammdaten inkl. Mitgliedsnummer, Altersklassen (Auflage/Freihand) fürs aktuelle Sportjahr sowie Kontaktdaten (E-Mail, Telefon, Ort); jeder Bereich nutzt daraus, was er braucht. Mit Anzahl-Anzeige, Suche, Sortierung und mobiltauglicher Darstellung (Tabelle am Desktop, Karten am Handy)
-- **🏢 Vereinsfilter statt gemischter Liste**: Wer mehreren Vereinen zugeordnet ist, wählt oben gezielt einen Verein — keine vermischte Ansicht mehr. Bei nur einem Verein wird dieser automatisch verwendet
-- **📥 Mitcom-Import bei den Mitgliedern**: Der Excel-Import ist von der Vereinsseite in die zentrale Mitgliederverwaltung umgezogen (`/mitglieder/import`) und importiert in den aktiven Verein
-- **🔐 Neue abgesicherte Mitglieder-API**: Anlegen, Bearbeiten und Löschen laufen ausschließlich über eine serverseitig geschützte Schnittstelle (`/api/members`). Die Berechtigungen werden verbindlich auf dem Server geprüft — nicht mehr nur in der Oberfläche
-- **👤 Klare Rollen für die Mitgliederverwaltung**: Admin und KM-Organisation sehen und verwalten alle Vereine; Sportleiter verwalten ihre zugeordneten Vereine (RWK + KM + Mitglieder); Mannschaftsführer tragen weiterhin nur RWK-Ergebnisse ein
-- **🗑️ Sanftes Löschen mit Sicherheitsnetz**: Beim Entfernen eines Mitglieds wird es deaktiviert und aus allen aktiven Mannschaften (RWK und KM) genommen — bereits erfasste Ergebnisse und Meldungen bleiben erhalten, und der Vorgang wird protokolliert
-- **🧭 Aufgeräumte Einstiege**: Die bisherigen getrennten Listen (Vereinsbereich „Schützen“, KM „Mitglieder“, KM-Orga „Alle Mitglieder“) führen jetzt alle zur zentralen Liste. Im Dashboard erscheint die Mitglieder-Kachel nur mit passender Berechtigung, mit Hinweis, dass die Liste für RWK und KM gemeinsam gilt
-- **📇 Einheitliches Mitglieder-Datenmodell**: Vereinszuordnung über ein einziges Feld, Kontakt-/Stammdaten (Telefon, Mobil, Adresse) vereinheitlicht; der Mitcom-Import schreibt jetzt konsistent ins gemeinsame Modell
-- **🏢 Vereinsverwaltung vereinheitlicht (Multi-Verein)**: Der aktive Verein wird jetzt zentral an einer Stelle verwaltet. Vorher liefen drei getrennte Systeme mit eigenem Gedächtnis nebeneinander — ein Vereinswechsel wirkt jetzt einheitlich über RWK, KM und die Mitgliederliste. Die Vereinsauswahl nach dem Login ist robuster geworden
-- **📊 Saisonübergreifende Statistik wieder da**: Die zuvor deaktivierte Auswertung über mehrere Jahre funktioniert wieder — inkl. Zusammenführung mehrerer KK-Saisons und mehrerer Vereinseinträge desselben Schützen. In der Schützensuche wird der Verein angezeigt, um Namensgleiche zu unterscheiden
-- **🎨 Statistik-Bereich modernisiert**: Übersicht, Dashboard, Vergleich und saisonübergreifende Statistik im neuen Look — mit Kennzahlen-Kacheln, klaren Filtern und an das App-Design angepassten Diagrammfarben
-- **🧭 Modernere Navigation & Startkacheln**: Menüleiste mit deutlicherem aktivem Zustand; die Kacheln der Arbeitsbereich-Auswahl sind einheitlicher; der Schießnachweis ist als eigenständiges Zusatz-Feature abgesetzt
-- **🎯 Schießnachweis ist offiziell (kein Beta mehr)**: Kennzeichnung entfernt. Beim Behörden-PDF lässt sich jetzt die Empfänger-Anschrift eintragen (passend für Fensterumschläge), Unterschriftsfelder für Schütze und Vereinsschießsportleiter bleiben erhalten
-- **⏱️ Automatische Abmeldung vereinheitlicht**: Die angezeigte Rest-Zeit bis zur Abmeldung stimmt jetzt überall mit der tatsächlichen Abmeldung überein (vorher konnten zwei Anzeigen abweichen)
-- **🔒 Sicherheitslücken geschlossen (Mitglieder-Daten)**: Ungeschützte interne Schnittstellen entfernt bzw. abgesichert, über die Mitgliederdaten ohne Anmeldung abrufbar oder änderbar gewesen wären. Das Laden der Schützenliste erfordert jetzt eine Anmeldung und liefert nur die Vereine, für die man berechtigt ist; das Löschen prüft jetzt zuverlässig die Berechtigung
-- **📥 Mitglieder-Import repariert**: Der Link „Mitglieder importieren" im KM-Orga-Bereich führte ins Leere (404) — er zeigt jetzt korrekt auf den umgezogenen Import
-- **✉️ E-Mail-Versand genauer**: Ungültige E-Mail-Adressen werden jetzt vor dem Versand aussortiert und nicht mehr mitgezählt — die Erfolgsmeldung („an X Empfänger gesendet") stimmt jetzt
-- **🧩 Vereinszuordnung vereinheitlicht (technisch)**: Die Ermittlung, welche Vereine einem Nutzer gehören, läuft jetzt überall über dieselbe Logik — verhindert unterschiedliche Ergebnisse in verschiedenen Bereichen
-- **🧹 Datenmodell weiter bereinigt**: Alle verbliebenen Anlege-/Import-Wege schreiben Mitglieder jetzt einheitlich mit einem einzigen Vereinsfeld (kein doppeltes Alt-Feld mehr)
-- **🐛 Bugfix VM-Qualifikation**: In der VM-Übersicht wurde das Qualifikationslimit immer nach „Herren" bewertet — Damen wird jetzt korrekt das Damen-Limit zugeordnet
-- **🧹 Weiterer Code-Frühjahrsputz**: Mehrere ungenutzte Alt-Komponenten entfernt (doppelte Onboarding-/Theme-/Wartungs-Bausteine, ungenutztes Suchfeld). Reduziert Ballast, keine sichtbaren Änderungen
-- **📉 Sentry im Live-Betrieb sparsamer**: Detail-Aufzeichnung (Tracing) in Produktion auf 10% reduziert (spart Ressourcen, in der Entwicklung weiterhin vollständig)
-- **🧹 Social Training & Premium entfernt**: Die nicht mehr genutzten Bereiche Social Training (Trainingsgruppen, Duelle, Live-Wettkämpfe, Community-Profile) und die Premium-/Bezahl-Reste wurden vollständig aus der App entfernt. Schlankere, fokussierte Anwendung
-- **🔒 Weitere Sicherheitslücken geschlossen**: Mehrere interne Schnittstellen, über die ohne Anmeldung Daten hätten massenhaft gelöscht oder Berechtigungen manipuliert werden können, wurden entfernt bzw. mit Anmelde- und Rechteprüfung abgesichert. Die Registrierung legt Berechtigungen jetzt nur noch für das eigene Konto an
+Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
@@ -96,6 +68,36 @@ Alle Versionen und Änderungen in chronologischer Reihenfolge.
 - **📝 Nachvollziehbarkeit**: Jede Reparatur wurde in kleinen, thematischen Schritten festgehalten
 - **📋 Vermerkte Empfehlungen fürs nächste Update** (kein Fehler, aber Aufräumbedarf): Sentry-Tracing auf die neue API migrieren; `send-email`-Empfängerzählung prüfen
 - **✅ Umgesetzt**: Die zuvor vorgemerkte Zusammenführung der Mitgliederlisten (Vereinsbereich RWK + KM) ist in dieser Version realisiert — siehe „Zentrale Mitgliederliste (RWK + KM)“ oben
+
+---
+
+## Version 3.0.0
+- **👥 Zentrale Mitgliederliste (RWK + KM)**: Es gibt jetzt EINE gemeinsame Mitgliederliste unter `/mitglieder` für beide Bereiche — ein Datenbestand, eine Ansicht. Die Liste zeigt alle Stammdaten inkl. Mitgliedsnummer, Altersklassen (Auflage/Freihand) fürs aktuelle Sportjahr sowie Kontaktdaten (E-Mail, Telefon, Ort); jeder Bereich nutzt daraus, was er braucht. Mit Anzahl-Anzeige, Suche, Sortierung und mobiltauglicher Darstellung (Tabelle am Desktop, Karten am Handy)
+- **🏢 Vereinsfilter statt gemischter Liste**: Wer mehreren Vereinen zugeordnet ist, wählt oben gezielt einen Verein — keine vermischte Ansicht mehr. Bei nur einem Verein wird dieser automatisch verwendet
+- **📥 Mitcom-Import bei den Mitgliedern**: Der Excel-Import ist von der Vereinsseite in die zentrale Mitgliederverwaltung umgezogen (`/mitglieder/import`) und importiert in den aktiven Verein
+- **🔐 Neue abgesicherte Mitglieder-API**: Anlegen, Bearbeiten und Löschen laufen ausschließlich über eine serverseitig geschützte Schnittstelle (`/api/members`). Die Berechtigungen werden verbindlich auf dem Server geprüft — nicht mehr nur in der Oberfläche
+- **👤 Klare Rollen für die Mitgliederverwaltung**: Admin und KM-Organisation sehen und verwalten alle Vereine; Sportleiter verwalten ihre zugeordneten Vereine (RWK + KM + Mitglieder); Mannschaftsführer tragen weiterhin nur RWK-Ergebnisse ein
+- **🗑️ Sanftes Löschen mit Sicherheitsnetz**: Beim Entfernen eines Mitglieds wird es deaktiviert und aus allen aktiven Mannschaften (RWK und KM) genommen — bereits erfasste Ergebnisse und Meldungen bleiben erhalten, und der Vorgang wird protokolliert
+- **🧭 Aufgeräumte Einstiege**: Die bisherigen getrennten Listen (Vereinsbereich „Schützen“, KM „Mitglieder“, KM-Orga „Alle Mitglieder“) führen jetzt alle zur zentralen Liste. Im Dashboard erscheint die Mitglieder-Kachel nur mit passender Berechtigung, mit Hinweis, dass die Liste für RWK und KM gemeinsam gilt
+- **📇 Einheitliches Mitglieder-Datenmodell**: Vereinszuordnung über ein einziges Feld, Kontakt-/Stammdaten (Telefon, Mobil, Adresse) vereinheitlicht; der Mitcom-Import schreibt jetzt konsistent ins gemeinsame Modell
+- **🏢 Vereinsverwaltung vereinheitlicht (Multi-Verein)**: Der aktive Verein wird jetzt zentral an einer Stelle verwaltet. Vorher liefen drei getrennte Systeme mit eigenem Gedächtnis nebeneinander — ein Vereinswechsel wirkt jetzt einheitlich über RWK, KM und die Mitgliederliste. Die Vereinsauswahl nach dem Login ist robuster geworden
+- **📊 Saisonübergreifende Statistik wieder da**: Die zuvor deaktivierte Auswertung über mehrere Jahre funktioniert wieder — inkl. Zusammenführung mehrerer KK-Saisons und mehrerer Vereinseinträge desselben Schützen. In der Schützensuche wird der Verein angezeigt, um Namensgleiche zu unterscheiden
+- **🎨 Statistik-Bereich modernisiert**: Übersicht, Dashboard, Vergleich und saisonübergreifende Statistik im neuen Look — mit Kennzahlen-Kacheln, klaren Filtern und an das App-Design angepassten Diagrammfarben
+- **🧭 Modernere Navigation & Startkacheln**: Menüleiste mit deutlicherem aktivem Zustand; die Kacheln der Arbeitsbereich-Auswahl sind einheitlicher; der Schießnachweis ist als eigenständiges Zusatz-Feature abgesetzt
+- **🎯 Schießnachweis ist offiziell (kein Beta mehr)**: Kennzeichnung entfernt. Beim Behörden-PDF lässt sich jetzt die Empfänger-Anschrift eintragen (passend für Fensterumschläge), Unterschriftsfelder für Schütze und Vereinsschießsportleiter bleiben erhalten
+- **⏱️ Automatische Abmeldung vereinheitlicht**: Die angezeigte Rest-Zeit bis zur Abmeldung stimmt jetzt überall mit der tatsächlichen Abmeldung überein (vorher konnten zwei Anzeigen abweichen)
+- **🔒 Sicherheitslücken geschlossen (Mitglieder-Daten)**: Ungeschützte interne Schnittstellen entfernt bzw. abgesichert, über die Mitgliederdaten ohne Anmeldung abrufbar oder änderbar gewesen wären. Das Laden der Schützenliste erfordert jetzt eine Anmeldung und liefert nur die Vereine, für die man berechtigt ist; das Löschen prüft jetzt zuverlässig die Berechtigung
+- **📥 Mitglieder-Import repariert**: Der Link „Mitglieder importieren" im KM-Orga-Bereich führte ins Leere (404) — er zeigt jetzt korrekt auf den umgezogenen Import
+- **✉️ E-Mail-Versand genauer**: Ungültige E-Mail-Adressen werden jetzt vor dem Versand aussortiert und nicht mehr mitgezählt — die Erfolgsmeldung („an X Empfänger gesendet") stimmt jetzt
+- **🧩 Vereinszuordnung vereinheitlicht (technisch)**: Die Ermittlung, welche Vereine einem Nutzer gehören, läuft jetzt überall über dieselbe Logik — verhindert unterschiedliche Ergebnisse in verschiedenen Bereichen
+- **🧹 Datenmodell weiter bereinigt**: Alle verbliebenen Anlege-/Import-Wege schreiben Mitglieder jetzt einheitlich mit einem einzigen Vereinsfeld (kein doppeltes Alt-Feld mehr)
+- **🐛 Bugfix VM-Qualifikation**: In der VM-Übersicht wurde das Qualifikationslimit immer nach „Herren" bewertet — Damen wird jetzt korrekt das Damen-Limit zugeordnet
+- **🧹 Weiterer Code-Frühjahrsputz**: Mehrere ungenutzte Alt-Komponenten entfernt (doppelte Onboarding-/Theme-/Wartungs-Bausteine, ungenutztes Suchfeld). Reduziert Ballast, keine sichtbaren Änderungen
+- **📉 Sentry im Live-Betrieb sparsamer**: Detail-Aufzeichnung (Tracing) in Produktion auf 10% reduziert (spart Ressourcen, in der Entwicklung weiterhin vollständig)
+- **🧹 Social Training & Premium entfernt**: Die nicht mehr genutzten Bereiche Social Training (Trainingsgruppen, Duelle, Live-Wettkämpfe, Community-Profile) und die Premium-/Bezahl-Reste wurden vollständig aus der App entfernt. Schlankere, fokussierte Anwendung
+- **🔒 Weitere Sicherheitslücken geschlossen**: Mehrere interne Schnittstellen, über die ohne Anmeldung Daten hätten massenhaft gelöscht oder Berechtigungen manipuliert werden können, wurden entfernt bzw. mit Anmelde- und Rechteprüfung abgesichert. Die Registrierung legt Berechtigungen jetzt nur noch für das eigene Konto an
+
+---
 
 ## Version 2.8.0
 - **🧹 Große Code-Bereinigung**: Toten und veralteten Code entfernt (~3850 Zeilen) — alte Suffix-Duplikate (`page-fixed`, `page_new`, `page-modified`, `page-clean`, `page-with-*`), doppelte PDF-/Zertifikat-Basisdateien, Pages-Router-Rest `_app.tsx`, ungenutzte UI-Varianten (enhanced-/improved-card, native-/android-button) und toter Context
