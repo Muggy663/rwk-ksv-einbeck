@@ -1,11 +1,14 @@
 "use client";
 
 // src/components/home/MeldefensterBanner.tsx
-// Zeigt oben auf der Startseite offene Meldefenster (RWK + KM) an.
-// Regeln:
+// Zeigt oben auf der Startseite offene Meldefenster (RWK + KM) sowie Abgabetermine an.
+// Regeln (Meldefenster, Status "Anmeldung möglich" + meldeschluss):
 //  - Frist heute oder in der Zukunft  -> "Meldung möglich bis <Datum>"
-//  - Frist < 7 Tage abgelaufen         -> "Seit <Datum> beendet"
+//  - Frist < 7 Tage abgelaufen         -> "Anmeldung beendet seit <Datum>"
 //  - Frist >= 7 Tage abgelaufen / keine -> nichts anzeigen
+// Abgabetermin (laufende Saison + wettkampfende), blau, gleiche 7-Tage-Regel:
+//  - Termin in der Zukunft -> "Abgabe der Ergebnisse bis <Datum>"
+//  - < 7 Tage vorbei        -> "Abgabetermin war am <Datum>"
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -19,6 +22,7 @@ interface Meldefenster {
   deadline: Date;
   offen: boolean; // true = noch möglich, false = kürzlich beendet
   href: string;
+  art?: 'meldung' | 'abgabe'; // meldung = Meldeschluss (Default), abgabe = Wettkampfende/Abgabetermin
 }
 
 const EINE_WOCHE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -42,15 +46,16 @@ export function MeldefensterBanner() {
         bereich: 'RWK' | 'KM',
         titel: string,
         meldeschluss: string | undefined | null,
-        href: string
+        href: string,
+        art: 'meldung' | 'abgabe' = 'meldung'
       ) => {
         const deadline = parseMeldeschluss(meldeschluss);
         if (!deadline) return;
         const diff = jetzt.getTime() - deadline.getTime();
         if (diff <= 0) {
-          gefunden.push({ key, bereich, titel, deadline, offen: true, href });
+          gefunden.push({ key, bereich, titel, deadline, offen: true, href, art });
         } else if (diff < EINE_WOCHE_MS) {
-          gefunden.push({ key, bereich, titel, deadline, offen: false, href });
+          gefunden.push({ key, bereich, titel, deadline, offen: false, href, art });
         }
       };
 
@@ -64,6 +69,17 @@ export function MeldefensterBanner() {
         rwkSnap.docs.forEach((d) => {
           const s = d.data() as any;
           pruefe(`rwk_${d.id}`, 'RWK', s.name || 'Rundenwettkampf', s.meldeschluss, '/verein/mannschaften');
+        });
+
+        // Laufende RWK-Saisons mit gepflegtem Abgabetermin (wettkampfende)
+        const laufendSnap = await getDocs(
+          query(collection(db, 'seasons'), where('status', '==', 'Laufend'))
+        );
+        laufendSnap.docs.forEach((d) => {
+          const s = d.data() as any;
+          if (s.wettkampfende) {
+            pruefe(`rwk_abgabe_${d.id}`, 'RWK', s.name || 'Rundenwettkampf', s.wettkampfende, '/rwk-tabellen', 'abgabe');
+          }
         });
       } catch (error) {
         logError('Meldefenster: RWK-Saisons konnten nicht geladen werden', error);
@@ -82,8 +98,11 @@ export function MeldefensterBanner() {
         logError('Meldefenster: KM-Saisons konnten nicht geladen werden', error);
       }
 
-      // Offene zuerst, dann nach Frist
+      // Reihenfolge: Meldefenster vor Abgabeterminen; darin offene zuerst, dann nach Frist
       gefunden.sort((a, b) => {
+        const aAbgabe = a.art === 'abgabe';
+        const bAbgabe = b.art === 'abgabe';
+        if (aAbgabe !== bAbgabe) return aAbgabe ? 1 : -1;
         if (a.offen !== b.offen) return a.offen ? -1 : 1;
         return a.deadline.getTime() - b.deadline.getTime();
       });
@@ -96,35 +115,58 @@ export function MeldefensterBanner() {
 
   return (
     <div className="mb-6 space-y-2">
-      {fenster.map((f) => (
-        <div
-          key={f.key}
-          className={`rounded-lg border p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 ${
-            f.offen
-              ? 'border-green-300 bg-green-50 dark:bg-green-950/30 dark:border-green-800'
-              : 'border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800'
-          }`}
-        >
-          <div className={`flex items-center gap-2 text-sm ${f.offen ? 'text-green-800 dark:text-green-200' : 'text-amber-800 dark:text-amber-200'}`}>
-            <span className="text-lg">{f.offen ? '📣' : '⏳'}</span>
-            <span>
-              <span className="font-semibold">{f.bereich}: {f.titel}</span>
-              {' — '}
-              {f.offen
-                ? <>Meldung möglich <strong>bis {formatDatum(f.deadline)}</strong></>
-                : <>Anmeldung beendet <strong>seit {formatDatum(f.deadline)}</strong></>}
-            </span>
+      {fenster.map((f) => {
+        const istAbgabe = f.art === 'abgabe';
+        // Farbschema: Meldung offen = grün, beendet = amber, Abgabetermin = blau
+        const boxClass = istAbgabe
+          ? 'border-blue-300 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800'
+          : f.offen
+            ? 'border-green-300 bg-green-50 dark:bg-green-950/30 dark:border-green-800'
+            : 'border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800';
+        const textClass = istAbgabe
+          ? 'text-blue-800 dark:text-blue-200'
+          : f.offen
+            ? 'text-green-800 dark:text-green-200'
+            : 'text-amber-800 dark:text-amber-200';
+        const icon = istAbgabe ? '📅' : f.offen ? '📣' : '⏳';
+        return (
+          <div
+            key={f.key}
+            className={`rounded-lg border p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 ${boxClass}`}
+          >
+            <div className={`flex items-center gap-2 text-sm ${textClass}`}>
+              <span className="text-lg">{icon}</span>
+              <span>
+                <span className="font-semibold">{f.titel}</span>
+                {' — '}
+                {istAbgabe
+                  ? (f.offen
+                      ? <>Abgabe der Ergebnisse <strong>bis {formatDatum(f.deadline)}</strong></>
+                      : <>Abgabetermin war <strong>am {formatDatum(f.deadline)}</strong></>)
+                  : (f.offen
+                      ? <>Meldung möglich <strong>bis {formatDatum(f.deadline)}</strong></>
+                      : <>Anmeldung beendet <strong>seit {formatDatum(f.deadline)}</strong></>)}
+              </span>
+            </div>
+            {f.offen && !istAbgabe && (
+              <Link
+                href={f.href}
+                className="text-sm font-medium underline text-green-700 hover:text-green-900 dark:text-green-300 whitespace-nowrap"
+              >
+                Jetzt melden →
+              </Link>
+            )}
+            {istAbgabe && (
+              <Link
+                href={f.href}
+                className="text-sm font-medium underline text-blue-700 hover:text-blue-900 dark:text-blue-300 whitespace-nowrap"
+              >
+                Zu den Tabellen →
+              </Link>
+            )}
           </div>
-          {f.offen && (
-            <Link
-              href={f.href}
-              className="text-sm font-medium underline text-green-700 hover:text-green-900 dark:text-green-300 whitespace-nowrap"
-            >
-              Jetzt melden →
-            </Link>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
