@@ -561,9 +561,10 @@ export async function applyPromotionRelegation(
     // Nur echte Mannschaften (>=3 Schützen) — Einzelschützen ignorieren.
     // previousOrder = Liga-Rang der Vorsaison (nur bei per Saisonwechsel erzeugten
     // Teams gesetzt); wird als stabiler, idempotenter Startpunkt bevorzugt.
-    interface ZielTeam { docId: string; leagueId: string | null; previousOrder: number | null; name: string; clubId: string }
+    interface ZielTeam { docId: string; leagueId: string | null; previousOrder: number | null; name: string; clubId: string; leagueType: string | null }
     const bySourceId = new Map<string, ZielTeam>();       // primär: sourceTeamId-Verweis
-    const byName = new Map<string, ZielTeam>();            // Fallback: normalisierter Mannschaftsname
+    const byNameCat = new Map<string, ZielTeam>();         // Fallback: Name + Disziplin-Kategorie (LGA/LGS=LG, LP=..)
+    const byName = new Map<string, ZielTeam>();            // Letzter Fallback: nur Name (kann bei Gleichnamigkeit unscharf sein)
     const alleZielTeams: ZielTeam[] = [];                  // für die Vereins-Rangfolge-Korrektur
     // Robuste Mannschaftsnamen-Normalisierung für den Fallback-Abgleich zwischen den
     // Saisons: gleicht typische Schreibvarianten an, damit z. B.
@@ -575,6 +576,18 @@ export async function applyPromotionRelegation(
         .toLowerCase()
         .replace(/e\.?\s*v\.?/g, 'ev') // e.V. / eV. / e. V. vereinheitlichen
         .replace(/[.\s]/g, '');         // Punkte und Leerzeichen entfernen
+    // Feinere Disziplin-Unterscheidung als die Kategorie: Auflage (LGA) und Freihand
+    // (LGS) gehören beide zur Kategorie "LG", müssen beim Abgleich aber getrennt
+    // bleiben (ein Verein hat oft gleichnamige Teams in Auflage UND Freihand).
+    const disziplinKey = (type?: string | null): string => {
+      const t = (type || '').toUpperCase();
+      if (['LGA'].includes(t)) return 'LG-AUFLAGE';
+      if (['LGS', 'LG'].includes(t)) return 'LG-FREIHAND';
+      if (['LP', 'LPA'].includes(t)) return 'LP';
+      if (['KK', 'KKG'].includes(t)) return 'KK';
+      if (t === 'KKP') return 'KKP';
+      return kategorie(type as any); // Fallback
+    };
     teamsSnap.docs.forEach((d) => {
       const data = d.data() as any;
       if ((data.shooterIds?.length || 0) < 3) return; // keine echte Mannschaft
@@ -584,10 +597,14 @@ export async function applyPromotionRelegation(
         previousOrder: typeof data.previousOrder === 'number' ? data.previousOrder : null,
         name: data.name || '',
         clubId: data.clubId || '',
+        leagueType: data.leagueType ?? null,
       };
       if (data.sourceTeamId) bySourceId.set(data.sourceTeamId, eintrag);
-      const key = normName(data.name);
-      if (key && !byName.has(key)) byName.set(key, eintrag);
+      const nk = normName(data.name);
+      // Primärer Fallback: Name + Disziplin (unterscheidet Auflage-/Freihand-/Pistolen-I)
+      const catKey = `${nk}|${disziplinKey(data.leagueType)}`;
+      if (nk && !byNameCat.has(catKey)) byNameCat.set(catKey, eintrag);
+      if (nk && !byName.has(nk)) byName.set(nk, eintrag);
       alleZielTeams.push(eintrag);
     });
 
@@ -605,9 +622,17 @@ export async function applyPromotionRelegation(
     }
 
     for (const s of confirmed) {
+      // Disziplin der Vorjahresliga (aus dem Vorschlag) bestimmen, um bei Vereinen mit
+      // gleichnamigen Teams (z. B. Auflage-I UND Freihand-I) das RICHTIGE Ziel-Team zu treffen.
+      const vorjahresLiga = ligaByName.get(normLiga(s.currentLeague));
+      const disziplinDerSuggestion = disziplinKey(vorjahresLiga?.type);
       // 1. Match über sourceTeamId (eindeutig, wenn Ziel-Saison per Saisonwechsel entstand)
-      // 2. Fallback: Match über den Mannschaftsnamen (für bereits gemeldete Ziel-Saisons)
-      const targetTeam = bySourceId.get(s.teamId) || byName.get(normName(s.teamName));
+      // 2. Match über Name + Disziplin (trennt Auflage/Freihand/Pistole sauber)
+      // 3. Letzter Fallback: nur Name (falls Disziplin nicht auflösbar)
+      const targetTeam =
+        bySourceId.get(s.teamId) ||
+        byNameCat.get(`${normName(s.teamName)}|${disziplinDerSuggestion}`) ||
+        byName.get(normName(s.teamName));
       if (!targetTeam) {
         // Team der Vorsaison ist in der Ziel-Saison NICHT gemeldet -> nicht anfassen.
         result.skipped.push(`${s.teamName}: in Ziel-Saison nicht gemeldet – übersprungen`);
@@ -667,23 +692,23 @@ export async function applyPromotionRelegation(
     // --- Vereins-Rangfolge-Korrektur ---------------------------------------
     // Regel: Innerhalb eines Vereins muss die Mannschaftsstärke die Liga-Reihenfolge
     // bestimmen — I mindestens so hoch wie II, II wie III usw. Da Vereine immer mit I
-    // beginnend melden, wird das durchgesetzt, indem pro Verein UND Disziplin-Kategorie
-    // die belegten Ligen nach Rang (höchste zuerst) den Mannschaften nach Römerzahl
-    // zugewiesen werden (I -> höchste belegte Liga, II -> nächste usw.). Reiner
-    // Platztausch der belegten Ligen — es entstehen keine neuen Ligabelegungen.
+    // beginnend melden, wird das durchgesetzt, indem pro Verein UND Disziplin
+    // (Auflage/Freihand/Pistole getrennt!) die belegten Ligen nach Rang (höchste
+    // zuerst) den Mannschaften nach Römerzahl zugewiesen werden (I -> höchste belegte
+    // Liga, II -> nächste usw.). Reiner Platztausch — es entstehen keine neuen Belegungen.
     const roemToNum: Record<string, number> = { I: 1, II: 2, III: 3, IV: 4, V: 5 };
     const roemischeStaerke = (name: string): number => {
       const m = name.trim().match(/\b(IV|V|III|II|I)\s*$/); // Endung I..V (längere zuerst)
       return m ? (roemToNum[m[1]] ?? 99) : 99;
     };
-    // Gruppieren nach clubId + Disziplin-Kategorie
+    // Gruppieren nach clubId + Disziplin (LGA/LGS/LP getrennt, sonst würden Auflage-I
+    // und Freihand-I fälschlich gegeneinander getauscht).
     const gruppen = new Map<string, ZielTeam[]>();
     for (const t of alleZielTeams) {
       const zuord = finaleZuordnung.get(t.docId);
       if (!zuord) continue;                       // Team ohne Liga -> nicht einbeziehen
       if (roemischeStaerke(t.name) === 99) continue; // kein I..V-Suffix (z. B. Einzel) -> ignorieren
-      const cat = kategorie(zuord.type);
-      const key = `${t.clubId}|${cat}`;
+      const key = `${t.clubId}|${disziplinKey(zuord.type)}`;
       if (!gruppen.has(key)) gruppen.set(key, []);
       gruppen.get(key)!.push(t);
     }
