@@ -10,7 +10,7 @@ import { Loader2, ArrowUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, AlertCircle, ArrowUp, ArrowDown, Download } from 'lucide-react';
@@ -72,6 +72,12 @@ export default function SeasonTransitionPage() {
   const [allLeagueSuggestions, setAllLeagueSuggestions] = useState<Map<string, PromotionRelegationSuggestion[]>>(new Map());
   const [showAllLeagues, setShowAllLeagues] = useState(false);
   const [teamStandings, setTeamStandings] = useState<Map<string, any>>(new Map());
+  // Nachher-Übersicht: alle Mannschaften der Ziel-Saison mit aktueller Liga-Zuordnung,
+  // um die Einteilung nach dem Anwenden zu prüfen und manuell nachzujustieren.
+  const [ligaEinteilung, setLigaEinteilung] = useState<Array<{ docId: string; name: string; clubName: string; leagueId: string | null; shooterCount: number; isEinzel: boolean }>>([]);
+  const [zielLigen, setZielLigen] = useState<League[]>([]);
+  const [showEinteilung, setShowEinteilung] = useState(false);
+  const [isLoadingEinteilung, setIsLoadingEinteilung] = useState(false);
 
 
   useEffect(() => {
@@ -248,11 +254,14 @@ export default function SeasonTransitionPage() {
         description: `${res.moved} Mannschaft(en) verschoben${res.skipped.length ? `, ${res.skipped.length} übersprungen` : ''}.`,
       });
       if (res.skipped.length > 0) {
-        logError('Auf-/Abstieg übersprungen:', res.skipped);
+        // Übersprungene sind i.d.R. normal (nicht gemeldet / offene Klassen) -> Info, kein Fehler
+        logDebug('Auf-/Abstieg übersprungen:', res.skipped.join(' | '));
       }
       
       setShowAllLeagues(false);
       setAllLeagueSuggestions(new Map());
+      // Nachher-Übersicht laden, damit der Nutzer die Einteilung prüfen/nachjustieren kann.
+      await loadLigaEinteilung(selectedTargetSeason);
       
     } catch (error: any) {
       logError('Error applying all league suggestions:', error);
@@ -263,6 +272,64 @@ export default function SeasonTransitionPage() {
       });
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // Lädt alle Mannschaften der Ziel-Saison + deren Ligen für die Nachher-Übersicht.
+  const loadLigaEinteilung = async (targetSeasonId: string) => {
+    if (!targetSeasonId) return;
+    setIsLoadingEinteilung(true);
+    try {
+      // Ziel-Ligen laden (nach order sortiert)
+      const ligenSnap = await getDocs(query(collection(db, 'rwk_leagues'), where('seasonId', '==', targetSeasonId)));
+      const ligen = ligenSnap.docs
+        .map(d => ({ id: d.id, ...(d.data() as any) } as League))
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+      setZielLigen(ligen);
+
+      // Vereinsnamen auflösen
+      const clubsSnap = await getDocs(collection(db, 'clubs'));
+      const clubName = new Map<string, string>();
+      clubsSnap.docs.forEach(c => clubName.set(c.id, (c.data() as any).name || c.id));
+
+      // Teams der Ziel-Saison laden
+      const teamsSnap = await getDocs(query(collection(db, 'rwk_teams'), where('seasonId', '==', targetSeasonId)));
+      const teams = teamsSnap.docs.map(d => {
+        const data = d.data() as any;
+        const count = data.shooterIds?.length || 0;
+        return {
+          docId: d.id,
+          name: data.name || 'Unbenannt',
+          clubName: clubName.get(data.clubId) || data.clubName || '',
+          leagueId: data.leagueId ?? null,
+          shooterCount: count,
+          isEinzel: count < 3 || String(data.name || '').toLowerCase().includes('einzel'),
+        };
+      }).sort((a, b) => a.name.localeCompare(b.name));
+
+      setLigaEinteilung(teams);
+      setShowEinteilung(true);
+    } catch (error) {
+      logError('Fehler beim Laden der Liga-Einteilung:', error);
+      toast({ title: 'Fehler', description: 'Liga-Einteilung konnte nicht geladen werden.', variant: 'destructive' });
+    } finally {
+      setIsLoadingEinteilung(false);
+    }
+  };
+
+  // Ändert die Liga-Zuordnung eines einzelnen Teams direkt in der Übersicht.
+  const changeTeamLeague = async (docId: string, newLeagueId: string) => {
+    try {
+      const liga = zielLigen.find(l => l.id === newLeagueId);
+      await updateDoc(doc(db, 'rwk_teams', docId), {
+        leagueId: newLeagueId || null,
+        ...(liga ? { leagueType: liga.type } : {}),
+      });
+      setLigaEinteilung(prev => prev.map(t => t.docId === docId ? { ...t, leagueId: newLeagueId || null } : t));
+      toast({ title: 'Gespeichert', description: 'Liga-Zuordnung aktualisiert.' });
+    } catch (error) {
+      logError('Fehler beim Ändern der Liga-Zuordnung:', error);
+      toast({ title: 'Fehler', description: 'Zuordnung konnte nicht gespeichert werden.', variant: 'destructive' });
     }
   };
 
@@ -495,11 +562,12 @@ export default function SeasonTransitionPage() {
         description: `${res.moved} Mannschaft(en) verschoben${res.skipped.length ? `, ${res.skipped.length} übersprungen` : ''}.`,
       });
       if (res.skipped.length > 0) {
-        logError('Auf-/Abstieg übersprungen:', res.skipped);
+        logDebug('Auf-/Abstieg übersprungen:', res.skipped.join(' | '));
       }
       
       setShowSuggestions(false);
       setSuggestions([]);
+      await loadLigaEinteilung(selectedTargetSeason);
       
     } catch (error: any) {
       logError('Error applying suggestions:', error);
@@ -734,6 +802,16 @@ export default function SeasonTransitionPage() {
                     Bestätigte anwenden
                   </Button>
                 )}
+
+                <Button
+                  onClick={() => loadLigaEinteilung(selectedTargetSeason)}
+                  disabled={!selectedTargetSeason || isLoadingEinteilung}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  <ArrowUpDown className="mr-2 h-4 w-4" />
+                  Aktuelle Einteilung anzeigen
+                </Button>
               </div>
               
               {showSuggestions && suggestions.length > 0 && (
@@ -957,6 +1035,80 @@ export default function SeasonTransitionPage() {
                         Bestätigte anwenden
                       </Button>
                     </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Nachher-Übersicht: Liga-Einteilung der Ziel-Saison, nach Liga gruppiert,
+                  mit Dropdown pro Team zum direkten Umsortieren (inkl. "Nicht zugewiesen"). */}
+              {showEinteilung && (
+                <Card className="mt-4">
+                  <CardHeader>
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <CardTitle className="text-lg">Liga-Einteilung {seasons.find(s => s.id === selectedTargetSeason)?.name || ''}</CardTitle>
+                        <CardDescription>
+                          Prüfen Sie die Einteilung und ordnen Sie einzelne Mannschaften bei Bedarf direkt einer anderen Liga zu.
+                          Änderungen werden sofort gespeichert.
+                        </CardDescription>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => loadLigaEinteilung(selectedTargetSeason)} disabled={isLoadingEinteilung}>
+                        {isLoadingEinteilung ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aktualisieren'}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {isLoadingEinteilung ? (
+                      <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Lade Einteilung…</div>
+                    ) : (
+                      <>
+                        {/* Pro Liga (order-sortiert) + am Ende "Nicht zugewiesen" */}
+                        {[...zielLigen, { id: '__none__', name: 'Nicht zugewiesen', type: '', competitionYear: 0, seasonId: '' } as League].map(liga => {
+                          const teamsInLiga = ligaEinteilung.filter(t =>
+                            liga.id === '__none__' ? !t.leagueId : t.leagueId === liga.id
+                          );
+                          if (teamsInLiga.length === 0) return null;
+                          const istNichtZugewiesen = liga.id === '__none__';
+                          return (
+                            <div key={liga.id} className={`border rounded-lg p-4 ${istNichtZugewiesen ? 'border-amber-300 bg-amber-50 dark:bg-amber-950/20' : ''}`}>
+                              <h4 className={`font-semibold text-base mb-3 ${istNichtZugewiesen ? 'text-amber-700 dark:text-amber-300' : 'text-primary'}`}>
+                                {liga.name}{liga.type ? ` (${liga.type})` : ''} — {teamsInLiga.length} {teamsInLiga.length === 1 ? 'Mannschaft' : 'Mannschaften'}
+                              </h4>
+                              <div className="space-y-2">
+                                {teamsInLiga.map(t => (
+                                  <div key={t.docId} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between border-b last:border-b-0 pb-2 last:pb-0">
+                                    <div className="min-w-0">
+                                      <span className="font-medium">{t.name}</span>
+                                      {t.isEinzel && <Badge variant="secondary" className="ml-2">Einzel</Badge>}
+                                      <span className="text-sm text-muted-foreground ml-2">{t.clubName}</span>
+                                    </div>
+                                    <div className="w-full sm:w-64">
+                                      <Select value={t.leagueId || ''} onValueChange={(v) => changeTeamLeague(t.docId, v)}>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Liga wählen" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {zielLigen.map(l => (
+                                            <SelectItem key={l.id} value={l.id}>{l.name} ({l.type})</SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <p className="text-sm text-blue-800 dark:text-blue-200">
+                            <strong>Tipp:</strong> Neu gemeldete Mannschaften ohne Vorjahr erscheinen unter „Nicht zugewiesen".
+                            Ordnen Sie sie über das Dropdown der passenden Liga zu (neue Mannschaften starten laut RWK-Ordnung in der niedrigsten Liga).
+                            Wenn alles stimmt, kann die Saison unter „Saisonverwaltung" auf „Laufend" gesetzt werden.
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               )}

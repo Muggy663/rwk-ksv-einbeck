@@ -531,10 +531,19 @@ export async function applyPromotionRelegation(
       .sort((a, b) => a.order - b.order);
 
     // Ziel-Liga per Name finden (für Vorjahres-Startpunkt, wenn Team noch keine Liga hat).
-    // Robust gegen unterschiedliche Leerzeichen-Schreibweisen zwischen den Saisons,
-    // z. B. "2. Kreisklasse" (Quelle) vs. "2.Kreisklasse" (Ziel): alle Leerzeichen
-    // werden entfernt, damit der Name-Vergleich nicht an Formatierungen scheitert.
-    const normLiga = (n?: string) => (n || '').trim().toLowerCase().replace(/\s+/g, '');
+    // Robust gegen unterschiedliche Schreibweisen zwischen den Saisons:
+    //  - alle Leerzeichen entfernen ("2. Kreisklasse" vs. "2.Kreisklasse")
+    //  - gängige Disziplin-Synonyme angleichen ("Luftgewehr Freihand" vs. "LG Freihand",
+    //    "Luftpistole" vs. "LP" etc.), damit der Name-Vergleich nicht an der
+    //    Ausschreibung scheitert.
+    const normLiga = (n?: string) =>
+      (n || '')
+        .toLowerCase()
+        .replace(/luftgewehr\s*freihand/g, 'lgfreihand')
+        .replace(/\blgf?\b\s*freihand/g, 'lgfreihand')
+        .replace(/luftgewehr\s*auflage/g, 'lgauflage')
+        .replace(/luftpistole/g, 'lp')
+        .replace(/\s+/g, '');
     const ligaByName = new Map(targetLeagues.map((l) => [normLiga(l.name), l]));
 
     // Disziplin-Kategorie (KK vs. LG/LP) einer Liga, damit Auf-/Abstieg nur
@@ -606,6 +615,11 @@ export async function applyPromotionRelegation(
         startLiga = ligaByName.get(normLiga(s.currentLeague));
       }
       if (!startLiga) {
+        // "Verbleibt" + Team hat bereits eine Liga (z. B. offene Klassen wie
+        // Freihand/Pistole): kein Handlungsbedarf, kein Fehler — still überspringen.
+        if (s.action === 'stay' && targetTeam.leagueId) {
+          continue;
+        }
         result.skipped.push(`${s.teamName}: Vorjahresliga „${s.currentLeague}" in Ziel-Saison nicht gefunden`);
         continue;
       }
