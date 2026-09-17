@@ -10,6 +10,7 @@ export interface Season {
   endDate?: Date;
   meldestart?: string;   // Meldefenster-Öffnung (ISO "YYYY-MM-DD"); Cron öffnet ab diesem Tag automatisch
   meldeschluss?: string; // Meldeschluss-Datum (ISO "YYYY-MM-DD"), v.a. bei Status "Anmeldung möglich"
+  wettkampfende?: string; // Ende des Wettkampfs / Abgabeschluss (ISO "YYYY-MM-DD"); für Abgabetermin auf Listen
 }
 
 export interface League {

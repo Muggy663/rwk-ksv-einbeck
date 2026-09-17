@@ -149,6 +149,8 @@ export default function AdminSeasonsPage() {
       meldeschluss: currentSeason.status === 'Anmeldung möglich' ? (currentSeason.meldeschluss || '') : '',
       // Meldestart (Auto-Öffnen) nur in der Planungsphase "Vorbereitung" sinnvoll.
       meldestart: currentSeason.status === 'Vorbereitung' ? (currentSeason.meldestart || '') : '',
+      // Wettkampfende / Abgabeschluss (optional) – wird auf Ligalisten als Abgabetermin genutzt.
+      wettkampfende: currentSeason.wettkampfende || '',
       // "Meldungen abgeschlossen"-Kennzeichen: nur solange Status "Vorbereitung" ist
       // UND es zuvor gesetzt wurde. Beim Öffnen (Anmeldung möglich) / Laufend / Abgeschlossen
       // wird es zurückgesetzt.
@@ -434,6 +436,20 @@ export default function AdminSeasonsPage() {
                     </div>
                   </div>
                 )}
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label htmlFor="wettkampfende" className="text-right pt-2">Wettkampfende</Label>
+                  <div className="col-span-3">
+                    <Input
+                      id="wettkampfende"
+                      type="date"
+                      value={currentSeason.wettkampfende || ''}
+                      onChange={(e) => setCurrentSeason(prev => prev ? ({ ...prev, wettkampfende: e.target.value }) : prev)}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Optional: Ende des Wettkampfs / Abgabeschluss. Wird auf den Ligalisten als „Abgabetermin" angezeigt. Leer lassen, um den Standard aus der RWK-Ordnung zu nutzen (Luftdruck: 1. März, Kleinkaliber: 15. August).
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
             <DialogFooter>

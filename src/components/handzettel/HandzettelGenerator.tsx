@@ -14,6 +14,7 @@ import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 import type { Season, League, Team } from '@/types/rwk';
+import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
 
 // Team angereichert mit aufgelösten Schützen-Objekten (zur Laufzeit in loadTeams befüllt)
@@ -33,6 +34,11 @@ export function HandzettelGenerator({
   backButtonHref = "/dokumente"
 }: HandzettelGeneratorProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
+  // Kontaktdaten nur zeigen, wenn die Route sie erlaubt (showContactData) UND
+  // der Nutzer tatsächlich eingeloggt ist. So kann kein Nicht-Angemeldeter
+  // (auch nicht durch direktes Aufrufen) an die Mannschaftsführer-Kontakte.
+  const darfKontaktZeigen = showContactData && !!user;
   
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [leagues, setLeagues] = useState<League[]>([]);
@@ -128,14 +134,20 @@ export function HandzettelGenerator({
           shooterMap.set(shooter.id, shooter);
         });
         
-        const teamsWithShooters = teamsData.map(team => ({
-          ...team,
-          shooters: (team.shooterIds || []).map(id => shooterMap.get(id)).filter(Boolean),
-          // Kontaktdaten basierend auf showContactData
-          captainName: showContactData ? team.captainName : (team.captainName ? 'Mannschaftsführer' : ''),
-          captainPhone: showContactData ? team.captainPhone : '',
-          captainEmail: showContactData ? team.captainEmail : ''
-        }));
+        const teamsWithShooters = teamsData.map(team => {
+          // Aktuelle Felder bevorzugen, Legacy (teamLeader*) als Fallback für Altdaten.
+          const name = team.captainName || team.teamLeader || '';
+          const phone = team.captainPhone || team.teamLeaderPhone || '';
+          const email = team.captainEmail || team.teamLeaderEmail || '';
+          return {
+            ...team,
+            shooters: (team.shooterIds || []).map(id => shooterMap.get(id)).filter(Boolean),
+            // Nur für eingeloggte Nutzer die echten Kontaktdaten; sonst neutraler Platzhalter.
+            captainName: darfKontaktZeigen ? name : (name ? 'Mannschaftsführer' : ''),
+            captainPhone: darfKontaktZeigen ? phone : '',
+            captainEmail: darfKontaktZeigen ? email : ''
+          };
+        });
         
         setTeams(teamsWithShooters);
         
@@ -152,7 +164,7 @@ export function HandzettelGenerator({
     };
     
     loadTeams();
-  }, [selectedSeasonId, selectedLeagueId, showContactData, toast]);
+  }, [selectedSeasonId, selectedLeagueId, darfKontaktZeigen, toast]);
 
   const loadExistingResults = async () => {
     if (!selectedSeasonId || !selectedLeagueId) return;
@@ -484,7 +496,7 @@ export function HandzettelGenerator({
 
                   <div className="grid grid-cols-4 gap-4 mb-4 text-xs">
                     <div>Durchgang: <span className="font-bold">{selectedDurchgang}</span></div>
-                    <div>Datum: <span className="font-bold">{wettkampfData.datum ? new Date(wettkampfData.datum).toLocaleDateString('de-DE') : '__.__.25'}</span></div>
+                    <div>Datum: <span className="font-bold">{wettkampfData.datum ? new Date(wettkampfData.datum).toLocaleDateString('de-DE') : '__.__.____'}</span></div>
                     <div>Uhrzeit: <span className="font-bold">{wettkampfData.uhrzeit}</span></div>
                     <div>Ort: <span className="font-bold">{wettkampfData.ort || '___________'}</span></div>
                   </div>
@@ -517,7 +529,6 @@ export function HandzettelGenerator({
                             if (!aIsEinzel && bIsEinzel) return -1;
                             return 0;
                           })
-                          .slice(0, 10)
                           .map((team) => {
                             const isEinzelTeam = team.name.toLowerCase().includes('einzel');
                             const shooterCount = isEinzelTeam ? (team.shooters?.length || 1) : 3;
@@ -544,8 +555,13 @@ export function HandzettelGenerator({
                                 ))}
                                 <tr className="h-4">
                                   <td className="border p-0.5 text-xs italic" colSpan={4}>
-                                    Ansprechpartner: {team.captainName || 'N/A'}
-                                    {showContactData && team.captainPhone && `, ${team.captainPhone}`}
+                                    {team.captainName ? (
+                                      <>
+                                        Ansprechpartner: {team.captainName}
+                                        {darfKontaktZeigen && team.captainPhone ? `, ${team.captainPhone}` : ''}
+                                        {darfKontaktZeigen && team.captainEmail ? `, ${team.captainEmail}` : ''}
+                                      </>
+                                    ) : ''}
                                   </td>
                                 </tr>
                               </React.Fragment>
@@ -895,8 +911,13 @@ export function HandzettelGenerator({
                               </tr>
                               <tr>
                                 <td className="border p-1 text-xs italic" colSpan={13}>
-                                  Ansprechpartner: {team.captainName || 'N/A'}
-                                  {showContactData && team.captainPhone && `, ${team.captainPhone}`}
+                                  {team.captainName ? (
+                                    <>
+                                      Ansprechpartner: {team.captainName}
+                                      {darfKontaktZeigen && team.captainPhone ? `, ${team.captainPhone}` : ''}
+                                      {darfKontaktZeigen && team.captainEmail ? `, ${team.captainEmail}` : ''}
+                                    </>
+                                  ) : ''}
                                 </td>
                               </tr>
                             </React.Fragment>

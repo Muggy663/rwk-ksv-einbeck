@@ -268,11 +268,21 @@ export default function GesamtergebnislisteGeneratorPage() {
                   {(() => {
                     const season = seasons.find(s => s.id === selectedSeasonId);
                     if (!season) return null;
-                    const yearMatch = season.name.match(/(\d{4})/);
-                    const year = yearMatch ? yearMatch[1] : '';
                     let abgabe = '';
-                    if (season.name.toLowerCase().includes('kleinkaliber')) abgabe = `15. August ${year}`;
-                    else if (season.name.toLowerCase().includes('luftdruck')) abgabe = `1. März ${year}`;
+                    // 1. Bevorzugt das gepflegte Wettkampfende-Datum der Saison verwenden.
+                    if ((season as any).wettkampfende) {
+                      const d = new Date((season as any).wettkampfende);
+                      if (!isNaN(d.getTime())) {
+                        abgabe = d.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+                      }
+                    }
+                    // 2. Fallback: Standard aus der RWK-Ordnung (LD 1. März / KK 15. August).
+                    if (!abgabe) {
+                      const yearMatch = season.name.match(/(\d{4})/);
+                      const year = yearMatch ? yearMatch[1] : '';
+                      if (season.name.toLowerCase().includes('kleinkaliber')) abgabe = `15. August ${year}`;
+                      else if (season.name.toLowerCase().includes('luftdruck')) abgabe = `1. März ${year}`;
+                    }
                     if (!abgabe) return null;
                     return <div className="text-red-600 font-bold">Abgabetermin: {abgabe}</div>;
                   })()}
