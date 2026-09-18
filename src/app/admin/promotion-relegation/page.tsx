@@ -75,7 +75,7 @@ export default function SeasonTransitionPage() {
   const [teamStandings, setTeamStandings] = useState<Map<string, any>>(new Map());
   // Nachher-Übersicht: alle Mannschaften der Ziel-Saison mit aktueller Liga-Zuordnung,
   // um die Einteilung nach dem Anwenden zu prüfen und manuell nachzujustieren.
-  const [ligaEinteilung, setLigaEinteilung] = useState<Array<{ docId: string; name: string; clubId: string; clubName: string; leagueId: string | null; shooterCount: number; isEinzel: boolean; ringe: number | null; schuetzenNamen: string[] }>>([]);
+  const [ligaEinteilung, setLigaEinteilung] = useState<Array<{ docId: string; name: string; clubId: string; clubName: string; leagueId: string | null; leagueType: string | null; shooterCount: number; isEinzel: boolean; ringe: number | null; schuetzenNamen: string[] }>>([]);
   const [isAusgleich, setIsAusgleich] = useState(false);
   const [zielLigen, setZielLigen] = useState<League[]>([]);
   const [showEinteilung, setShowEinteilung] = useState(false);
@@ -319,16 +319,20 @@ export default function SeasonTransitionPage() {
 
       // Teams der Ziel-Saison laden
       const teamsSnap = await getDocs(query(collection(db, 'rwk_teams'), where('seasonId', '==', targetSeasonId)));
+      const ligaTypeById = new Map(ligen.map(l => [l.id, l.type]));
       const teams = teamsSnap.docs.map(d => {
         const data = d.data() as any;
         const count = data.shooterIds?.length || 0;
         const ringe = ringeByName.get(normTeam(data.name || ''));
+        // Disziplin bevorzugt aus der zugeordneten Liga (aktuell), sonst vom Team-Feld
+        const leagueType = (data.leagueId && ligaTypeById.get(data.leagueId)) || data.leagueType || null;
         return {
           docId: d.id,
           name: data.name || 'Unbenannt',
           clubId: data.clubId || '',
           clubName: clubName.get(data.clubId) || data.clubName || '',
           leagueId: data.leagueId ?? null,
+          leagueType,
           shooterCount: count,
           isEinzel: count < 3 || String(data.name || '').toLowerCase().includes('einzel'),
           ringe: typeof ringe === 'number' ? ringe : null,
@@ -354,7 +358,7 @@ export default function SeasonTransitionPage() {
         leagueId: newLeagueId || null,
         ...(liga ? { leagueType: liga.type } : {}),
       });
-      setLigaEinteilung(prev => prev.map(t => t.docId === docId ? { ...t, leagueId: newLeagueId || null } : t));
+      setLigaEinteilung(prev => prev.map(t => t.docId === docId ? { ...t, leagueId: newLeagueId || null, leagueType: liga?.type ?? t.leagueType } : t));
       toast({ title: 'Gespeichert', description: 'Liga-Zuordnung aktualisiert.' });
     } catch (error) {
       logError('Fehler beim Ändern der Liga-Zuordnung:', error);
@@ -1270,6 +1274,7 @@ export default function SeasonTransitionPage() {
                                       <div className="min-w-0 flex items-center gap-2">
                                         <span className="text-muted-foreground select-none">⠿</span>
                                         <span className="font-medium">{t.name}</span>
+                                        {t.leagueType && <Badge variant="outline" className="font-mono">{t.leagueType}</Badge>}
                                         {t.isEinzel && <Badge variant="secondary">Einzel</Badge>}
                                         <span className="text-sm text-muted-foreground">{t.clubName}</span>
                                       </div>
