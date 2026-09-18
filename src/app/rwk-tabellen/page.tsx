@@ -107,8 +107,9 @@ const determineLeagueCompleteRound = (teams: TeamDisplay[], numRounds: number): 
   let leagueCompleteRound = numRounds;
   
   for (const team of teams) {
-    // Überspringe Teams "außer Konkurrenz"
-    if (team.outOfCompetition) continue;
+    // Überspringe Teams außer Wertung (außer Konkurrenz ODER Einzelmeldung),
+    // damit sie den liga-weit vollständigen Durchgang nicht verfälschen.
+    if (team.outOfCompetition || team.istEinzelwertung) continue;
     
     // Finde letzten lückenlosen Durchgang für dieses Team
     let teamCompleteRound = 0;
@@ -809,6 +810,10 @@ function RwkTabellenPageComponent() {
           const teamTotal = calculationResult.totalScore;
           const numScoredRds = calculationResult.numScoredRounds;
 
+          // Einzelmeldung erkennen: weniger als 3 Schützen = keine echte Mannschaft.
+          // (Namen mit "Einzel" werden bereits weiter oben herausgefiltert.)
+          const istEinzelwertung = (Array.isArray(teamData.shooterIds) ? teamData.shooterIds.length : 0) < 3;
+
           const teamDisplayItem: TeamDisplay = { 
             ...teamData, 
             clubName, 
@@ -819,7 +824,8 @@ function RwkTabellenPageComponent() {
             numScoredRounds: numScoredRds,
             leagueType: leagueDisplay.type,
             sortingScore: calculationResult.sortingScore,
-            sortingAverage: calculationResult.sortingAverage
+            sortingAverage: calculationResult.sortingAverage,
+            istEinzelwertung, // außer Wertung, wird wie "außer Konkurrenz" behandelt
           };
           teamDisplays.push(teamDisplayItem);
         }
@@ -827,10 +833,12 @@ function RwkTabellenPageComponent() {
         // Damit wird verhindert dass ein Team das einen Durchgang mehr eingetragen hat nach oben sortiert wird
         const leagueCompleteRoundForSort = determineLeagueCompleteRound(teamDisplays, numRoundsForCompetition);
         
+        // "Außer Wertung" = außer Konkurrenz ODER Einzelmeldung (<3 Schützen)
+        const ausserWertung = (t: TeamDisplay) => !!t.outOfCompetition || !!t.istEinzelwertung;
         teamDisplays.sort((a, b) => {
-          // Teams "außer Konkurrenz" immer nach Teams in Wertung
-          if (a.outOfCompetition && !b.outOfCompetition) return 1;
-          if (!a.outOfCompetition && b.outOfCompetition) return -1;
+          // Teams außer Wertung (AK + Einzel) immer nach Teams in Wertung
+          if (ausserWertung(a) && !ausserWertung(b)) return 1;
+          if (!ausserWertung(a) && ausserWertung(b)) return -1;
           
           // Sortier-Score nur bis zum liga-weit vollständigen Durchgang berechnen
           const scoreA = Array.from({length: leagueCompleteRoundForSort}, (_, i) => 
@@ -845,13 +853,13 @@ function RwkTabellenPageComponent() {
                  a.name.localeCompare(b.name);
         });
         
-        // Vergebe Rangplätze nur für Teams in Wertung
+        // Vergebe Rangplätze nur für Teams in Wertung (AK + Einzel bekommen keinen Rang)
         let rankCounter = 1;
         teamDisplays.forEach(team => {
-          if (!team.outOfCompetition) {
+          if (!ausserWertung(team)) {
             team.rank = rankCounter++;
           } else {
-            team.rank = null; // Kein Rang für Teams "außer Konkurrenz"
+            team.rank = null; // Kein Rang für AK- und Einzel-Meldungen
           }
         });
         leagueDisplay.teams = teamDisplays;
@@ -2160,7 +2168,9 @@ function RwkTabellenPageComponent() {
                                   <TableCell className="text-center font-medium px-2 py-2">
                                     {team.outOfCompetition ? 
                                       <span className="text-amber-500 dark:text-amber-400" title="Außer Konkurrenz">AK</span> : 
-                                      <span className="text-foreground dark:text-foreground">{team.rank}</span>
+                                      team.istEinzelwertung ?
+                                        <span className="text-slate-500" title="Einzelmeldung – außer Wertung">—</span> :
+                                        <span className="text-foreground dark:text-foreground">{team.rank}</span>
                                     }
                                   </TableCell>
                                   <TableCell className="font-medium text-foreground px-2 py-2 text-sm">
@@ -2170,6 +2180,14 @@ function RwkTabellenPageComponent() {
                                       reason={team.outOfCompetitionReason} 
                                       className="ml-2" 
                                     />
+                                    {team.istEinzelwertung && (
+                                      <span 
+                                        className="ml-2 text-xs bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-medium cursor-help"
+                                        title="Einzelmeldung – außer Wertung, zählt nicht für die Mannschaftsplatzierung"
+                                      >
+                                        Einzel
+                                      </span>
+                                    )}
                                   </TableCell>
                                   {[...Array(currentNumRoundsState)].map((_, i) => (
                                     <TableCell key={`dg-val-${i + 1}-${team.id}`} className="text-center px-1 py-2">{(team.roundResults as any)?.[`dg${i + 1}`] ?? '-'}</TableCell>

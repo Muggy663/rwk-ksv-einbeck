@@ -323,6 +323,7 @@ export interface TeamDisplay {
   teamLeaderPhone?: string;
   outOfCompetition?: boolean;
   outOfCompetitionReason?: string;
+  istEinzelwertung?: boolean; // <3 Schützen: außer Wertung, kein Rang, als "Einzel" gekennzeichnet
   rank?: number | null;
   sortingScore?: number;
   sortingAverage?: number;

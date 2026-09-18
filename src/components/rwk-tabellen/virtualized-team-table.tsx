@@ -17,6 +17,7 @@ interface Team {
   roundResults?: Record<string, number | null>;
   outOfCompetition?: boolean;
   outOfCompetitionReason?: string;
+  istEinzelwertung?: boolean;
   [key: string]: any;
 }
 
@@ -94,7 +95,7 @@ export function VirtualizedTeamTable({
                   onClick={() => onToggleTeam && onToggleTeam(team.id)}
                 >
                   <TableCell className="text-center font-medium px-2 py-2">
-                    {team.rank}
+                    {team.istEinzelwertung ? '—' : team.rank}
                   </TableCell>
                   <TableCell className="font-medium text-foreground px-2 py-2">
                     {team.name}
@@ -105,6 +106,15 @@ export function VirtualizedTeamTable({
                         aria-label={`Außer Konkurrenz: ${team.outOfCompetitionReason || 'Keine Begründung angegeben'}`}
                       >
                         AK
+                      </span>
+                    )}
+                    {team.istEinzelwertung && (
+                      <span 
+                        className="ml-2 text-xs bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-medium cursor-help"
+                        title="Einzelmeldung – außer Wertung, zählt nicht für die Mannschaftsplatzierung"
+                        aria-label="Einzelmeldung, außer Wertung"
+                      >
+                        Einzel
                       </span>
                     )}
                   </TableCell>

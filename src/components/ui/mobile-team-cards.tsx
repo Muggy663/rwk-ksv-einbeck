@@ -46,7 +46,7 @@ export const MobileTeamCards: React.FC<MobileTeamCardsProps> = ({
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
-                  {team.outOfCompetition ? 'AK' : team.rank}
+                  {team.outOfCompetition ? 'AK' : team.istEinzelwertung ? 'E' : team.rank}
                 </div>
                 <div>
                   <div className="font-semibold text-foreground">{team.name}</div>
@@ -91,6 +91,11 @@ export const MobileTeamCards: React.FC<MobileTeamCardsProps> = ({
                 outOfCompetition={team.outOfCompetition} 
                 reason={team.outOfCompetitionReason} 
               />
+              {team.istEinzelwertung && (
+                <span className="text-xs bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-medium">
+                  Einzel (außer Wertung)
+                </span>
+              )}
               <div className="flex gap-1">
                 {[...Array(numRounds)].map((_, i) => (
                   <div key={i} className="text-xs bg-muted px-2 py-1 rounded">
