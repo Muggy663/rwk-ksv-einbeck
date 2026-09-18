@@ -15,7 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, AlertCircle, ArrowUp, ArrowDown, Download } from 'lucide-react';
 import Link from 'next/link';
-import { calculateLeagueStandings, generatePromotionRelegationSuggestions, applyPromotionRelegation } from '@/lib/services/season-transition-service';
+import { calculateLeagueStandings, generatePromotionRelegationSuggestions, applyPromotionRelegation, berechneLigaAusgleich } from '@/lib/services/season-transition-service';
+import { writeBatch } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -74,7 +75,8 @@ export default function SeasonTransitionPage() {
   const [teamStandings, setTeamStandings] = useState<Map<string, any>>(new Map());
   // Nachher-Übersicht: alle Mannschaften der Ziel-Saison mit aktueller Liga-Zuordnung,
   // um die Einteilung nach dem Anwenden zu prüfen und manuell nachzujustieren.
-  const [ligaEinteilung, setLigaEinteilung] = useState<Array<{ docId: string; name: string; clubName: string; leagueId: string | null; shooterCount: number; isEinzel: boolean }>>([]);
+  const [ligaEinteilung, setLigaEinteilung] = useState<Array<{ docId: string; name: string; clubId: string; clubName: string; leagueId: string | null; shooterCount: number; isEinzel: boolean; ringe: number | null; schuetzenNamen: string[] }>>([]);
+  const [isAusgleich, setIsAusgleich] = useState(false);
   const [zielLigen, setZielLigen] = useState<League[]>([]);
   const [showEinteilung, setShowEinteilung] = useState(false);
   const [isLoadingEinteilung, setIsLoadingEinteilung] = useState(false);
@@ -297,18 +299,40 @@ export default function SeasonTransitionPage() {
       const clubName = new Map<string, string>();
       clubsSnap.docs.forEach(c => clubName.set(c.id, (c.data() as any).name || c.id));
 
+      // Schützennamen auflösen (für Einzel-Nachnamen-Abgleich)
+      const shootersSnap = await getDocs(collection(db, 'shooters'));
+      const shooterName = new Map<string, string>();
+      shootersSnap.docs.forEach(s => {
+        const sd = s.data() as any;
+        const nm = (sd.firstName && sd.lastName) ? `${sd.firstName} ${sd.lastName}` : (sd.name || '');
+        shooterName.set(s.id, nm);
+      });
+
+      // Vorjahres-Ringzahlen nach normalisiertem Teamnamen (aus der Analyse: teamStandings)
+      const normTeam = (n?: string) => (n || '').toLowerCase().replace(/\be\.?\s*v\.?(?=\s|$)/g, ' ').replace(/[.\s]/g, '');
+      const ringeByName = new Map<string, number>();
+      teamStandings.forEach((st: any) => {
+        if (st?.teamName && typeof st.totalScore === 'number') {
+          ringeByName.set(normTeam(st.teamName), st.totalScore);
+        }
+      });
+
       // Teams der Ziel-Saison laden
       const teamsSnap = await getDocs(query(collection(db, 'rwk_teams'), where('seasonId', '==', targetSeasonId)));
       const teams = teamsSnap.docs.map(d => {
         const data = d.data() as any;
         const count = data.shooterIds?.length || 0;
+        const ringe = ringeByName.get(normTeam(data.name || ''));
         return {
           docId: d.id,
           name: data.name || 'Unbenannt',
+          clubId: data.clubId || '',
           clubName: clubName.get(data.clubId) || data.clubName || '',
           leagueId: data.leagueId ?? null,
           shooterCount: count,
           isEinzel: count < 3 || String(data.name || '').toLowerCase().includes('einzel'),
+          ringe: typeof ringe === 'number' ? ringe : null,
+          schuetzenNamen: (data.shooterIds || []).map((id: string) => shooterName.get(id)).filter(Boolean) as string[],
         };
       }).sort((a, b) => a.name.localeCompare(b.name));
 
@@ -335,6 +359,86 @@ export default function SeasonTransitionPage() {
     } catch (error) {
       logError('Fehler beim Ändern der Liga-Zuordnung:', error);
       toast({ title: 'Fehler', description: 'Zuordnung konnte nicht gespeichert werden.', variant: 'destructive' });
+    }
+  };
+
+  // Ligagrößen ausgleichen (Mannschaften deterministisch, Einzelstarter per KI) und
+  // die Vorschläge direkt anwenden. Alles bleibt danach per Drag & Drop anpassbar.
+  const ligaAusgleichAnwenden = async () => {
+    if (ligaEinteilung.length === 0) return;
+    setIsAusgleich(true);
+    try {
+      // 1) Deterministischer Größen-Ausgleich für echte Mannschaften (LGA)
+      const mannschaften = ligaEinteilung.filter(t => !t.isEinzel);
+      const ausgleichTeams = mannschaften.map(t => ({
+        docId: t.docId, name: t.name, clubId: t.clubId, leagueId: t.leagueId, ringe: t.ringe,
+      }));
+      const ausgleichLigen = zielLigen.map(l => ({ id: l.id, name: l.name, type: l.type, order: l.order || 0 }));
+      const vorschlaege = berechneLigaAusgleich(ausgleichTeams, ausgleichLigen);
+
+      // Änderungen der Mannschaften in Map sammeln
+      const neueZuordnung = new Map<string, string>(); // docId -> ligaId
+      vorschlaege.forEach(v => neueZuordnung.set(v.docId, v.nachLigaId));
+
+      // 2) Einzelstarter per KI-Route zuordnen
+      // Mannschaften mit ihrer (ggf. neuen) Liga für den Kontext
+      const ligaById = new Map(zielLigen.map(l => [l.id, l]));
+      const mannschaftInput = mannschaften.map(t => {
+        const ligaId = neueZuordnung.get(t.docId) || t.leagueId || '';
+        const liga = ligaById.get(ligaId);
+        return {
+          name: t.name, clubId: t.clubId, ligaId,
+          ligaName: liga?.name || '', ligaOrder: liga?.order || 0,
+          schuetzen: t.schuetzenNamen,
+        };
+      }).filter(m => m.ligaId);
+      const einzelInput = ligaEinteilung.filter(t => t.isEinzel).map(t => ({
+        docId: t.docId, name: t.name, clubId: t.clubId, schuetzen: t.schuetzenNamen, ringe: t.ringe,
+      }));
+      // nur LGA-Ligen an die KI (Auflage)
+      const lgaLigenInput = zielLigen.filter(l => (l.type || '').toUpperCase() === 'LGA').map(l => ({ id: l.id, name: l.name, order: l.order || 0 }));
+
+      let einzelZuordnungen: Array<{ docId: string; ligaId: string }> = [];
+      if (einzelInput.length > 0 && lgaLigenInput.length > 0) {
+        try {
+          const resp = await fetch('/api/admin/liga-einteilung-einzel-ki', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ einzel: einzelInput, mannschaften: mannschaftInput, ligen: lgaLigenInput }),
+          });
+          if (resp.ok) {
+            const data = await resp.json();
+            einzelZuordnungen = (data.zuordnungen || []).map((z: any) => ({ docId: z.docId, ligaId: z.ligaId }));
+          }
+        } catch (kiErr) {
+          logDebug('Einzel-KI nicht erreichbar, Einzel bleiben unverändert:', String(kiErr));
+        }
+      }
+      einzelZuordnungen.forEach(z => { if (z.ligaId) neueZuordnung.set(z.docId, z.ligaId); });
+
+      // 3) Änderungen in einem Batch schreiben
+      if (neueZuordnung.size === 0) {
+        toast({ title: 'Keine Änderung', description: 'Die Einteilung ist bereits ausgeglichen.' });
+        return;
+      }
+      const batch = writeBatch(db);
+      let count = 0;
+      neueZuordnung.forEach((ligaId, docId) => {
+        const t = ligaEinteilung.find(x => x.docId === docId);
+        if (!t || t.leagueId === ligaId) return;
+        const liga = ligaById.get(ligaId);
+        batch.update(doc(db, 'rwk_teams', docId), { leagueId: ligaId, ...(liga ? { leagueType: liga.type } : {}) });
+        count++;
+      });
+      if (count > 0) await batch.commit();
+
+      // 4) Lokalen State aktualisieren
+      setLigaEinteilung(prev => prev.map(t => neueZuordnung.has(t.docId) ? { ...t, leagueId: neueZuordnung.get(t.docId)! } : t));
+      toast({ title: 'Ligagrößen ausgeglichen', description: `${count} Mannschaft(en)/Einzel neu zugeordnet. Bei Bedarf per Drag & Drop anpassen.` });
+    } catch (error) {
+      logError('Ligagrößen-Ausgleich fehlgeschlagen:', error);
+      toast({ title: 'Fehler', description: 'Ausgleich konnte nicht durchgeführt werden.', variant: 'destructive' });
+    } finally {
+      setIsAusgleich(false);
     }
   };
 
@@ -585,6 +689,24 @@ export default function SeasonTransitionPage() {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // Zielgröße einer LGA-Liga: obere zwei = 6, Rest fair (obere Klasse +1 bei ungerade).
+  // Für Nicht-LGA-Ligen (Freihand/Pistole) und "Nicht zugewiesen": null (keine Vorgabe).
+  const ligaSollGroesse = (ligaId: string): number | null => {
+    const lgaLigen = zielLigen.filter(l => (l.type || '').toUpperCase() === 'LGA').sort((a, b) => (a.order || 0) - (b.order || 0));
+    const idx = lgaLigen.findIndex(l => l.id === ligaId);
+    if (idx === -1) return null;
+    const anzahl = ligaEinteilung.filter(t => !t.isEinzel && t.leagueId && lgaLigen.some(l => l.id === t.leagueId)).length;
+    const groessen: number[] = new Array(lgaLigen.length).fill(0);
+    let rest = anzahl;
+    for (let i = 0; i < lgaLigen.length && i < 2; i++) { const g = Math.min(6, rest); groessen[i] = g; rest -= g; }
+    const uebrig = lgaLigen.length - 2;
+    if (uebrig > 0 && rest > 0) {
+      const basis = Math.floor(rest / uebrig); let extra = rest - basis * uebrig;
+      for (let i = 2; i < lgaLigen.length; i++) { groessen[i] = basis + (extra > 0 ? 1 : 0); if (extra > 0) extra--; }
+    } else if (uebrig === 0 && rest > 0) { groessen[1] += rest; }
+    return groessen[idx];
   };
 
   return (
@@ -1058,9 +1180,14 @@ export default function SeasonTransitionPage() {
                           Änderungen werden sofort gespeichert.
                         </CardDescription>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => loadLigaEinteilung(selectedTargetSeason)} disabled={isLoadingEinteilung}>
-                        {isLoadingEinteilung ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aktualisieren'}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="default" size="sm" onClick={ligaAusgleichAnwenden} disabled={isAusgleich || isLoadingEinteilung}>
+                          {isAusgleich ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Gleiche aus…</> : 'Ligagrößen ausgleichen'}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => loadLigaEinteilung(selectedTargetSeason)} disabled={isLoadingEinteilung}>
+                          {isLoadingEinteilung ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aktualisieren'}
+                        </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -1117,7 +1244,16 @@ export default function SeasonTransitionPage() {
                               }`}
                             >
                               <h4 className={`font-semibold text-base mb-3 ${istNichtZugewiesen ? 'text-amber-700 dark:text-amber-300' : 'text-primary'}`}>
-                                {liga.name}{liga.type ? ` (${liga.type})` : ''} — {teamsInLiga.length} {teamsInLiga.length === 1 ? 'Mannschaft' : 'Mannschaften'}
+                                {liga.name}{liga.type ? ` (${liga.type})` : ''} — {(() => {
+                                  // Nur echte Mannschaften für die Größenzählung (Einzel zählen nicht mit)
+                                  const mannschaftenAnzahl = teamsInLiga.filter(t => !t.isEinzel).length;
+                                  const einzelAnzahl = teamsInLiga.length - mannschaftenAnzahl;
+                                  const soll = ligaSollGroesse(liga.id);
+                                  const teil = `${mannschaftenAnzahl}${soll !== null ? ` / ${soll}` : ''} ${mannschaftenAnzahl === 1 ? 'Mannschaft' : 'Mannschaften'}`;
+                                  const einzelTeil = einzelAnzahl > 0 ? ` + ${einzelAnzahl} Einzel` : '';
+                                  const warn = soll !== null && mannschaftenAnzahl !== soll ? ' ⚠️' : '';
+                                  return `${teil}${einzelTeil}${warn}`;
+                                })()}
                               </h4>
                               {teamsInLiga.length === 0 ? (
                                 <p className="text-xs text-muted-foreground italic">Mannschaft hierher ziehen…</p>

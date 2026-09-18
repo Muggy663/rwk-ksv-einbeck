@@ -718,13 +718,18 @@ export async function applyPromotionRelegation(
     }
     for (const teams of gruppen.values()) {
       if (teams.length < 2) continue;
-      // Belegte Ligen dieser Gruppe (höchste zuerst = kleinste order)
+      // Die von dieser Vereinsgruppe belegten Ligen, aufsteigend nach Rang (order).
+      // Mehrfach belegte Ligen bleiben mehrfach enthalten — dadurch dürfen I und II
+      // in DERSELBEN Liga stehen (ihre beiden Einträge sind dann identisch).
       const belegteLigen = teams
         .map((t) => finaleZuordnung.get(t.docId)!)
         .sort((a, b) => a.order - b.order);
-      // Mannschaften nach Römerzahl aufsteigend (I, II, III …)
+      // Mannschaften nach Römerzahl aufsteigend (I, II, III …).
       const nachStaerke = [...teams].sort((a, b) => roemischeStaerke(a.name) - roemischeStaerke(b.name));
-      // Zuweisen: I -> höchste, II -> nächste …
+      // I bekommt die höchste belegte Liga, II die nächste usw. Regel: I nie TIEFER
+      // als II. Stehen sie schon korrekt (auch gemeinsam in einer Liga), ändert sich
+      // nichts; nur wenn eine höhere Römerzahl höher stünde als eine niedrigere, wird
+      // getauscht.
       nachStaerke.forEach((t, i) => {
         finaleZuordnung.set(t.docId, belegteLigen[i]);
       });
@@ -755,3 +760,163 @@ export async function applyPromotionRelegation(
 }
 
 
+
+
+// ===========================================================================
+// Ligagrößen-Ausgleich (deterministischer Vorschlag)
+// ===========================================================================
+
+export interface AusgleichTeam {
+  docId: string;
+  name: string;
+  clubId: string;
+  leagueId: string | null;   // aktuelle Liga (nach Auf-/Abstieg)
+  ringe: number | null;      // Vorjahres-Gesamtringe (null = neu / kein Vorjahr)
+}
+export interface AusgleichLiga {
+  id: string;
+  name: string;
+  type: string;
+  order: number;
+}
+export interface AusgleichVorschlag {
+  docId: string;
+  name: string;
+  vonLigaId: string | null;
+  nachLigaId: string;
+  nachLigaName: string;
+  grund: string;
+}
+
+/**
+ * Berechnet einen Vorschlag, wie die LGA-Mannschaften auf die Ligen verteilt werden,
+ * damit die Größen stimmen:
+ *   - höchste Liga = 6, zweithöchste = 6
+ *   - restliche Mannschaften möglichst gleichmäßig auf die übrigen Ligen (obere Klasse
+ *     bekommt bei ungerader Zahl die zusätzliche Mannschaft)
+ * Regeln:
+ *   - Nachrücken/Absteigen nach Vorjahres-Ringzahl (stärkste rücken hoch, schwächste runter)
+ *   - Neue Mannschaften ohne Vorjahr (ringe = null) gelten als schwächste -> bleiben unten
+ *   - "I nie tiefer als II": ein Team wird nicht so verschoben, dass es unter einer
+ *     höheren Römerzahl desselben Vereins landet
+ *   - so wenige Verschiebungen wie möglich (es wird von der aktuellen Verteilung ausgegangen)
+ *
+ * Gibt NUR einen Vorschlag zurück (keine DB-Änderung).
+ */
+export function berechneLigaAusgleich(
+  teams: AusgleichTeam[],
+  ligen: AusgleichLiga[],
+): AusgleichVorschlag[] {
+  // Nur LGA-Auflage-Ligen mit Auf-/Abstieg berücksichtigen, aufsteigend nach order.
+  const lgaLigen = ligen
+    .filter((l) => (l.type || '').toUpperCase() === 'LGA')
+    .sort((a, b) => a.order - b.order);
+  if (lgaLigen.length < 2) return [];
+
+  const roemToNum: Record<string, number> = { I: 1, II: 2, III: 3, IV: 4, V: 5 };
+  const staerke = (name: string): number => {
+    const m = name.trim().match(/\b(IV|V|III|II|I)\s*$/);
+    return m ? (roemToNum[m[1]] ?? 99) : 99;
+  };
+
+  // Nur LGA-Teams (die einer LGA-Liga zugeordnet sind).
+  const lgaLigaIds = new Set(lgaLigen.map((l) => l.id));
+  const lgaTeams = teams.filter((t) => t.leagueId && lgaLigaIds.has(t.leagueId));
+  const anzahl = lgaTeams.length;
+  if (anzahl === 0) return [];
+
+  // Zielgrößen bestimmen
+  const zielGroessen: number[] = new Array(lgaLigen.length).fill(0);
+  let rest = anzahl;
+  // Die obersten beiden Ligen: je 6 (aber nicht mehr als vorhanden)
+  for (let i = 0; i < lgaLigen.length && i < 2; i++) {
+    const g = Math.min(6, rest);
+    zielGroessen[i] = g;
+    rest -= g;
+  }
+  // Restliche Ligen: gleichmäßig, obere bekommen bei Rest die zusätzliche(n)
+  const uebrigeLigen = lgaLigen.length - 2;
+  if (uebrigeLigen > 0 && rest > 0) {
+    const basis = Math.floor(rest / uebrigeLigen);
+    let extra = rest - basis * uebrigeLigen;
+    for (let i = 2; i < lgaLigen.length; i++) {
+      zielGroessen[i] = basis + (extra > 0 ? 1 : 0);
+      if (extra > 0) extra--;
+    }
+  } else if (uebrigeLigen === 0 && rest > 0) {
+    // Nur zwei Ligen vorhanden -> Rest kommt in die zweite
+    zielGroessen[1] += rest;
+  }
+
+  // Aktuelle Zuordnung: Liga-Index je Team
+  const ligaIndex = new Map<string, number>(lgaLigen.map((l, i) => [l.id, i]));
+  // Arbeitsstruktur: pro Liga-Index eine Liste von Teams
+  const belegung: AusgleichTeam[][] = lgaLigen.map(() => []);
+  for (const t of lgaTeams) {
+    const idx = ligaIndex.get(t.leagueId!);
+    if (idx !== undefined) belegung[idx].push(t);
+  }
+
+  // Hilfsfunktion: Ringe zum Vergleich (null -> -1, gilt als schwächste)
+  const r = (t: AusgleichTeam) => (typeof t.ringe === 'number' ? t.ringe : -1);
+
+  // Von oben nach unten ausgleichen.
+  // Zu wenige in Liga i -> stärkste aus i+1 hochziehen.
+  // Zu viele in Liga i -> schwächste nach i+1 schieben.
+  for (let i = 0; i < lgaLigen.length; i++) {
+    // Zu viele: schwächste nach unten schieben
+    while (belegung[i].length > zielGroessen[i] && i + 1 < lgaLigen.length) {
+      // schwächstes Team dieser Liga
+      belegung[i].sort((a, b) => r(b) - r(a)); // stärkste zuerst
+      const weg = belegung[i].pop()!;          // schwächstes
+      belegung[i + 1].push(weg);
+    }
+    // Zu wenige: stärkste aus der Liga darunter hochziehen
+    while (belegung[i].length < zielGroessen[i] && i + 1 < lgaLigen.length) {
+      belegung[i + 1].sort((a, b) => r(b) - r(a)); // stärkste zuerst
+      const rauf = belegung[i + 1].shift();
+      if (!rauf) break;
+      belegung[i].push(rauf);
+    }
+  }
+
+  // "I nie tiefer als II" wahren: pro Verein prüfen und ggf. innerhalb der belegten
+  // Ligen nach Römerzahl neu zuordnen (gleiche Ligen bleiben gleich -> zusammen erlaubt).
+  const finalLigaIndex = new Map<string, number>();
+  belegung.forEach((teamsInLiga, idx) => teamsInLiga.forEach((t) => finalLigaIndex.set(t.docId, idx)));
+  const proVerein = new Map<string, AusgleichTeam[]>();
+  for (const t of lgaTeams) {
+    if (staerke(t.name) === 99) continue;
+    if (!proVerein.has(t.clubId)) proVerein.set(t.clubId, []);
+    proVerein.get(t.clubId)!.push(t);
+  }
+  for (const vteams of proVerein.values()) {
+    if (vteams.length < 2) continue;
+    const belegteIdx = vteams.map((t) => finalLigaIndex.get(t.docId)!).sort((a, b) => a - b);
+    const nachStaerke = [...vteams].sort((a, b) => staerke(a.name) - staerke(b.name));
+    nachStaerke.forEach((t, k) => finalLigaIndex.set(t.docId, belegteIdx[k]));
+  }
+
+  // Vorschläge zusammenstellen (nur echte Änderungen).
+  const vorschlaege: AusgleichVorschlag[] = [];
+  for (const t of lgaTeams) {
+    const zielIdx = finalLigaIndex.get(t.docId);
+    if (zielIdx === undefined) continue;
+    const zielLiga = lgaLigen[zielIdx];
+    if (t.leagueId === zielLiga.id) continue; // unverändert
+    const vonIdx = ligaIndex.get(t.leagueId!);
+    const richtung = vonIdx === undefined ? 'eingeordnet' : (zielIdx < vonIdx! ? 'aufgerückt' : 'abgerückt');
+    const grund = t.ringe === null
+      ? 'Neue Mannschaft ohne Vorjahr'
+      : `${richtung} (Ligagrößen-Ausgleich, ${t.ringe} Ringe)`;
+    vorschlaege.push({
+      docId: t.docId,
+      name: t.name,
+      vonLigaId: t.leagueId,
+      nachLigaId: zielLiga.id,
+      nachLigaName: zielLiga.name,
+      grund,
+    });
+  }
+  return vorschlaege;
+}
