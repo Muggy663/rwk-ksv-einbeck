@@ -564,7 +564,6 @@ export async function applyPromotionRelegation(
     interface ZielTeam { docId: string; leagueId: string | null; previousOrder: number | null; name: string; clubId: string; leagueType: string | null }
     const bySourceId = new Map<string, ZielTeam>();       // primär: sourceTeamId-Verweis
     const byNameCat = new Map<string, ZielTeam>();         // Fallback: Name + Disziplin-Kategorie (LGA/LGS=LG, LP=..)
-    const byName = new Map<string, ZielTeam>();            // Letzter Fallback: nur Name (kann bei Gleichnamigkeit unscharf sein)
     const alleZielTeams: ZielTeam[] = [];                  // für die Vereins-Rangfolge-Korrektur
     // Robuste Mannschaftsnamen-Normalisierung für den Fallback-Abgleich zwischen den
     // Saisons: gleicht typische Schreibvarianten an, damit z. B.
@@ -608,7 +607,6 @@ export async function applyPromotionRelegation(
       // Primärer Fallback: Name + Disziplin (unterscheidet Auflage-/Freihand-/Pistolen-I)
       const catKey = `${nk}|${disziplinKey(data.leagueType)}`;
       if (nk && !byNameCat.has(catKey)) byNameCat.set(catKey, eintrag);
-      if (nk && !byName.has(nk)) byName.set(nk, eintrag);
       alleZielTeams.push(eintrag);
     });
 
@@ -632,14 +630,21 @@ export async function applyPromotionRelegation(
       const disziplinDerSuggestion = disziplinKey(vorjahresLiga?.type);
       // 1. Match über sourceTeamId (eindeutig, wenn Ziel-Saison per Saisonwechsel entstand)
       // 2. Match über Name + Disziplin (trennt Auflage/Freihand/Pistole sauber)
-      // 3. Letzter Fallback: nur Name (falls Disziplin nicht auflösbar)
+      // WICHTIG: KEIN reiner Namens-Fallback mehr! Der hat früher gleichnamige Teams
+      // ÜBER Disziplingrenzen hinweg gematcht (z. B. LP-"SGi Einbeck I" auf den
+      // LGA-Vorschlag) und dabei die Disziplin des Teams fälschlich umgestellt.
       const targetTeam =
         bySourceId.get(s.teamId) ||
-        byNameCat.get(`${normName(s.teamName)}|${disziplinDerSuggestion}`) ||
-        byName.get(normName(s.teamName));
+        byNameCat.get(`${normName(s.teamName)}|${disziplinDerSuggestion}`);
       if (!targetTeam) {
         // Team der Vorsaison ist in der Ziel-Saison NICHT gemeldet -> nicht anfassen.
         result.skipped.push(`${s.teamName}: in Ziel-Saison nicht gemeldet – übersprungen`);
+        continue;
+      }
+      // Sicherung: Team NIE über Disziplin-Grenzen verschieben. Stimmt die Disziplin
+      // des gefundenen Ziel-Teams nicht mit der der Vorjahresliga überein, überspringen.
+      if (disziplinKey(targetTeam.leagueType) !== disziplinDerSuggestion) {
+        result.skipped.push(`${s.teamName}: Disziplin passt nicht – übersprungen`);
         continue;
       }
       // Start-Liga bestimmen — IMMER aus der Vorjahresangabe, NIE aus der bereits
@@ -770,7 +775,8 @@ export interface AusgleichTeam {
   docId: string;
   name: string;
   clubId: string;
-  leagueId: string | null;   // aktuelle Liga (nach Auf-/Abstieg)
+  leagueId: string | null;   // aktuelle Liga (nach Auf-/Abstieg); null = noch nicht zugewiesen
+  leagueType: string | null; // Disziplin des Teams (für nicht zugewiesene LGA-Teams nötig)
   ringe: number | null;      // Vorjahres-Gesamtringe (null = neu / kein Vorjahr)
 }
 export interface AusgleichLiga {
@@ -819,9 +825,13 @@ export function berechneLigaAusgleich(
     return m ? (roemToNum[m[1]] ?? 99) : 99;
   };
 
-  // Nur LGA-Teams (die einer LGA-Liga zugeordnet sind).
+  // LGA-Teams: entweder bereits einer LGA-Liga zugeordnet ODER als LGA gemeldet, aber
+  // noch ohne Liga ("Nicht zugewiesen"). Letztere sind i.d.R. neue Mannschaften und
+  // müssen mitgezählt und einsortiert werden.
   const lgaLigaIds = new Set(lgaLigen.map((l) => l.id));
-  const lgaTeams = teams.filter((t) => t.leagueId && lgaLigaIds.has(t.leagueId));
+  const lgaTeams = teams.filter(
+    (t) => (t.leagueId && lgaLigaIds.has(t.leagueId)) || (!t.leagueId && (t.leagueType || '').toUpperCase() === 'LGA')
+  );
   const anzahl = lgaTeams.length;
   if (anzahl === 0) return [];
 
@@ -850,11 +860,13 @@ export function berechneLigaAusgleich(
 
   // Aktuelle Zuordnung: Liga-Index je Team
   const ligaIndex = new Map<string, number>(lgaLigen.map((l, i) => [l.id, i]));
-  // Arbeitsstruktur: pro Liga-Index eine Liste von Teams
+  // Arbeitsstruktur: pro Liga-Index eine Liste von Teams.
+  // Nicht zugewiesene LGA-Teams (leagueId = null) starten in der untersten Liga.
   const belegung: AusgleichTeam[][] = lgaLigen.map(() => []);
+  const letzterIdx = lgaLigen.length - 1;
   for (const t of lgaTeams) {
-    const idx = ligaIndex.get(t.leagueId!);
-    if (idx !== undefined) belegung[idx].push(t);
+    const idx = t.leagueId ? ligaIndex.get(t.leagueId) : letzterIdx;
+    belegung[idx ?? letzterIdx].push(t);
   }
 
   // Hilfsfunktion: Ringe zum Vergleich (null -> -1, gilt als schwächste)

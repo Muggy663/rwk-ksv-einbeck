@@ -375,7 +375,7 @@ export default function SeasonTransitionPage() {
       // 1) Deterministischer Größen-Ausgleich für echte Mannschaften (LGA)
       const mannschaften = ligaEinteilung.filter(t => !t.isEinzel);
       const ausgleichTeams = mannschaften.map(t => ({
-        docId: t.docId, name: t.name, clubId: t.clubId, leagueId: t.leagueId, ringe: t.ringe,
+        docId: t.docId, name: t.name, clubId: t.clubId, leagueId: t.leagueId, leagueType: t.leagueType, ringe: t.ringe,
       }));
       const ausgleichLigen = zielLigen.map(l => ({ id: l.id, name: l.name, type: l.type, order: l.order || 0 }));
       const vorschlaege = berechneLigaAusgleich(ausgleichTeams, ausgleichLigen);
@@ -701,7 +701,14 @@ export default function SeasonTransitionPage() {
     const lgaLigen = zielLigen.filter(l => (l.type || '').toUpperCase() === 'LGA').sort((a, b) => (a.order || 0) - (b.order || 0));
     const idx = lgaLigen.findIndex(l => l.id === ligaId);
     if (idx === -1) return null;
-    const anzahl = ligaEinteilung.filter(t => !t.isEinzel && t.leagueId && lgaLigen.some(l => l.id === t.leagueId)).length;
+    // Alle LGA-Mannschaften zählen: bereits einer LGA-Liga zugeordnet ODER als LGA
+    // gemeldet, aber noch "Nicht zugewiesen" (diese sollen ja mit aufgefüllt werden).
+    const anzahl = ligaEinteilung.filter(t =>
+      !t.isEinzel && (
+        (t.leagueId && lgaLigen.some(l => l.id === t.leagueId)) ||
+        (!t.leagueId && (t.leagueType || '').toUpperCase() === 'LGA')
+      )
+    ).length;
     const groessen: number[] = new Array(lgaLigen.length).fill(0);
     let rest = anzahl;
     for (let i = 0; i < lgaLigen.length && i < 2; i++) { const g = Math.min(6, rest); groessen[i] = g; rest -= g; }
