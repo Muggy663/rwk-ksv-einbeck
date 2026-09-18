@@ -612,6 +612,34 @@ export default function AdminTeamsPage() {
         </div>
       )}
 
+      {/* Disziplin-Übersicht (nur Auslesen): Anzahl Mannschaften und Einzel je Disziplin */}
+      {teamsForDisplay.length > 0 && (() => {
+        const zaehler = new Map<string, { mannschaften: number; einzel: number }>();
+        teamsForDisplay.forEach(t => {
+          const typ = getLeagueTypeDisplay(t) || '-';
+          if (!zaehler.has(typ)) zaehler.set(typ, { mannschaften: 0, einzel: 0 });
+          const e = zaehler.get(typ)!;
+          if (istEinzel(t)) e.einzel++; else e.mannschaften++;
+        });
+        const reihenfolge = ['LGA', 'LGS', 'LG', 'LP', 'LPA', 'KKG', 'KK', 'KKP'];
+        const eintraege = Array.from(zaehler.entries()).sort((a, b) => {
+          const ia = reihenfolge.indexOf(a[0]); const ib = reihenfolge.indexOf(b[0]);
+          return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+        });
+        const summeM = eintraege.reduce((s, [, v]) => s + v.mannschaften, 0);
+        const summeE = eintraege.reduce((s, [, v]) => s + v.einzel, 0);
+        return (
+          <div className="flex flex-wrap items-center gap-3 px-4 py-3 rounded-md border bg-card text-sm">
+            <span className="font-medium text-muted-foreground">Disziplinen ({summeM} Mannschaften{summeE > 0 ? `, ${summeE} Einzel` : ''}):</span>
+            {eintraege.map(([typ, v]) => (
+              <span key={typ} className="flex items-center gap-1.5 bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-full font-medium">
+                {typ}: {v.mannschaften}{v.einzel > 0 ? ` (+${v.einzel} Einzel)` : ''}
+              </span>
+            ))}
+          </div>
+        );
+      })()}
+
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle>

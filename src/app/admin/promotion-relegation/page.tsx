@@ -350,15 +350,39 @@ export default function SeasonTransitionPage() {
     }
   };
 
+  // Disziplin-Kategorie für den Schutz beim Verschieben (LGA/LGS/LP/KK getrennt).
+  const disziplinKat = (type?: string | null): string => {
+    const t = (type || '').toUpperCase();
+    if (t === 'LGA') return 'LG-AUFLAGE';
+    if (t === 'LGS' || t === 'LG') return 'LG-FREIHAND';
+    if (t === 'LP' || t === 'LPA') return 'LP';
+    if (t === 'KK' || t === 'KKG') return 'KK';
+    if (t === 'KKP') return 'KKP';
+    return t || '?';
+  };
+
   // Ändert die Liga-Zuordnung eines einzelnen Teams direkt in der Übersicht.
+  // WICHTIG: Ein Team darf NUR innerhalb derselben Disziplin verschoben werden.
+  // Die Disziplin (leagueType) des Teams wird dabei NIE verändert – so kann eine
+  // LGA-Mannschaft nicht versehentlich zu LP werden.
   const changeTeamLeague = async (docId: string, newLeagueId: string) => {
+    const team = ligaEinteilung.find(t => t.docId === docId);
+    const liga = zielLigen.find(l => l.id === newLeagueId);
+    // "Nicht zugewiesen" (leerer Wert) ist immer erlaubt – nur die Liga wird entfernt.
+    if (liga && team && team.leagueType && disziplinKat(team.leagueType) !== disziplinKat(liga.type)) {
+      toast({
+        title: 'Verschieben nicht möglich',
+        description: `„${team.name}" ist eine ${team.leagueType}-Mannschaft und kann nicht in die ${liga.type}-Liga „${liga.name}" verschoben werden.`,
+        variant: 'destructive',
+      });
+      return;
+    }
     try {
-      const liga = zielLigen.find(l => l.id === newLeagueId);
       await updateDoc(doc(db, 'rwk_teams', docId), {
         leagueId: newLeagueId || null,
-        ...(liga ? { leagueType: liga.type } : {}),
+        // leagueType NICHT überschreiben – Disziplin des Teams bleibt immer erhalten.
       });
-      setLigaEinteilung(prev => prev.map(t => t.docId === docId ? { ...t, leagueId: newLeagueId || null, leagueType: liga?.type ?? t.leagueType } : t));
+      setLigaEinteilung(prev => prev.map(t => t.docId === docId ? { ...t, leagueId: newLeagueId || null } : t));
       toast({ title: 'Gespeichert', description: 'Liga-Zuordnung aktualisiert.' });
     } catch (error) {
       logError('Fehler beim Ändern der Liga-Zuordnung:', error);
@@ -430,7 +454,10 @@ export default function SeasonTransitionPage() {
         const t = ligaEinteilung.find(x => x.docId === docId);
         if (!t || t.leagueId === ligaId) return;
         const liga = ligaById.get(ligaId);
-        batch.update(doc(db, 'rwk_teams', docId), { leagueId: ligaId, ...(liga ? { leagueType: liga.type } : {}) });
+        // leagueType nur setzen, wenn das Team noch KEINE Disziplin hat (neu/„Nicht
+        // zugewiesen"). Vorhandene Disziplin wird nie überschrieben.
+        const setType = liga && !t.leagueType ? { leagueType: liga.type } : {};
+        batch.update(doc(db, 'rwk_teams', docId), { leagueId: ligaId, ...setType });
         count++;
       });
       if (count > 0) await batch.commit();

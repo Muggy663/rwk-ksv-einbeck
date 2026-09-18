@@ -747,9 +747,12 @@ export async function applyPromotionRelegation(
       const ziel = finaleZuordnung.get(t.docId);
       if (!ziel) continue;
       if (t.leagueId === ziel.id) continue; // schon korrekt -> nichts tun (idempotent)
+      // leagueType nur setzen, wenn das Team noch KEINE Disziplin hat. Vorhandene
+      // Disziplin wird nie überschrieben (Schutz gegen versehentliche Umwidmung).
+      const setType = !t.leagueType ? { leagueType: ziel.type } : {};
       batch.update(doc(db, 'rwk_teams', t.docId), {
         leagueId: ziel.id,
-        leagueType: ziel.type,
+        ...setType,
       });
       result.moved += 1;
     }
