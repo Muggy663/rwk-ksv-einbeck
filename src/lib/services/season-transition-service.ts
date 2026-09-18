@@ -574,8 +574,12 @@ export async function applyPromotionRelegation(
     const normName = (n?: string) =>
       (n || '')
         .toLowerCase()
-        .replace(/e\.?\s*v\.?/g, 'ev') // e.V. / eV. / e. V. vereinheitlichen
-        .replace(/[.\s]/g, '');         // Punkte und Leerzeichen entfernen
+        // "e.V." / "eV." / "e. V." KOMPLETT entfernen (nur als eigenständiges Wort,
+        // nicht mitten in einem Namen). Wichtig: eine Saison kann das Team mit,
+        // die andere ohne "e.V." führen ("SC Naensen I" vs. "SC Naensen e.V. I") —
+        // beide müssen gleich normalisieren. "Post SV ..." bleibt unberührt.
+        .replace(/\be\.?\s*v\.?(?=\s|$)/g, ' ')
+        .replace(/[.\s]/g, ''); // übrige Punkte und Leerzeichen entfernen
     // Feinere Disziplin-Unterscheidung als die Kategorie: Auflage (LGA) und Freihand
     // (LGS) gehören beide zur Kategorie "LG", müssen beim Abgleich aber getrennt
     // bleiben (ein Verein hat oft gleichnamige Teams in Auflage UND Freihand).
