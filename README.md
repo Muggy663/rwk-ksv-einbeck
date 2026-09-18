@@ -1,12 +1,12 @@
 # 🎯 RWK Einbeck App
 
-**Version: 3.0.3** | **Android: 1.0.0** | **16.09.2026**
+**Version: 3.0.4** | **Android: 1.0.0** | **18.09.2026**
 
 > **Digitale Plattform für den deutschen Schießsport**
 
 Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeisterschaften (KM) und den digitalen Schießnachweis. Automatische Tabellen, KI-gestützte Ergebniserfassung und moderne Vereinsverwaltung.
 
-[![Version](https://img.shields.io/badge/Version-3.0.3-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-3.0.4-green?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_16_+_Firebase-blue?style=for-the-badge)](#)
 [![Design](https://img.shields.io/badge/Design-Glassmorphism-purple?style=for-the-badge)](#)
 
@@ -96,7 +96,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
-**Aktuell: Version 3.0.3 (16.09.2026)** – Automatisierte Meldefenster (Öffnen/Schließen/Erinnerung), anwendbarer Auf-/Abstieg, Einzelstarter-Meldung im Vereinsbereich, gezielteres E-Mail-System und diverse Mobile-Verbesserungen. Baut auf 3.0.2/3.0.1 auf (zentrale Mitgliederliste, abgesicherte KM-Schnittstellen, einheitliche Altersklassen).
+**Aktuell: Version 3.0.4 (18.09.2026)** – Auf-/Abstieg mit automatischem Ligagrößen-Ausgleich (KI-gestützte Einzelstarter-Einteilung), bearbeitbare Liga-Einteilung per Drag & Drop, Gesamtliste als Excel (mit Formeln) und PDF, Abgabetermin-Hinweis auf der Startseite und Einzelmeldungen außer Wertung in den Tabellen. Baut auf 3.0.3 auf (automatisierte Meldefenster, anwendbarer Auf-/Abstieg, gezielteres E-Mail-System).
 
 ## 📸 Screenshots
 
@@ -136,7 +136,7 @@ Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
 **Copyright © 2025-2026 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 16.09.2026 - Version 3.0.3*
+*Letzte Aktualisierung: 18.09.2026 - Version 3.0.4*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 
