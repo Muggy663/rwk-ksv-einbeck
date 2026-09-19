@@ -979,6 +979,11 @@ export default function SeasonTransitionPage() {
                   Aktuelle Einteilung anzeigen
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Tipp: Über „Aktuelle Einteilung anzeigen" kommst du auch <strong>ohne Analyse</strong> direkt zur Liga-Einteilung
+                (Ziel-Saison wählen genügt) – dort siehst du alle Mannschaften mit Schützen und kannst sie per Drag &amp; Drop
+                sortieren. Die Analyse brauchst du nur für den automatischen Auf-/Abstieg und den Ligagrößen-Ausgleich nach Ringzahl.
+              </p>
               
               {showSuggestions && suggestions.length > 0 && (
                 <Card className="mt-4">
@@ -1303,27 +1308,34 @@ export default function SeasonTransitionPage() {
                                       draggable
                                       onDragStart={(e) => { e.dataTransfer.setData('text/plain', t.docId); e.currentTarget.style.opacity = '0.5'; }}
                                       onDragEnd={(e) => { e.currentTarget.style.opacity = '1'; }}
-                                      className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between border rounded-md bg-card px-3 py-2 cursor-grab active:cursor-grabbing hover:bg-accent/50"
+                                      className="border rounded-md bg-card px-3 py-2 cursor-grab active:cursor-grabbing hover:bg-accent/50"
                                     >
-                                      <div className="min-w-0 flex items-center gap-2">
-                                        <span className="text-muted-foreground select-none">⠿</span>
-                                        <span className="font-medium">{t.name}</span>
-                                        {t.leagueType && <Badge variant="outline" className="font-mono">{t.leagueType}</Badge>}
-                                        {t.isEinzel && <Badge variant="secondary">Einzel</Badge>}
-                                        <span className="text-sm text-muted-foreground">{t.clubName}</span>
+                                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
+                                        <div className="min-w-0 flex items-center gap-2 flex-wrap">
+                                          <span className="text-muted-foreground select-none">⠿</span>
+                                          <span className="font-medium">{t.name}</span>
+                                          {t.leagueType && <Badge variant="outline" className="font-mono">{t.leagueType}</Badge>}
+                                          {t.isEinzel && <Badge variant="secondary">Einzel</Badge>}
+                                          <span className="text-sm text-muted-foreground">{t.clubName}</span>
+                                        </div>
+                                        <div className="w-full sm:w-56 sm:hidden">
+                                          <Select value={t.leagueId || ''} onValueChange={(v) => changeTeamLeague(t.docId, v)}>
+                                            <SelectTrigger>
+                                              <SelectValue placeholder="Liga wählen" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {zielLigen.map(l => (
+                                                <SelectItem key={l.id} value={l.id}>{l.name} ({l.type})</SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
                                       </div>
-                                      <div className="w-full sm:w-56 sm:hidden">
-                                        <Select value={t.leagueId || ''} onValueChange={(v) => changeTeamLeague(t.docId, v)}>
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="Liga wählen" />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            {zielLigen.map(l => (
-                                              <SelectItem key={l.id} value={l.id}>{l.name} ({l.type})</SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
+                                      {t.schuetzenNamen && t.schuetzenNamen.length > 0 && (
+                                        <div className="mt-1 pl-6 text-xs text-muted-foreground">
+                                          {t.schuetzenNamen.join(' · ')}
+                                        </div>
+                                      )}
                                     </div>
                                   ))}
                                 </div>
