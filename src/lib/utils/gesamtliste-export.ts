@@ -234,24 +234,19 @@ export async function exportGesamtlisteExcel(data: GesamtlisteExportData): Promi
     }
   }
 
-  // ---------- Rang-Formeln setzen (RANK.EQ über die jeweiligen Endgesamt-Zellen) ----------
-  const einzelBereich = einzelGesamtZellen.length > 0
-    ? buildRangBereich(einzelGesamtZellen)
-    : '';
+  // ---------- Rang-Formeln setzen (Vergleichs-Summe statt RANK, s. buildRangFormel) ----------
+  // Rang wird als Summe von Größer-Vergleichen berechnet: Rang = (Anzahl größerer
+  // Werte) + 1. Das kommt ohne RANK/RANG.GLEICH aus (das über eine Zellen-LISTE
+  // "#NAME?"/Fehler liefert) und funktioniert sprach- und versionsunabhängig.
   for (const e of einzelRangZeilen) {
-    if (!einzelBereich) continue;
     ws.getCell(e.row, COL.rangEinzel).value = {
-      formula: `IF(${e.gesamtRef}=0,"",RANK.EQ(${e.gesamtRef},${einzelBereich}))`,
+      formula: buildRangFormel(e.gesamtRef, einzelGesamtZellen),
     };
   }
-  const mannschaftBereich = mannschaftGesamtZellen.length > 0
-    ? buildRangBereich(mannschaftGesamtZellen)
-    : '';
   for (const m of mannschaftRangZeilen) {
-    if (!mannschaftBereich) continue;
-    // Mannschaftsrang mittig in der Total-Zeile
+    // Mannschaftsrang in der Total-Zeile
     ws.getCell(m.row, COL.rangMannschaft).value = {
-      formula: `IF(${m.gesamtRef}=0,"",RANK.EQ(${m.gesamtRef},${mannschaftBereich}))`,
+      formula: buildRangFormel(m.gesamtRef, mannschaftGesamtZellen),
     };
   }
 
@@ -265,9 +260,14 @@ export async function exportGesamtlisteExcel(data: GesamtlisteExportData): Promi
   triggerDownload(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `Gesamtliste_${sanitizeFilename(data.kopf.liga)}.xlsx`);
 }
 
-// Baut aus den Endgesamt-Zellen einen zusammengesetzten RANK-Bereich, z.B. (M7,M8,M9,M12,...)
-function buildRangBereich(zellen: string[]): string {
-  return `(${zellen.join(',')})`;
+// Baut eine Rang-Formel ohne RANK: Rang = Anzahl der (verstreuten) End-Gesamt-Zellen,
+// die größer sind als die Ziel-Zelle, + 1. Leere/0-Werte ergeben keinen Rang ("").
+// Beispiel: =IF(M7=0,"",(M8>M7)+(M9>M7)+...+1)
+function buildRangFormel(zielRef: string, alleRefs: string[]): string {
+  const andere = alleRefs.filter((r) => r !== zielRef);
+  if (andere.length === 0) return `IF(${zielRef}=0,"",1)`;
+  const vergleiche = andere.map((r) => `(${r}>${zielRef})`).join('+');
+  return `IF(${zielRef}=0,"",${vergleiche}+1)`;
 }
 
 function styleDatenzeile(
