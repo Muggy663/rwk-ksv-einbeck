@@ -32,9 +32,10 @@ export default function GesamtergebnislisteGeneratorPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        // ALLE Saisons laden (nicht nur "Laufend") – die Gesamtliste wird auch für
+        // Saisons in Vorbereitung oder für abgeschlossene Saisons gebraucht.
         const seasonsQuery = query(
           collection(db, 'seasons'),
-          where('status', '==', 'Laufend'),
           orderBy('competitionYear', 'desc')
         );
         const seasonsSnapshot = await getDocs(seasonsQuery);
