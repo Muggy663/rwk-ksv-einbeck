@@ -13,7 +13,7 @@ import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, AlertCircle, ArrowUp, ArrowDown, Download } from 'lucide-react';
+import { CheckCircle, AlertCircle, ArrowUp, ArrowDown, Download, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { calculateLeagueStandings, generatePromotionRelegationSuggestions, applyPromotionRelegation, berechneLigaAusgleich } from '@/lib/services/season-transition-service';
 import { writeBatch } from 'firebase/firestore';
@@ -470,6 +470,53 @@ export default function SeasonTransitionPage() {
       toast({ title: 'Fehler', description: 'Ausgleich konnte nicht durchgeführt werden.', variant: 'destructive' });
     } finally {
       setIsAusgleich(false);
+    }
+  };
+
+  // Erzeugt einen Kontroll-Text der Einteilung (Liga → Mannschaft → Schützen) und
+  // kopiert ihn in die Zwischenablage (z. B. für die Mail an die Sportleiter).
+  const einteilungAlsText = (): string => {
+    const saisonName = seasons.find(s => s.id === selectedTargetSeason)?.name || 'Saison';
+    const zeilen: string[] = [`Liga-Einteilung ${saisonName}`, ''];
+    // Reihenfolge: echte Ligen nach order, dann "Nicht zugewiesen"
+    const ligenSortiert = [...zielLigen].sort((a, b) => (a.order || 0) - (b.order || 0));
+    const gruppen: Array<{ id: string; label: string }> = [
+      ...ligenSortiert.map(l => ({ id: l.id, label: `${l.name}${l.type ? ` (${l.type})` : ''}` })),
+      { id: '__none__', label: 'Nicht zugewiesen' },
+    ];
+    for (const g of gruppen) {
+      const teams = ligaEinteilung
+        .filter(t => (g.id === '__none__' ? !t.leagueId : t.leagueId === g.id))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      if (teams.length === 0) continue;
+      zeilen.push(`=== ${g.label} ===`);
+      for (const t of teams) {
+        const einzelMark = t.isEinzel ? ' [Einzel]' : '';
+        zeilen.push(`${t.name}${einzelMark}`);
+        if (t.schuetzenNamen && t.schuetzenNamen.length > 0) {
+          for (const s of t.schuetzenNamen) zeilen.push(`   - ${s}`);
+        }
+      }
+      zeilen.push('');
+    }
+    return zeilen.join('\n').trim();
+  };
+
+  const einteilungKopieren = async () => {
+    const text = einteilungAlsText();
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: 'Kopiert', description: 'Die Einteilung wurde in die Zwischenablage kopiert.' });
+    } catch {
+      // Fallback: als Datei herunterladen, falls Clipboard nicht verfügbar
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Liga-Einteilung_${(seasons.find(s => s.id === selectedTargetSeason)?.name || 'Saison').replace(/\s+/g, '_')}.txt`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast({ title: 'Heruntergeladen', description: 'Die Einteilung wurde als Textdatei gespeichert.' });
     }
   };
 
@@ -1198,9 +1245,13 @@ export default function SeasonTransitionPage() {
                           Änderungen werden sofort gespeichert.
                         </CardDescription>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <Button variant="default" size="sm" onClick={ligaAusgleichAnwenden} disabled={isAusgleich || isLoadingEinteilung}>
                           {isAusgleich ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Gleiche aus…</> : 'Ligagrößen ausgleichen'}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={einteilungKopieren} disabled={isLoadingEinteilung || ligaEinteilung.length === 0}>
+                          <FileText className="mr-2 h-4 w-4" />
+                          Als Text kopieren
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => loadLigaEinteilung(selectedTargetSeason)} disabled={isLoadingEinteilung}>
                           {isLoadingEinteilung ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aktualisieren'}
