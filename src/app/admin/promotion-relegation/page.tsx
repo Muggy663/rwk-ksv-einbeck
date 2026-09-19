@@ -77,6 +77,7 @@ export default function SeasonTransitionPage() {
   // um die Einteilung nach dem Anwenden zu prüfen und manuell nachzujustieren.
   const [ligaEinteilung, setLigaEinteilung] = useState<Array<{ docId: string; name: string; clubId: string; clubName: string; leagueId: string | null; leagueType: string | null; shooterCount: number; isEinzel: boolean; ringe: number | null; schuetzenNamen: string[] }>>([]);
   const [isAusgleich, setIsAusgleich] = useState(false);
+  const [einteilungText, setEinteilungText] = useState<string>(''); // angezeigter Kopier-Text
   const [zielLigen, setZielLigen] = useState<League[]>([]);
   const [showEinteilung, setShowEinteilung] = useState(false);
   const [isLoadingEinteilung, setIsLoadingEinteilung] = useState(false);
@@ -504,20 +505,30 @@ export default function SeasonTransitionPage() {
 
   const einteilungKopieren = async () => {
     const text = einteilungAlsText();
+    // Immer im Textfeld anzeigen (funktioniert in jedem Browser, auch ohne Clipboard-API)
+    setEinteilungText(text);
+    // Zusätzlich versuchen, direkt in die Zwischenablage zu legen (best effort)
     try {
-      await navigator.clipboard.writeText(text);
-      toast({ title: 'Kopiert', description: 'Die Einteilung wurde in die Zwischenablage kopiert.' });
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        toast({ title: 'Kopiert', description: 'Die Einteilung wurde in die Zwischenablage kopiert (siehe auch Textfeld unten).' });
+        return;
+      }
     } catch {
-      // Fallback: als Datei herunterladen, falls Clipboard nicht verfügbar
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Liga-Einteilung_${(seasons.find(s => s.id === selectedTargetSeason)?.name || 'Saison').replace(/\s+/g, '_')}.txt`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      toast({ title: 'Heruntergeladen', description: 'Die Einteilung wurde als Textdatei gespeichert.' });
+      /* ignorieren – Textfeld unten steht als Fallback bereit */
     }
+    toast({ title: 'Bereit zum Kopieren', description: 'Die Einteilung steht unten im Textfeld – markieren und kopieren.' });
+  };
+
+  const einteilungHerunterladen = () => {
+    const text = einteilungText || einteilungAlsText();
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Liga-Einteilung_${(seasons.find(s => s.id === selectedTargetSeason)?.name || 'Saison').replace(/\s+/g, '_')}.txt`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const toggleSuggestionConfirmation = (teamId: string) => {
@@ -1260,6 +1271,25 @@ export default function SeasonTransitionPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    {einteilungText && (
+                      <div className="p-3 rounded-lg border bg-muted/40">
+                        <div className="flex items-center justify-between mb-2 gap-2">
+                          <span className="text-sm font-medium">Einteilung als Text (markieren &amp; kopieren)</span>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={einteilungHerunterladen}>
+                              <Download className="mr-2 h-4 w-4" /> Als Datei
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => setEinteilungText('')}>Schließen</Button>
+                          </div>
+                        </div>
+                        <textarea
+                          readOnly
+                          value={einteilungText}
+                          onFocus={(e) => e.currentTarget.select()}
+                          className="w-full h-64 text-xs font-mono p-2 border rounded bg-background"
+                        />
+                      </div>
+                    )}
                     {isLoadingEinteilung ? (
                       <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Lade Einteilung…</div>
                     ) : (
