@@ -301,19 +301,24 @@ export default function EmailSystemPage() {
 
   const getContactsByGroup = (groupId: string): EmailContact[] => {
     const filteredContacts = getFilteredContacts();
-    
+
+    // WICHTIG: über das groups-ARRAY filtern, nicht über das Einzelfeld role.
+    // Ein Kontakt kann mehreren Gruppen angehören (z. B. ein Sportleiter mit
+    // App-Konto, der zusätzlich in "Meine Liste" steht). Der frühere Filter auf
+    // c.role hat solche Kontakte aus "Meine Liste" fallen lassen -> es kamen viel
+    // zu wenige Empfänger an.
     switch (groupId) {
       case 'alle':
-        // Alle App-Benutzer (aus user_permissions), NICHT die manuelle Liste.
-        return filteredContacts.filter(c => c.role !== 'meine_liste');
+        // Alle App-Benutzer (aus user_permissions), NICHT die reine manuelle Liste.
+        return filteredContacts.filter(c => c.source === 'app');
       case 'meine_liste':
-        return filteredContacts.filter(c => c.role === 'meine_liste');
+        return filteredContacts.filter(c => c.groups?.includes('meine_liste'));
       case 'sportleiter':
-        return filteredContacts.filter(c => c.role === 'sportleiter');
+        return filteredContacts.filter(c => c.groups?.includes('sportleiter'));
       case 'mannschaftsfuehrer':
-        return filteredContacts.filter(c => c.role === 'mannschaftsfuehrer');
+        return filteredContacts.filter(c => c.groups?.includes('mannschaftsfuehrer'));
       case 'kv_orga':
-        return filteredContacts.filter(c => c.role === 'kv_orga');
+        return filteredContacts.filter(c => c.groups?.includes('kv_orga'));
       default:
         return [];
     }
@@ -343,9 +348,9 @@ export default function EmailSystemPage() {
       if (contact) recipients.push(contact);
     });
 
-    // Duplikate entfernen
+    // Duplikate entfernen (case-insensitiv, damit z. B. Max@... und max@... gleich gelten)
     recipients = recipients.filter((contact, index, self) => 
-      index === self.findIndex(c => c.email === contact.email)
+      index === self.findIndex(c => c.email.toLowerCase() === contact.email.toLowerCase())
     );
 
     if (recipients.length === 0) {
@@ -608,7 +613,7 @@ export default function EmailSystemPage() {
                           if (contact) recipients.push(contact);
                         });
                         recipients = recipients.filter((contact, index, self) => 
-                          index === self.findIndex(c => c.email === contact.email)
+                          index === self.findIndex(c => c.email.toLowerCase() === contact.email.toLowerCase())
                         );
                         return recipients.length > 0 
                           ? `${recipients.length} Empfänger ausgewählt`
@@ -914,9 +919,9 @@ export default function EmailSystemPage() {
                         if (contact) recipients.push(contact);
                       });
                       
-                      // Duplikate entfernen
+                      // Duplikate entfernen (case-insensitiv)
                       recipients = recipients.filter((contact, index, self) => 
-                        index === self.findIndex(c => c.email === contact.email)
+                        index === self.findIndex(c => c.email.toLowerCase() === contact.email.toLowerCase())
                       );
                       
                       return recipients.length > 0 ? (

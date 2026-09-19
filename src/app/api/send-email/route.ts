@@ -122,6 +122,12 @@ ${signature}`.trim();
     
     for (let i = 0; i < validRecipients.length; i += batchSize) {
       const batch = validRecipients.slice(i, i + batchSize);
+
+      // Kleine Pause zwischen den Batches, um das Resend-Rate-Limit nicht zu treffen
+      // (der erste Batch läuft sofort).
+      if (i > 0) {
+        await new Promise((r) => setTimeout(r, 600));
+      }
       
       try {
         const emailData = {
