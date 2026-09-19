@@ -722,31 +722,6 @@ export default function SeasonTransitionPage() {
     }
   };
 
-  // Zielgröße einer LGA-Liga: obere zwei = 6, Rest fair (obere Klasse +1 bei ungerade).
-  // Für Nicht-LGA-Ligen (Freihand/Pistole) und "Nicht zugewiesen": null (keine Vorgabe).
-  const ligaSollGroesse = (ligaId: string): number | null => {
-    const lgaLigen = zielLigen.filter(l => (l.type || '').toUpperCase() === 'LGA').sort((a, b) => (a.order || 0) - (b.order || 0));
-    const idx = lgaLigen.findIndex(l => l.id === ligaId);
-    if (idx === -1) return null;
-    // Alle LGA-Mannschaften zählen: bereits einer LGA-Liga zugeordnet ODER als LGA
-    // gemeldet, aber noch "Nicht zugewiesen" (diese sollen ja mit aufgefüllt werden).
-    const anzahl = ligaEinteilung.filter(t =>
-      !t.isEinzel && (
-        (t.leagueId && lgaLigen.some(l => l.id === t.leagueId)) ||
-        (!t.leagueId && (t.leagueType || '').toUpperCase() === 'LGA')
-      )
-    ).length;
-    const groessen: number[] = new Array(lgaLigen.length).fill(0);
-    let rest = anzahl;
-    for (let i = 0; i < lgaLigen.length && i < 2; i++) { const g = Math.min(6, rest); groessen[i] = g; rest -= g; }
-    const uebrig = lgaLigen.length - 2;
-    if (uebrig > 0 && rest > 0) {
-      const basis = Math.floor(rest / uebrig); let extra = rest - basis * uebrig;
-      for (let i = 2; i < lgaLigen.length; i++) { groessen[i] = basis + (extra > 0 ? 1 : 0); if (extra > 0) extra--; }
-    } else if (uebrig === 0 && rest > 0) { groessen[1] += rest; }
-    return groessen[idx];
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -1258,6 +1233,33 @@ export default function SeasonTransitionPage() {
                           Mannschaften per <strong>Drag &amp; Drop</strong> in eine andere Liga ziehen – oder am Handy das Dropdown nutzen. Änderungen werden sofort gespeichert.
                         </p>
 
+                        {/* Gesamt-Aufzählung nach Disziplin (Mannschaften + Einzel) */}
+                        {(() => {
+                          const zaehler = new Map<string, { mannschaften: number; einzel: number }>();
+                          ligaEinteilung.forEach(t => {
+                            const typ = (t.leagueType || '—').toUpperCase();
+                            if (!zaehler.has(typ)) zaehler.set(typ, { mannschaften: 0, einzel: 0 });
+                            const e = zaehler.get(typ)!;
+                            if (t.isEinzel) e.einzel++; else e.mannschaften++;
+                          });
+                          const reihenfolge = ['LGA', 'LGS', 'LG', 'LP', 'LPA', 'KKG', 'KK', 'KKP'];
+                          const eintraege = Array.from(zaehler.entries()).sort((a, b) => {
+                            const ia = reihenfolge.indexOf(a[0]); const ib = reihenfolge.indexOf(b[0]);
+                            return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+                          });
+                          if (eintraege.length === 0) return null;
+                          return (
+                            <div className="flex flex-wrap items-center gap-2 text-sm">
+                              <span className="font-medium text-muted-foreground">Meldungen gesamt:</span>
+                              {eintraege.map(([typ, v]) => (
+                                <span key={typ} className="bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-full font-medium">
+                                  {typ}: {v.mannschaften} {v.mannschaften === 1 ? 'Mannschaft' : 'Mannschaften'}{v.einzel > 0 ? ` + ${v.einzel} Einzel` : ''}
+                                </span>
+                              ))}
+                            </div>
+                          );
+                        })()}
+
                         {/* Pro Liga (order-sortiert) + am Ende "Nicht zugewiesen" */}
                         {[...zielLigen, { id: '__none__', name: 'Nicht zugewiesen', type: '', competitionYear: 0, seasonId: '' } as League].map(liga => {
                           const teamsInLiga = ligaEinteilung.filter(t =>
@@ -1288,14 +1290,12 @@ export default function SeasonTransitionPage() {
                             >
                               <h4 className={`font-semibold text-base mb-3 ${istNichtZugewiesen ? 'text-amber-700 dark:text-amber-300' : 'text-primary'}`}>
                                 {liga.name}{liga.type ? ` (${liga.type})` : ''} — {(() => {
-                                  // Nur echte Mannschaften für die Größenzählung (Einzel zählen nicht mit)
+                                  // Nur echte Mannschaften zählen (Einzel separat ausweisen)
                                   const mannschaftenAnzahl = teamsInLiga.filter(t => !t.isEinzel).length;
                                   const einzelAnzahl = teamsInLiga.length - mannschaftenAnzahl;
-                                  const soll = ligaSollGroesse(liga.id);
-                                  const teil = `${mannschaftenAnzahl}${soll !== null ? ` / ${soll}` : ''} ${mannschaftenAnzahl === 1 ? 'Mannschaft' : 'Mannschaften'}`;
+                                  const teil = `${mannschaftenAnzahl} ${mannschaftenAnzahl === 1 ? 'Mannschaft' : 'Mannschaften'}`;
                                   const einzelTeil = einzelAnzahl > 0 ? ` + ${einzelAnzahl} Einzel` : '';
-                                  const warn = soll !== null && mannschaftenAnzahl !== soll ? ' ⚠️' : '';
-                                  return `${teil}${einzelTeil}${warn}`;
+                                  return `${teil}${einzelTeil}`;
                                 })()}
                               </h4>
                               {teamsInLiga.length === 0 ? (
