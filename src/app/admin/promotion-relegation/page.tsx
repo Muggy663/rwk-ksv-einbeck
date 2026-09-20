@@ -582,6 +582,25 @@ export default function SeasonTransitionPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showEinteilung, zielLigen, ligaEinteilung, ausrichterHistorie, clubAusrichter]);
 
+  // Setzt für ALLE Ligen den fair rotierten Top-Vorschlag als Ausrichter —
+  // überschreibt auch bereits (manuell) gewählte Ausrichter. Nützlich, um nach
+  // manuellen Änderungen wieder zur fairen Rotation zurückzukehren.
+  const ausrichterVorschlagUebernehmen = () => {
+    const next: Record<string, string> = {};
+    let gesetzt = 0;
+    for (const liga of zielLigen) {
+      const kandidaten = ausrichterKandidatenFuerLiga(liga as League);
+      // Bevorzugt den ersten fähigen Kandidaten; sonst den ersten überhaupt.
+      const top = kandidaten.find(k => k.faehig) || kandidaten[0];
+      if (top) {
+        next[liga.id] = top.clubId;
+        gesetzt++;
+      }
+    }
+    setAusrichterWahl(next);
+    toast({ title: 'Vorschlag übernommen', description: `Für ${gesetzt} Liga(en) den fairen Ausrichter-Vorschlag gesetzt. Zum Festhalten „Ausrichter speichern".` });
+  };
+
   // Speichert die gewählten Ausrichter aller Ligen in die Historie.
   const ausrichterSpeichern = async () => {
     const season = seasons.find(s => s.id === selectedTargetSeason);
@@ -1349,6 +1368,9 @@ export default function SeasonTransitionPage() {
                         <Button variant="outline" size="sm" onClick={einteilungKopieren} disabled={isLoadingEinteilung || ligaEinteilung.length === 0}>
                           <FileText className="mr-2 h-4 w-4" />
                           Als Text kopieren
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={ausrichterVorschlagUebernehmen} disabled={isLoadingEinteilung || zielLigen.length === 0}>
+                          Ausrichter-Vorschlag übernehmen
                         </Button>
                         <Button variant="outline" size="sm" onClick={ausrichterSpeichern} disabled={isSavingAusrichter || ligaEinteilung.length === 0}>
                           {isSavingAusrichter ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
