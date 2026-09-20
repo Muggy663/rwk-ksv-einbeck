@@ -21,14 +21,14 @@ export function AusrichterReminder() {
   const [offeneVereine, setOffeneVereine] = useState<string[] | null>(null);
   const [sichtbar, setSichtbar] = useState(false);
 
-  // Wer die Stände pflegen darf/soll: Admin, KV-Orga/Wettkampfleiter sowie
-  // Sportleiter/Vorstand (die dürfen laut Firestore-Rule ohnehin schreiben).
+  // Wer die Erinnerung sehen soll: Admin sowie Sportleiter/Vorstand/Mannschaftsführer
+  // (Vereins-Ebene). KV-Orga ist hier bewusst NICHT dabei.
   const istZustaendig =
     userAppPermissions?.role === 'superadmin' ||
     user?.email === 'admin@rwk-einbeck.de' ||
-    !!(userAppPermissions?.kvRoles && Object.values(userAppPermissions.kvRoles).some(r => ['KV_KM_ORGA', 'KV_WETTKAMPFLEITER'].includes(r as string))) ||
-    !!(userAppPermissions?.clubRoles && Object.values(userAppPermissions.clubRoles).some(r => ['SPORTLEITER', 'VORSTAND'].includes(r as string))) ||
-    userAppPermissions?.role === 'vereinsvertreter';
+    !!(userAppPermissions?.clubRoles && Object.values(userAppPermissions.clubRoles).some(r => ['SPORTLEITER', 'VORSTAND', 'MANNSCHAFTSFUEHRER'].includes(r as string))) ||
+    userAppPermissions?.role === 'vereinsvertreter' ||
+    userAppPermissions?.role === 'mannschaftsfuehrer';
 
   useEffect(() => {
     // Warten bis Nutzer + Berechtigungen geladen sind (Permissions kommen asynchron).
@@ -71,6 +71,9 @@ export function AusrichterReminder() {
           Bei <strong>{offeneVereine.length}</strong> {offeneVereine.length === 1 ? 'Verein' : 'Vereinen'} ist noch nicht hinterlegt,
           welche Disziplinen sie ausrichten können (Luftdruck / KK-Gewehr / KK-Pistole). Diese Angabe wird gebraucht,
           damit der Vorschlag „wer lädt zum 1. Durchgang ein" fair und korrekt rechnet – gerade bei Kleinkaliber und KK-Pistole.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Bitte gib dem <strong>Sportleiter</strong> deines Vereins Bescheid, damit er die Angabe ergänzt.
         </p>
         <div className="max-h-32 overflow-y-auto text-xs text-muted-foreground border rounded p-2">
           {offeneVereine.slice(0, 20).join(', ')}
