@@ -80,7 +80,7 @@ export function AusrichterReminder() {
         <div className="font-semibold text-amber-800 dark:text-amber-200 flex items-center gap-2">
           <span className="text-lg">🏠</span> {text}
         </div>
-        <Link href="/admin/clubs" className="shrink-0">
+        <Link href="/mitglieder" className="shrink-0">
           <Button size="sm">Jetzt pflegen</Button>
         </Link>
       </div>

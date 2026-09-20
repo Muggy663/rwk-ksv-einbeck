@@ -233,7 +233,13 @@ service cloud.firestore {
 
     match /clubs/{club} {
       allow read: if true;
-      allow write: if isSuperAdmin();
+      // Admin darf alles. Sportleiter/Vorstand des jeweiligen Vereins dürfen ihren
+      // eigenen Verein aktualisieren (z. B. Standkapazität ausrichterDisziplinen).
+      allow create, delete: if isSuperAdmin();
+      allow update: if isSuperAdmin() ||
+                    isSportleiter(club) ||
+                    isVorstand(club) ||
+                    hasLegacyClubAccess(club);
     }
 
     match /rwk_leagues/{league} {
