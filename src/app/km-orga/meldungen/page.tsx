@@ -1082,11 +1082,49 @@ export default function KMAdminMeldungen() {
                           }
                         }}
                       />
-                      <Label htmlFor={`schuetze-${schuetze.id}`} className="text-sm">
-                        {schuetze.firstName && schuetze.lastName 
-                          ? `${schuetze.firstName} ${schuetze.lastName}` 
-                          : schuetze.name
-                        }
+                      <Label htmlFor={`schuetze-${schuetze.id}`} className="text-sm flex items-center gap-2 flex-wrap">
+                        <span>
+                          {schuetze.firstName && schuetze.lastName
+                            ? `${schuetze.firstName} ${schuetze.lastName}`
+                            : schuetze.name}
+                        </span>
+                        {(() => {
+                          // Wettkampfklassen-Vorschau: hilft der KM-Orga schon beim
+                          // Anmelden zu sehen, in welche Altersklasse der Schütze fällt.
+                          // Referenz-Disziplin = erste ausgewählte (Auflage/SPO-abhängig).
+                          const currentSaison = saisons.find(s => s.id === selectedSaison);
+                          const refDisziplin = disziplinen.find(d => meldungsForm.disziplinIds.includes(d.id));
+                          const klasse = ermittleEinzelklasse({
+                            birthYear: schuetze?.birthYear,
+                            gender: schuetze?.gender,
+                            auflage: !!refDisziplin?.auflage,
+                            spoNummer: refDisziplin?.spoNummer,
+                            saisonJahr: currentSaison?.jahr || new Date().getFullYear(),
+                            altersklassen: altersklassenListe,
+                            altersgenehmigung: !!schuetze?.sondergenehmigung
+                          });
+                          if (!klasse) return null;
+                          return (
+                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
+                              {klasse}
+                            </span>
+                          );
+                        })()}
+                        {(() => {
+                          // Vorwarnung: Ist der Schütze in ALLEN gerade gewählten
+                          // Disziplinen schon gemeldet, würde die Meldung als Duplikat
+                          // abgelehnt (Server: 409). Das zeigen wir vorab an.
+                          if (meldungsForm.disziplinIds.length === 0) return null;
+                          const alleSchonGemeldet = meldungsForm.disziplinIds.every(dId =>
+                            meldungen.some(m => m.schuetzeId === schuetze.id && m.disziplinId === dId)
+                          );
+                          if (!alleSchonGemeldet) return null;
+                          return (
+                            <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-800 rounded">
+                              bereits gemeldet
+                            </span>
+                          );
+                        })()}
                       </Label>
                     </div>
                   ))}
