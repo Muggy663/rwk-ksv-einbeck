@@ -4,6 +4,11 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.0.6
+- **🔄 „Aktualisieren" lädt Daten jetzt sofort**: Beim Klick auf „Aktualisieren" im Update-Hinweis blieben Tabellen und Startseite leer, bis die App komplett neu gestartet wurde. Ursache war, dass direkt nach dem Abmelden des Service Workers neu geladen wurde und die Datenverbindung (Firestore) nicht sauber neu aufbaute. Jetzt wird kurz gewartet, bis die Abmeldung durch ist, und die Seite anschließend vollständig frisch geladen – die Daten erscheinen sofort, ein manueller App-Neustart ist nicht mehr nötig
+
+---
+
 ## Version 3.0.5
 - **📋 Admin-Übersicht: Ausrichter-Stände je Verein**: In der Vereinsverwaltung zeigt eine Tabelle auf einen Blick, welcher Verein welche Disziplinen ausrichten kann (Luftdruck / KK-Gewehr / KK-Pistole). Noch nicht gepflegte Vereine sind hervorgehoben, mit Zähler „x noch offen".
 - **🏠 Standkapazität auch für Sportleiter pflegbar**: Sportleiter können die Ausrichter-Stände ihres eigenen Vereins jetzt direkt auf der Mitglieder-Seite setzen (kleines Feld über der Liste). Eine dezente Erinnerung auf dem Dashboard weist darauf hin, solange der eigene Verein noch nicht gepflegt ist – und verschwindet, sobald mindestens eine Disziplin gewählt wurde.
