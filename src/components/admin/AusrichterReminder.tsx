@@ -28,15 +28,29 @@ export function AusrichterReminder() {
     userAppPermissions?.role === 'vereinsvertreter' ||
     userAppPermissions?.role === 'mannschaftsfuehrer';
 
+  const istAdmin =
+    userAppPermissions?.role === 'superadmin' || user?.email === 'admin@rwk-einbeck.de';
+
   useEffect(() => {
     // Warten bis Nutzer + Berechtigungen geladen sind (Permissions kommen asynchron).
     if (!user || !userAppPermissions || !istZustaendig) return;
+
+    // Die Vereins-IDs des eingeloggten Nutzers aus allen möglichen Feldern sammeln.
+    const eigeneClubIds = new Set<string>();
+    const p: any = userAppPermissions;
+    if (p.clubId) eigeneClubIds.add(p.clubId);
+    if (Array.isArray(p.clubIds)) p.clubIds.forEach((id: string) => id && eigeneClubIds.add(id));
+    if (Array.isArray(p.representedClubs)) p.representedClubs.forEach((id: string) => id && eigeneClubIds.add(id));
+    if (p.clubRoles && typeof p.clubRoles === 'object') Object.keys(p.clubRoles).forEach(id => id && eigeneClubIds.add(id));
+    if (p.assignedClubId) eigeneClubIds.add(p.assignedClubId);
 
     const pruefe = async () => {
       try {
         const snap = await getDocs(collection(db, 'clubs'));
         const offen = snap.docs
           .filter(d => {
+            // Admin: alle Vereine prüfen. Sonst: nur die eigenen Vereine.
+            if (!istAdmin && !eigeneClubIds.has(d.id)) return false;
             const arr = (d.data() as any).ausrichterDisziplinen;
             return !Array.isArray(arr) || arr.length === 0;
           })
@@ -51,16 +65,20 @@ export function AusrichterReminder() {
     };
     pruefe();
     // userAppPermissions in den Dependencies, da es nach dem Login asynchron nachlädt
-  }, [user, userAppPermissions, istZustaendig]);
+  }, [user, userAppPermissions, istZustaendig, istAdmin]);
 
   if (!sichtbar || !offeneVereine || offeneVereine.length === 0) return null;
 
-  // Schlichter Banner oben auf dem Dashboard – nur die Aufforderung, keine Details.
+  // Schlichter Banner oben auf dem Dashboard – nur die Aufforderung.
+  // Nicht-Admins sehen ihn nur, wenn IHR Verein noch ungepflegt ist.
+  const text = istAdmin
+    ? 'Stände pflegen'
+    : `Stände pflegen (${offeneVereine.join(', ')})`;
   return (
     <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4">
       <div className="flex items-center justify-between gap-3">
         <div className="font-semibold text-amber-800 dark:text-amber-200 flex items-center gap-2">
-          <span className="text-lg">🏠</span> Stände pflegen
+          <span className="text-lg">🏠</span> {text}
         </div>
         <Link href="/admin/clubs" className="shrink-0">
           <Button size="sm">Jetzt pflegen</Button>
