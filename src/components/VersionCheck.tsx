@@ -15,6 +15,15 @@ export function VersionCheck() {
     if (typeof navigator !== 'undefined') {
       setIsMac(/Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent));
     }
+    // Cache-Buster-Parameter aus der Adresse entfernen, falls nach einem
+    // Update-Reload noch vorhanden – hält die URL sauber.
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('_v')) {
+        url.searchParams.delete('_v');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -52,12 +61,24 @@ export function VersionCheck() {
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         await Promise.all(registrations.map((r) => r.unregister()));
+        // Kurz warten, damit die Abmeldung wirklich abgeschlossen ist, bevor
+        // wir neu laden. Ohne diese Pause startet die neue Seite, während der
+        // Service Worker gerade erst entfernt wird – die Firestore-Listener
+        // initialisieren dann nicht sauber und die Tabellen bleiben leer,
+        // bis die App komplett neu gestartet wird.
+        await new Promise((resolve) => setTimeout(resolve, 300));
       }
     } catch {
       // Fehler beim Cache-Leeren ignorieren – Reload trotzdem versuchen
     }
-    // Mit Cache-Bypass neu laden
-    window.location.reload();
+    // Vollständige Neu-Navigation mit Cache-Buster statt reload().
+    // reload() rendert in der PWA/App teils noch aus dem gerade geleerten
+    // Zustand; eine frische Navigation baut Dokument und alle Kontexte
+    // (Firebase, Auth, Datenschicht) komplett neu auf – entspricht einem
+    // echten App-Neustart, ohne dass die App beendet werden muss.
+    const url = new URL(window.location.href);
+    url.searchParams.set('_v', Date.now().toString());
+    window.location.replace(url.toString());
   };
 
   if (!outdated) return null;
