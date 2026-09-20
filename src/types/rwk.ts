@@ -34,10 +34,13 @@ export interface Club {
   id: string;
   name: string;
   shortName?: string;
+  clubNumber?: string; // Vereinsnummer (Format "08-XXX"), real im Dokument vorhanden
   address?: string;
   contactPerson?: string;
   email?: string;
   phone?: string;
+  /** Welche Disziplinen der Verein ausrichten kann (Standkapazität): 'LG' | 'KKG' | 'KKP' */
+  ausrichterDisziplinen?: string[];
 }
 
 export interface Team {

@@ -85,7 +85,7 @@ export default function AdminClubsPage() {
 
   const handleAddNew = () => {
     setFormMode('new');
-    setCurrentClub({ name: '', shortName: '', clubNumber: '' });
+    setCurrentClub({ name: '', shortName: '', clubNumber: '', ausrichterDisziplinen: [] });
     setIsFormOpen(true);
   };
 
@@ -158,6 +158,7 @@ export default function AdminClubsPage() {
       name: currentClub.name.trim(),
       shortName: currentClub.shortName?.trim() || '',
       clubNumber: currentClub.clubNumber?.trim() || '',
+      ausrichterDisziplinen: currentClub.ausrichterDisziplinen || [],
     };
 
     setIsLoading(true);
@@ -382,6 +383,39 @@ export default function AdminClubsPage() {
                     onChange={(e) => handleFormInputChange('shortName', e.target.value)}
                     className="col-span-3"
                   />
+                </div>
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label className="text-right pt-1">Kann ausrichten</Label>
+                  <div className="col-span-3 space-y-2">
+                    {([
+                      { key: 'LG', label: 'Luftdruck (10m – Gewehr/Pistole)' },
+                      { key: 'KKG', label: 'Kleinkaliber Gewehr (50m)' },
+                      { key: 'KKP', label: 'Kleinkaliber Pistole (25m)' },
+                    ] as const).map(({ key, label }) => {
+                      const aktiv = (currentClub?.ausrichterDisziplinen || []).includes(key);
+                      return (
+                        <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4"
+                            checked={aktiv}
+                            onChange={(e) => {
+                              setCurrentClub(prev => {
+                                if (!prev) return prev;
+                                const vorhanden = new Set(prev.ausrichterDisziplinen || []);
+                                if (e.target.checked) vorhanden.add(key); else vorhanden.delete(key);
+                                return { ...prev, ausrichterDisziplinen: Array.from(vorhanden) };
+                              });
+                            }}
+                          />
+                          {label}
+                        </label>
+                      );
+                    })}
+                    <p className="text-xs text-muted-foreground">
+                      Welche Wettkämpfe der Verein an eigenen Ständen ausrichten kann. Wird für den Vorschlag genutzt, wer den 1. Durchgang einlädt.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

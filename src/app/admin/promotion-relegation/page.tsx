@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, AlertCircle, ArrowUp, ArrowDown, Download, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { calculateLeagueStandings, generatePromotionRelegationSuggestions, applyPromotionRelegation, berechneLigaAusgleich } from '@/lib/services/season-transition-service';
+import { ladeAusrichterHistorie, berechneAusrichterReihenfolge, speichereAusrichter, type AusrichterEintrag } from '@/lib/services/ausrichter-service';
 import { writeBatch } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -83,6 +84,11 @@ export default function SeasonTransitionPage() {
   const [isLoadingEinteilung, setIsLoadingEinteilung] = useState(false);
   // Übersprungene Vorschläge aus dem letzten Anwenden (sichtbar in der UI ausgeben)
   const [skippedInfo, setSkippedInfo] = useState<string[]>([]);
+  // Ausrichter-Rotation: Historie, Standkapazität je Verein, gewählter Ausrichter je Liga
+  const [ausrichterHistorie, setAusrichterHistorie] = useState<AusrichterEintrag[]>([]);
+  const [clubAusrichter, setClubAusrichter] = useState<Record<string, string[]>>({}); // clubId -> Disziplinen
+  const [ausrichterWahl, setAusrichterWahl] = useState<Record<string, string>>({}); // leagueId -> clubId
+  const [isSavingAusrichter, setIsSavingAusrichter] = useState(false);
   // Liga-ID, über der gerade ein Team schwebt (Drop-Highlight)
   const [dragOverLeague, setDragOverLeague] = useState<string | null>(null);
 
@@ -295,10 +301,20 @@ export default function SeasonTransitionPage() {
         .sort((a, b) => (a.order || 0) - (b.order || 0));
       setZielLigen(ligen);
 
-      // Vereinsnamen auflösen
+      // Vereinsnamen + Standkapazität (ausrichterDisziplinen) auflösen
       const clubsSnap = await getDocs(collection(db, 'clubs'));
       const clubName = new Map<string, string>();
-      clubsSnap.docs.forEach(c => clubName.set(c.id, (c.data() as any).name || c.id));
+      const clubDiszMap: Record<string, string[]> = {};
+      clubsSnap.docs.forEach(c => {
+        const cd = c.data() as any;
+        clubName.set(c.id, cd.name || c.id);
+        clubDiszMap[c.id] = Array.isArray(cd.ausrichterDisziplinen) ? cd.ausrichterDisziplinen : [];
+      });
+      setClubAusrichter(clubDiszMap);
+
+      // Ausrichter-Historie laden (für den Vorschlag, wer den 1. Durchgang einlädt)
+      const historie = await ladeAusrichterHistorie();
+      setAusrichterHistorie(historie);
 
       // Schützennamen auflösen (für Einzel-Nachnamen-Abgleich)
       const shootersSnap = await getDocs(collection(db, 'shooters'));
@@ -529,6 +545,76 @@ export default function SeasonTransitionPage() {
     a.download = `Liga-Einteilung_${(seasons.find(s => s.id === selectedTargetSeason)?.name || 'Saison').replace(/\s+/g, '_')}.txt`;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  // Vereinsname zu einer clubId (aus der geladenen Einteilung).
+  const clubAusrichterName = (clubId: string): string => {
+    const t = ligaEinteilung.find(x => x.clubId === clubId && x.clubName);
+    return t?.clubName || '';
+  };
+
+  // Für eine Liga: fähige, fair sortierte Ausrichter-Kandidaten (Vorschlag zuerst).
+  const ausrichterKandidatenFuerLiga = (liga: League) => {
+    const jahr = seasons.find(s => s.id === selectedTargetSeason)?.competitionYear || new Date().getFullYear();
+    // echte Mannschaften dieser Liga (keine Einzel), je Verein nur einmal
+    const teams = ligaEinteilung.filter(t => t.leagueId === liga.id && !t.isEinzel);
+    const proVerein = new Map<string, { clubId: string; teamName: string; ausrichterDisziplinen?: string[] }>();
+    teams.forEach(t => {
+      if (!proVerein.has(t.clubId)) {
+        proVerein.set(t.clubId, { clubId: t.clubId, teamName: t.clubName || t.name, ausrichterDisziplinen: clubAusrichter[t.clubId] });
+      }
+    });
+    return berechneAusrichterReihenfolge(liga.id, liga.type, jahr, Array.from(proVerein.values()), ausrichterHistorie);
+  };
+
+  // Vorschlag je Liga vorbelegen (nur Ligen ohne bereits getroffene Wahl).
+  useEffect(() => {
+    if (!showEinteilung || zielLigen.length === 0 || ligaEinteilung.length === 0) return;
+    setAusrichterWahl(prev => {
+      const next = { ...prev };
+      for (const liga of zielLigen) {
+        if (next[liga.id]) continue; // schon gewählt
+        const kandidaten = ausrichterKandidatenFuerLiga(liga);
+        if (kandidaten.length > 0) next[liga.id] = kandidaten[0].clubId;
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showEinteilung, zielLigen, ligaEinteilung, ausrichterHistorie, clubAusrichter]);
+
+  // Speichert die gewählten Ausrichter aller Ligen in die Historie.
+  const ausrichterSpeichern = async () => {
+    const season = seasons.find(s => s.id === selectedTargetSeason);
+    if (!season) return;
+    setIsSavingAusrichter(true);
+    try {
+      let count = 0;
+      for (const liga of zielLigen) {
+        const clubId = ausrichterWahl[liga.id];
+        if (!clubId) continue;
+        // Teamname des Ausrichters für die Anzeige/Historie
+        const team = ligaEinteilung.find(t => t.leagueId === liga.id && t.clubId === clubId && !t.isEinzel);
+        await speichereAusrichter({
+          seasonId: season.id,
+          leagueId: liga.id,
+          leagueName: liga.name,
+          competitionYear: season.competitionYear,
+          leagueType: liga.type,
+          ausrichterClubId: clubId,
+          ausrichterTeamName: team?.name || team?.clubName || '',
+        });
+        count++;
+      }
+      // Historie neu laden, damit künftige Vorschläge die neue Ausrichtung berücksichtigen
+      const historie = await ladeAusrichterHistorie();
+      setAusrichterHistorie(historie);
+      toast({ title: 'Ausrichter gespeichert', description: `${count} Liga(en) festgehalten. Nächstes Jahr rotiert der Vorschlag automatisch weiter.` });
+    } catch (error) {
+      logError('Ausrichter speichern fehlgeschlagen:', error);
+      toast({ title: 'Fehler', description: 'Ausrichter konnten nicht gespeichert werden.', variant: 'destructive' });
+    } finally {
+      setIsSavingAusrichter(false);
+    }
   };
 
   const toggleSuggestionConfirmation = (teamId: string) => {
@@ -1264,6 +1350,10 @@ export default function SeasonTransitionPage() {
                           <FileText className="mr-2 h-4 w-4" />
                           Als Text kopieren
                         </Button>
+                        <Button variant="outline" size="sm" onClick={ausrichterSpeichern} disabled={isSavingAusrichter || ligaEinteilung.length === 0}>
+                          {isSavingAusrichter ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                          Ausrichter speichern
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => loadLigaEinteilung(selectedTargetSeason)} disabled={isLoadingEinteilung}>
                           {isLoadingEinteilung ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aktualisieren'}
                         </Button>
@@ -1369,7 +1459,7 @@ export default function SeasonTransitionPage() {
                                 istNichtZugewiesen ? 'border-amber-300 bg-amber-50 dark:bg-amber-950/20' : ''
                               }`}
                             >
-                              <h4 className={`font-semibold text-base mb-3 ${istNichtZugewiesen ? 'text-amber-700 dark:text-amber-300' : 'text-primary'}`}>
+                              <h4 className={`font-semibold text-base mb-1 ${istNichtZugewiesen ? 'text-amber-700 dark:text-amber-300' : 'text-primary'}`}>
                                 {liga.name}{liga.type ? ` (${liga.type})` : ''} — {(() => {
                                   // Nur echte Mannschaften zählen (Einzel separat ausweisen)
                                   const mannschaftenAnzahl = teamsInLiga.filter(t => !t.isEinzel).length;
@@ -1379,6 +1469,36 @@ export default function SeasonTransitionPage() {
                                   return `${teil}${einzelTeil}`;
                                 })()}
                               </h4>
+                              {/* Ausrichter des 1. Durchgangs: Vorschlag (fair rotiert) + manuelle Wahl */}
+                              {!istNichtZugewiesen && teamsInLiga.some(t => !t.isEinzel) && (() => {
+                                const kandidaten = ausrichterKandidatenFuerLiga(liga as League);
+                                if (kandidaten.length === 0) return null;
+                                const gewaehlt = ausrichterWahl[liga.id] || kandidaten[0].clubId;
+                                const info = kandidaten.find(k => k.clubId === gewaehlt);
+                                return (
+                                  <div className="mb-3 flex flex-col sm:flex-row sm:items-center gap-2 text-sm bg-blue-50 dark:bg-blue-950/20 rounded px-2 py-1.5">
+                                    <span className="font-medium text-blue-800 dark:text-blue-200 whitespace-nowrap">🏠 1. Durchgang:</span>
+                                    <select
+                                      value={gewaehlt}
+                                      onChange={(e) => setAusrichterWahl(prev => ({ ...prev, [liga.id]: e.target.value }))}
+                                      className="text-sm border rounded px-2 py-1 bg-background max-w-[240px]"
+                                    >
+                                      {kandidaten.map(k => (
+                                        <option key={k.clubId} value={k.clubId} disabled={!k.faehig}>
+                                          {(clubAusrichterName(k.clubId) || k.teamName)}
+                                          {k.letztesJahr ? ` (zuletzt ${k.letztesJahr})` : ' (noch nie)'}
+                                          {!k.faehig ? ' – kann nicht ausrichten' : ''}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {info && (
+                                      <span className="text-xs text-muted-foreground">
+                                        Vorschlag: {info.letztesJahr ? `zuletzt ${info.letztesJahr}` : 'noch nie ausgerichtet'}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                               {teamsInLiga.length === 0 ? (
                                 <p className="text-xs text-muted-foreground italic">Mannschaft hierher ziehen…</p>
                               ) : (

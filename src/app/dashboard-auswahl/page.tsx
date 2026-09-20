@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuthContext } from '@/components/auth/AuthContext';
 import { useKMAuth } from '@/hooks/useKMAuth';
 import { getMemberPermissions } from '@/lib/permissions/memberPermissions';
+import { AusrichterReminder } from '@/components/admin/AusrichterReminder';
 import Link from 'next/link';
 
 export default function DashboardAuswahl() {
@@ -204,6 +205,7 @@ export default function DashboardAuswahl() {
 
   return (
     <div className="container py-8 max-w-6xl mx-auto">
+      <AusrichterReminder />
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-primary mb-2">Arbeitsbereich auswählen</h1>
         <p className="text-muted-foreground">
