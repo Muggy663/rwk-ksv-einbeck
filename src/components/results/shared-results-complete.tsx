@@ -70,6 +70,9 @@ export default function SharedResultsPage({
   const [editMode, setEditMode] = useState(userRole === 'admin');
   const [showOCR, setShowOCR] = useState(false);
   const [handzettelFiles, setHandzettelFiles] = useState<File[]>([]);
+  // Index der Handzettel-Seite, die die OCR gerade verarbeitet. Mehrere
+  // fotografierte Seiten werden nacheinander ausgelesen (0-basiert).
+  const [ocrPageIndex, setOcrPageIndex] = useState(0);
   const [attachOnly, setAttachOnly] = useState(false);
 
   const fetchMasterData = useCallback(async () => {
@@ -386,89 +389,106 @@ export default function SharedResultsPage({
     if (!currentSeason) return;
 
     const parsedRound = parseInt(selectedRound);
-    
-    // Erweiterte Duplikat-Erkennung: Bereits vorhandene Ergebnisse filtern
-    const filteredResults = ocrResults.filter(result => {
-      // Prüfe gegen bereits gespeicherte Ergebnisse (alle Teams)
-      const existsInDB = existingScoresForTeamAndRound.some(existing => 
-        existing.shooterId === result.shooterId && existing.durchgang === parsedRound
-      );
-      
-      // Prüfe gegen Zwischenliste (alle Teams)
-      const existsInPending = pendingScores.some(pending => 
-        pending.shooterId === result.shooterId && pending.durchgang === parsedRound
-      );
-      
-      // Prüfe gegen gerade gespeicherte (alle Teams)
-      const existsInJustSaved = justSavedScoreIdentifiers.some(saved => 
-        saved.shooterId === result.shooterId && saved.durchgang === parsedRound
-      );
-      
-      // Zusätzlich: Prüfe gegen alle bereits erfassten Ergebnisse in der Datenbank für diesen Durchgang
-      // (nicht nur für das aktuelle Team, sondern für alle Teams)
-      
-      return !existsInDB && !existsInPending && !existsInJustSaved;
-    });
-    
-    const duplicateCount = ocrResults.length - filteredResults.length;
-    
-    const newPendingEntries = filteredResults.map(result => ({
-      tempId: `ocr-${Date.now()}-${Math.random()}`,
-      seasonId: selectedSeasonId,
-      seasonName: currentSeason.name,
-      leagueId: selectedLeagueId,
-      leagueName: availableLeaguesForSeason.find(l => l.id === selectedLeagueId)?.name || '',
-      leagueType: availableLeaguesForSeason.find(l => l.id === selectedLeagueId)?.type || 'KK',
-      teamId: result.teamId,
-      teamName: result.teamName,
-      clubId: allTeamsInSelectedLeague.find(t => t.id === result.teamId)?.clubId || '',
-      shooterId: result.shooterId,
-      shooterName: result.shooterName,
-      shooterGender: 'unknown',
-      durchgang: parseInt(selectedRound),
-      totalRinge: result.score,
-      scoreInputType: (existingScoresForTeamAndRound.length > 0 ? 'post' : 'regular'),
-      competitionYear: currentSeason.competitionYear,
-      isOCRGenerated: true,
-      ocrConfidence: result.confidence,
-      ocrSource: result.ocrSource
-    } as PendingScoreEntry));
+    const mehrSeiten = handzettelFiles.length > 1;
+    const istLetzteSeite = ocrPageIndex >= handzettelFiles.length - 1;
 
-    setPendingScores(prev => [...prev, ...newPendingEntries]);
-    setShowOCR(false);
-    
-    // Intelligente Toast-Nachricht für bereits gescannte Handzettel
-    if (newPendingEntries.length > 0 && duplicateCount > 0) {
+    // Duplikat-Erkennung + Einfügen atomar in der State-Updater-Funktion, damit
+    // beim Auslesen MEHRERER Seiten nacheinander auch die gerade (in dieser
+    // Sitzung) hinzugefügten Schützen als Duplikat erkannt werden — der
+    // pendingScores-State ist zwischen den Seiten noch nicht neu gerendert.
+    let neuGezaehlt = 0;
+    let duplikateGezaehlt = 0;
+    setPendingScores(prev => {
+      const filteredResults = ocrResults.filter(result => {
+        const existsInDB = existingScoresForTeamAndRound.some(existing =>
+          existing.shooterId === result.shooterId && existing.durchgang === parsedRound
+        );
+        const existsInPending = prev.some(pending =>
+          pending.shooterId === result.shooterId && pending.durchgang === parsedRound
+        );
+        const existsInJustSaved = justSavedScoreIdentifiers.some(saved =>
+          saved.shooterId === result.shooterId && saved.durchgang === parsedRound
+        );
+        return !existsInDB && !existsInPending && !existsInJustSaved;
+      });
+
+      neuGezaehlt = filteredResults.length;
+      duplikateGezaehlt = ocrResults.length - filteredResults.length;
+
+      const newPendingEntries = filteredResults.map(result => ({
+        tempId: `ocr-${Date.now()}-${Math.random()}`,
+        seasonId: selectedSeasonId,
+        seasonName: currentSeason.name,
+        leagueId: selectedLeagueId,
+        leagueName: availableLeaguesForSeason.find(l => l.id === selectedLeagueId)?.name || '',
+        leagueType: availableLeaguesForSeason.find(l => l.id === selectedLeagueId)?.type || 'KK',
+        teamId: result.teamId,
+        teamName: result.teamName,
+        clubId: allTeamsInSelectedLeague.find(t => t.id === result.teamId)?.clubId || '',
+        shooterId: result.shooterId,
+        shooterName: result.shooterName,
+        shooterGender: 'unknown',
+        durchgang: parsedRound,
+        totalRinge: result.score,
+        scoreInputType: (existingScoresForTeamAndRound.length > 0 ? 'post' : 'regular'),
+        competitionYear: currentSeason.competitionYear,
+        isOCRGenerated: true,
+        ocrConfidence: result.confidence,
+        ocrSource: result.ocrSource
+      } as PendingScoreEntry));
+
+      return [...prev, ...newPendingEntries];
+    });
+
+    const seitenHinweis = mehrSeiten ? ` (Seite ${ocrPageIndex + 1}/${handzettelFiles.length})` : '';
+
+    // Toast-Feedback pro Seite
+    if (neuGezaehlt > 0 && duplikateGezaehlt > 0) {
       toast({
-        title: `🎯 ${newPendingEntries.length} neue Ergebnisse erfasst!`,
-        description: `${duplicateCount} bereits erfasste Ergebnisse übersprungen. 📝 Perfekt für Nachträge auf bereits gescannten Handzetteln!`,
+        title: `🎯 ${neuGezaehlt} neue Ergebnisse erfasst!${seitenHinweis}`,
+        description: `${duplikateGezaehlt} bereits erfasste Ergebnisse übersprungen. 📝 Perfekt für Nachträge auf bereits gescannten Handzetteln!`,
         className: "border-green-500 bg-green-50"
       });
-    } else if (newPendingEntries.length > 0) {
+    } else if (neuGezaehlt > 0) {
       toast({
-        title: `🎯 ${newPendingEntries.length} Ergebnisse automatisch erfasst!`,
+        title: `🎯 ${neuGezaehlt} Ergebnisse automatisch erfasst!${seitenHinweis}`,
         description: "🤖 Google Gemini AI hat alle Werte erkannt. Namen sind zuverlässig - Ringzahlen bitte kurz prüfen!",
         className: "border-green-500 bg-green-50"
       });
-    } else if (duplicateCount > 0) {
+    } else if (duplikateGezaehlt > 0) {
       toast({
-        title: "ℹ️ Handzettel bereits vollständig erfasst",
-        description: `Alle ${duplicateCount} Schützen haben bereits Ergebnisse für diesen Durchgang. 🚀 Einfach manuell fehlende Schützen nachtragen!`,
+        title: `ℹ️ Handzettel bereits vollständig erfasst${seitenHinweis}`,
+        description: `Alle ${duplikateGezaehlt} Schützen haben bereits Ergebnisse für diesen Durchgang. 🚀 Einfach manuell fehlende Schützen nachtragen!`,
         className: "border-blue-500 bg-blue-50"
       });
     } else {
-      // Wenn OCR erfolgreich war aber keine Ergebnisse gefunden wurden
       toast({
-        title: "ℹ️ Keine neuen Ergebnisse erkannt",
+        title: `ℹ️ Keine neuen Ergebnisse erkannt${seitenHinweis}`,
         description: "OCR war erfolgreich, aber keine neuen Schützen gefunden. Eventuell bereits alle erfasst oder Handzettel nicht erkannt.",
         className: "border-amber-500 bg-amber-50"
       });
     }
+
+    // Nächste Seite auslesen oder abschließen.
+    if (!istLetzteSeite) {
+      setOcrPageIndex(prev => prev + 1);
+    } else {
+      setShowOCR(false);
+      setOcrPageIndex(0);
+    }
   };
 
   const handleOCRError = (error: string) => {
-    setShowOCR(false);
-    toast({ title: "OCR-Fehler", description: error, variant: "destructive" });
+    const istLetzteSeite = ocrPageIndex >= handzettelFiles.length - 1;
+    // Fehler auf einer Seite soll die übrigen Seiten nicht blockieren.
+    if (!istLetzteSeite) {
+      toast({ title: `OCR-Fehler auf Seite ${ocrPageIndex + 1}`, description: `${error}\n\nNächste Seite wird versucht.`, variant: "destructive" });
+      setOcrPageIndex(prev => prev + 1);
+    } else {
+      setShowOCR(false);
+      setOcrPageIndex(0);
+      toast({ title: "OCR-Fehler", description: error, variant: "destructive" });
+    }
   };
 
   const handleAddToList = () => {
@@ -1030,6 +1050,7 @@ export default function SharedResultsPage({
                                 if (e.target.files && e.target.files.length > 0) {
                                   const files = Array.from(e.target.files);
                                   setHandzettelFiles(files);
+                                  setOcrPageIndex(0);
                                   toast({
                                     title: "📸 Foto aufgenommen",
                                     description: `${files.length} Foto(s) bereit. ${!attachOnly ? 'Klicke "🤖 Erkennung starten" um automatisch auszulesen.' : 'Wird ohne OCR versendet.'}`,
@@ -1061,6 +1082,7 @@ export default function SharedResultsPage({
                                 if (e.target.files && e.target.files.length > 0) {
                                   const files = Array.from(e.target.files);
                                   setHandzettelFiles(files);
+                                  setOcrPageIndex(0);
                                   toast({
                                     title: "📎 Handzettel ausgewählt",
                                     description: `${files.length} Datei(en) aus Galerie/Dateien. ${!attachOnly ? 'Klicke "🤖 Erkennung starten" um automatisch auszulesen.' : 'Wird ohne OCR versendet.'}`,
@@ -1084,12 +1106,12 @@ export default function SharedResultsPage({
                       <div className="mt-3">
                         {!showOCR && (
                           <Button
-                            onClick={() => setShowOCR(true)}
+                            onClick={() => { setOcrPageIndex(0); setShowOCR(true); }}
                             className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                             size="lg"
                           >
                             <Zap className="mr-2 h-5 w-5" />
-                            🤖 Erkennung starten
+                            🤖 Erkennung starten{handzettelFiles.length > 1 ? ` (${handzettelFiles.length} Seiten)` : ''}
                           </Button>
                         )}
                       </div>
@@ -1129,11 +1151,16 @@ export default function SharedResultsPage({
                   </div>
                 </div>
                 
-                {showOCR && handzettelFiles.length > 0 && !attachOnly && (
+                {showOCR && handzettelFiles.length > 0 && !attachOnly && handzettelFiles[ocrPageIndex] && (
                   <div data-ocr-component className="w-full max-w-full overflow-hidden">
+                    {handzettelFiles.length > 1 && (
+                      <p className="text-sm text-muted-foreground mb-2">
+                        📄 Lese Seite {ocrPageIndex + 1} von {handzettelFiles.length} aus…
+                      </p>
+                    )}
                     <HandzettelOCR
-                      key={handzettelFiles[0]?.name}
-                      imageFile={handzettelFiles[0]}
+                      key={handzettelFiles[ocrPageIndex]?.name || ocrPageIndex}
+                      imageFile={handzettelFiles[ocrPageIndex]}
                       availableTeams={allTeamsInSelectedLeague}
                       selectedLeagueId={selectedLeagueId}
                       selectedRound={selectedRound}
