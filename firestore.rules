@@ -308,6 +308,18 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    // Ausrichter-Historie (1. Durchgang) – öffentlich lesbar, Schreiben für Admin/KV/Sportleiter
+    match /ausrichter_historie/{eintrag} {
+      allow read: if true;
+      allow write: if isSuperAdmin() ||
+                   (isAuthenticated() && getUserPermissions() != null &&
+                    (getUserPermissions().kvRole == 'KV_WETTKAMPFLEITER' ||
+                     (getUserPermissions().kvRoles != null &&
+                      getUserPermissions().kvRoles.values().hasAny(['KV_WETTKAMPFLEITER', 'KV_KM_ORGA'])) ||
+                     (getUserPermissions().clubRoles != null &&
+                      getUserPermissions().clubRoles.values().hasAny(['SPORTLEITER', 'VORSTAND']))));
+    }
+
     // === KM-SYSTEM ===
     
     match /km_meldungen/{meldung} {
