@@ -14,8 +14,6 @@ import { useAuthContext } from '@/components/auth/AuthContext';
 import { logError } from '@/lib/utils/secure-logger';
 import { Button } from '@/components/ui/button';
 
-const DISMISS_KEY = 'ausrichter_reminder_dismissed_v1';
-
 export function AusrichterReminder() {
   const { user, userAppPermissions } = useAuthContext();
   const [offeneVereine, setOffeneVereine] = useState<string[] | null>(null);
@@ -33,7 +31,6 @@ export function AusrichterReminder() {
   useEffect(() => {
     // Warten bis Nutzer + Berechtigungen geladen sind (Permissions kommen asynchron).
     if (!user || !userAppPermissions || !istZustaendig) return;
-    if (typeof window !== 'undefined' && sessionStorage.getItem(DISMISS_KEY)) return;
 
     const pruefe = async () => {
       try {
@@ -58,33 +55,16 @@ export function AusrichterReminder() {
 
   if (!sichtbar || !offeneVereine || offeneVereine.length === 0) return null;
 
-  const schliessen = () => {
-    setSichtbar(false);
-    if (typeof window !== 'undefined') sessionStorage.setItem(DISMISS_KEY, '1');
-  };
-
+  // Schlichter Banner oben auf dem Dashboard – nur die Aufforderung, keine Details.
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
-      <div className="bg-background rounded-lg shadow-xl max-w-md w-full p-5 space-y-4">
-        <h2 className="text-lg font-semibold text-primary">🏠 Ausrichter-Stände pflegen</h2>
-        <p className="text-sm text-muted-foreground">
-          Bei <strong>{offeneVereine.length}</strong> {offeneVereine.length === 1 ? 'Verein' : 'Vereinen'} ist noch nicht hinterlegt,
-          welche Disziplinen sie ausrichten können (Luftdruck / KK-Gewehr / KK-Pistole). Diese Angabe wird gebraucht,
-          damit der Vorschlag „wer lädt zum 1. Durchgang ein" fair und korrekt rechnet – gerade bei Kleinkaliber und KK-Pistole.
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Bitte gib dem <strong>Sportleiter</strong> deines Vereins Bescheid, damit er die Angabe ergänzt.
-        </p>
-        <div className="max-h-32 overflow-y-auto text-xs text-muted-foreground border rounded p-2">
-          {offeneVereine.slice(0, 20).join(', ')}
-          {offeneVereine.length > 20 ? ` … und ${offeneVereine.length - 20} weitere` : ''}
+    <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="font-semibold text-amber-800 dark:text-amber-200 flex items-center gap-2">
+          <span className="text-lg">🏠</span> Stände pflegen
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 justify-end">
-          <Button variant="ghost" size="sm" onClick={schliessen}>Später</Button>
-          <Link href="/admin/clubs" onClick={schliessen}>
-            <Button size="sm">Jetzt pflegen</Button>
-          </Link>
-        </div>
+        <Link href="/admin/clubs" className="shrink-0">
+          <Button size="sm">Jetzt pflegen</Button>
+        </Link>
       </div>
     </div>
   );
