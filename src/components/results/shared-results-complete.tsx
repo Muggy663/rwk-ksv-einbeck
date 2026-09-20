@@ -654,12 +654,115 @@ export default function SharedResultsPage({
     }
   };
 
+  /**
+   * Prüft die zu speichernden Ergebnisse VOR dem Schreiben:
+   *  - Harte Fehler (unmögliche Ringzahl für die Disziplin, negativ oder über
+   *    dem Maximum) blockieren das Speichern komplett.
+   *  - Weiche Warnungen (ein späterer Durchgang wird erfasst, obwohl frühere
+   *    Durchgänge desselben Schützen weder in der Datenbank noch in der
+   *    Zwischenliste existieren) werden dem Nutzer zur Bestätigung vorgelegt.
+   * Rückgabe: true = weiter speichern, false = abbrechen.
+   */
+  const validatePendingScoresBeforeSave = async (): Promise<boolean> => {
+    // 1) Harte Prüfung: unmögliche Ringzahlen
+    const harteFehler: string[] = [];
+    for (const entry of pendingScores) {
+      const maxScore = ['LG', 'LGA', 'LP', 'LPA'].includes(entry.leagueType) ? 400 : 300;
+      const ringe = entry.totalRinge;
+      if (typeof ringe !== 'number' || isNaN(ringe) || ringe < 0 || ringe > maxScore) {
+        harteFehler.push(`${entry.shooterName} (${entry.teamName}, DG ${entry.durchgang}): ${ringe} Ringe – erlaubt sind 0–${maxScore}`);
+      }
+    }
+    if (harteFehler.length > 0) {
+      toast({
+        title: "❌ Unmögliche Ringzahl – nicht gespeichert",
+        description: harteFehler.slice(0, 3).join('\n') + (harteFehler.length > 3 ? `\n… und ${harteFehler.length - 3} weitere` : ''),
+        variant: "destructive",
+        duration: 8000,
+      });
+      return false;
+    }
+
+    // 2) Weiche Prüfung: Durchgang-Lücken. Für jeden zu speichernden Schützen
+    //    prüfen, ob alle Durchgänge < seinem Durchgang irgendwo (DB oder Pending)
+    //    vorhanden sind. Fehlt ein früherer Durchgang, ist das oft ein Tippfehler
+    //    beim Durchgang – aber Nachschießen ist legitim, daher nur warnen.
+    try {
+      // Betroffene (Schütze, Collection) sammeln, um die DB gezielt abzufragen.
+      const scoresByCollection = new Map<string, Set<string>>(); // collection -> shooterIds
+      for (const entry of pendingScores) {
+        let collectionName = SCORES_COLLECTION;
+        try {
+          collectionName = getSeasonSpecificScoresCollection(entry.competitionYear, entry.leagueType);
+        } catch { /* Standard-Collection */ }
+        if (!scoresByCollection.has(collectionName)) scoresByCollection.set(collectionName, new Set());
+        scoresByCollection.get(collectionName)!.add(entry.shooterId);
+      }
+
+      // Vorhandene Durchgänge je Schütze aus der DB laden.
+      const vorhandeneDurchgaenge = new Map<string, Set<number>>(); // shooterId -> rounds
+      for (const [collectionName, shooterIdSet] of scoresByCollection.entries()) {
+        const shooterIds = Array.from(shooterIdSet);
+        for (let i = 0; i < shooterIds.length; i += 30) {
+          const chunk = shooterIds.slice(i, i + 30);
+          const snap = await getDocs(query(collection(db, collectionName), where('shooterId', 'in', chunk)));
+          snap.docs.forEach(d => {
+            const data = d.data() as any;
+            if (typeof data.durchgang === 'number') {
+              if (!vorhandeneDurchgaenge.has(data.shooterId)) vorhandeneDurchgaenge.set(data.shooterId, new Set());
+              vorhandeneDurchgaenge.get(data.shooterId)!.add(data.durchgang);
+            }
+          });
+        }
+      }
+      // Pending-Durchgänge dazunehmen (werden gleich mitgespeichert).
+      for (const entry of pendingScores) {
+        if (!vorhandeneDurchgaenge.has(entry.shooterId)) vorhandeneDurchgaenge.set(entry.shooterId, new Set());
+        vorhandeneDurchgaenge.get(entry.shooterId)!.add(entry.durchgang);
+      }
+
+      const luecken: string[] = [];
+      for (const entry of pendingScores) {
+        const runden = vorhandeneDurchgaenge.get(entry.shooterId) || new Set<number>();
+        const fehlend: number[] = [];
+        for (let dg = 1; dg < entry.durchgang; dg++) {
+          if (!runden.has(dg)) fehlend.push(dg);
+        }
+        if (fehlend.length > 0) {
+          luecken.push(`${entry.shooterName} (DG ${entry.durchgang}): DG ${fehlend.join(', ')} fehlt`);
+        }
+      }
+
+      if (luecken.length > 0) {
+        const meldung =
+          '⚠️ Bei folgenden Schützen fehlen frühere Durchgänge:\n\n' +
+          luecken.slice(0, 8).join('\n') +
+          (luecken.length > 8 ? `\n… und ${luecken.length - 8} weitere` : '') +
+          '\n\nDas ist bei Nachschießen normal. War der Durchgang aber falsch gewählt, jetzt abbrechen und korrigieren.\n\nTrotzdem speichern?';
+        // window.confirm funktioniert zuverlässig auch im WebView der App.
+        const weiter = typeof window !== 'undefined' ? window.confirm(meldung) : true;
+        if (!weiter) return false;
+      }
+    } catch (error) {
+      // Die Lücken-Prüfung ist ein Komfort-Check. Schlägt die Abfrage fehl,
+      // blockieren wir das Speichern NICHT (harte Prüfung lief bereits durch).
+      logWarn('Durchgang-Lücken-Prüfung fehlgeschlagen:', error instanceof Error ? error.message : String(error));
+    }
+
+    return true;
+  };
+
   const handleFinalSave = async () => {
     if (!user || pendingScores.length === 0) {
       toast({ title: "Keine Ergebnisse", variant: "destructive" });
       return;
     }
-    
+
+    // Vorab-Validierung: unmögliche Ringzahlen blockieren, Durchgang-Lücken
+    // werden dem Nutzer zur Bestätigung vorgelegt.
+    const darfSpeichern = await validatePendingScoresBeforeSave();
+    if (!darfSpeichern) return;
+
     setIsSubmittingScores(true);
     
     try {
