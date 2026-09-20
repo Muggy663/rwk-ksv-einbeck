@@ -4,6 +4,17 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.0.7
+- **🔒 KM-Bereich: Zugriff korrekt beschränkt**: Wichtiger Sicherheits-Fix — der Kreismeisterschafts-Bereich war durch einen Programmierfehler für jeden eingeloggten Nutzer zugänglich, unabhängig von der Rolle. Jetzt kommen nur noch Sportleiter, KM-Organisatoren (Kreis-Wettkampfleiter) und Administratoren hinein. Vorstände, Mannschaftsführer und einfache Vereinsvertreter haben keinen KM-Zugang mehr
+- **💾 Ergebniserfassung: sicheres Speichern**: Beim gemeinsamen Speichern mehrerer Ergebnisse wird jetzt entweder alles oder nichts geschrieben. Vorher konnte bei einem Abbruch mitten im Vorgang ein Teil der Ergebnisse fehlen, während trotzdem „erfolgreich" gemeldet wurde – das ist ausgeschlossen
+- **✅ Ergebniserfassung: Prüfung vor dem Speichern**: Vor dem Abspeichern werden die Ringzahlen geprüft. Unmögliche Werte (negativ oder über dem Maximum der Disziplin) blockieren das Speichern mit klarem Hinweis. Fehlen bei einem Schützen frühere Durchgänge (z. B. Durchgang 3 erfasst, aber 1 und 2 fehlen), gibt es eine Rückfrage – bei Nachschießen einfach bestätigen, bei falsch gewähltem Durchgang abbrechen und korrigieren. Gilt auch für automatisch per Handzettel ausgelesene Ergebnisse
+- **📸 Handzettel: mehrere Seiten auf einmal**: Fotografiert man mehrere Handzettel-Seiten, werden jetzt alle nacheinander automatisch ausgelesen (vorher nur die erste Seite). Der Fortschritt wird pro Seite angezeigt; ein Fehler auf einer Seite stoppt die übrigen nicht
+- **🎯 KM-Meldungen: Wettkampfklasse & Doppelmeldungs-Hinweis schon bei der Auswahl**: Beim Anmelden von Schützen steht jetzt direkt neben dem Namen, in welche Wettkampfklasse er fällt. Ist ein Schütze in allen gewählten Disziplinen bereits gemeldet, erscheint vorab ein Hinweis „bereits gemeldet" – so fällt die Doppelmeldung schon vor dem Absenden auf
+- **🏠 Ausrichter-Vorschlag mit einem Klick**: In der Liga-Einteilung setzt der neue Button „Ausrichter-Vorschlag übernehmen" für alle Ligen auf einen Schlag die faire Rotations-Empfehlung – praktisch, um nach manuellen Änderungen wieder zum Vorschlag zurückzukehren
+- **🧭 Klarere Hinweise bei leeren Listen**: An mehreren Stellen erklären Hinweistexte jetzt, was zu tun ist, statt nur leere Felder zu zeigen – z. B. „noch keine Meldungen, über ‚Meldung für Verein erstellen' anmelden" oder ein Hinweis, wenn der eigene Verein in einer Saison keine gemeldete Mannschaft hat
+
+---
+
 ## Version 3.0.6
 - **🔄 „Aktualisieren" lädt Daten jetzt sofort**: Beim Klick auf „Aktualisieren" im Update-Hinweis blieben Tabellen und Startseite leer, bis die App komplett neu gestartet wurde. Ursache war, dass direkt nach dem Abmelden des Service Workers neu geladen wurde und die Datenverbindung (Firestore) nicht sauber neu aufbaute. Jetzt wird kurz gewartet, bis die Abmeldung durch ist, und die Seite anschließend vollständig frisch geladen – die Daten erscheinen sofort, ein manueller App-Neustart ist nicht mehr nötig
 
