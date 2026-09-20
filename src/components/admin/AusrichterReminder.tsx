@@ -21,15 +21,18 @@ export function AusrichterReminder() {
   const [offeneVereine, setOffeneVereine] = useState<string[] | null>(null);
   const [sichtbar, setSichtbar] = useState(false);
 
-  // Nur Admin / KV-Orga sollen die Stände pflegen.
+  // Wer die Stände pflegen darf/soll: Admin, KV-Orga/Wettkampfleiter sowie
+  // Sportleiter/Vorstand (die dürfen laut Firestore-Rule ohnehin schreiben).
   const istZustaendig =
     userAppPermissions?.role === 'superadmin' ||
     user?.email === 'admin@rwk-einbeck.de' ||
-    (userAppPermissions?.kvRoles && Object.values(userAppPermissions.kvRoles).some(r => ['KV_KM_ORGA', 'KV_WETTKAMPFLEITER'].includes(r as string)));
+    !!(userAppPermissions?.kvRoles && Object.values(userAppPermissions.kvRoles).some(r => ['KV_KM_ORGA', 'KV_WETTKAMPFLEITER'].includes(r as string))) ||
+    !!(userAppPermissions?.clubRoles && Object.values(userAppPermissions.clubRoles).some(r => ['SPORTLEITER', 'VORSTAND'].includes(r as string))) ||
+    userAppPermissions?.role === 'vereinsvertreter';
 
   useEffect(() => {
-    if (!user || !istZustaendig) return;
-    // In dieser Session bereits weggeklickt?
+    // Warten bis Nutzer + Berechtigungen geladen sind (Permissions kommen asynchron).
+    if (!user || !userAppPermissions || !istZustaendig) return;
     if (typeof window !== 'undefined' && sessionStorage.getItem(DISMISS_KEY)) return;
 
     const pruefe = async () => {
@@ -50,7 +53,8 @@ export function AusrichterReminder() {
       }
     };
     pruefe();
-  }, [user, istZustaendig]);
+    // userAppPermissions in den Dependencies, da es nach dem Login asynchron nachlädt
+  }, [user, userAppPermissions, istZustaendig]);
 
   if (!sichtbar || !offeneVereine || offeneVereine.length === 0) return null;
 
