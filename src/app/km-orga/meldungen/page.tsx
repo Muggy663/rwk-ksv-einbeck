@@ -777,8 +777,18 @@ export default function KMAdminMeldungen() {
               );
             })}
             {filteredMeldungen.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                Keine Meldungen gefunden
+              <div className="text-center py-10 text-gray-500">
+                {(filter.verein || filter.disziplin || filter.search) ? (
+                  <>
+                    <p className="font-medium mb-1">Keine Meldungen für den aktuellen Filter</p>
+                    <p className="text-sm">Filter zurücksetzen, um alle Meldungen dieser Saison zu sehen.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium mb-1">Noch keine Meldungen in dieser Saison</p>
+                    <p className="text-sm">Oben über „Meldung für Verein erstellen" Schützen zu Disziplinen anmelden.</p>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -990,8 +1000,18 @@ export default function KMAdminMeldungen() {
             </table>
             
             {filteredMeldungen.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                Keine Meldungen gefunden
+              <div className="text-center py-10 text-gray-500">
+                {(filter.verein || filter.disziplin || filter.search) ? (
+                  <>
+                    <p className="font-medium mb-1">Keine Meldungen für den aktuellen Filter</p>
+                    <p className="text-sm">Filter zurücksetzen, um alle Meldungen dieser Saison zu sehen.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium mb-1">Noch keine Meldungen in dieser Saison</p>
+                    <p className="text-sm">Oben über „Meldung für Verein erstellen" Schützen zu Disziplinen anmelden.</p>
+                  </>
+                )}
               </div>
             )}
           </div>

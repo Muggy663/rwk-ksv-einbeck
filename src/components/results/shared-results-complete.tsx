@@ -1320,6 +1320,13 @@ export default function SharedResultsPage({
                 placeholder={isLoadingLeagues ? "Lade Ligen..." : (availableLeaguesForSeason.length === 0 && selectedSeasonId ? "Keine Ligen für Saison" : "Liga wählen")}
                 options={availableLeaguesForSeason.filter(l => l.id).map(l => ({ value: l.id, label: l.name }))}
               />
+              {selectedSeasonId && !isLoadingLeagues && availableLeaguesForSeason.length === 0 && (
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  {userRole === 'admin'
+                    ? 'In dieser Saison sind noch keine Ligen angelegt.'
+                    : 'Ihr Verein hat in dieser Saison keine gemeldete Mannschaft. Bitte zuerst über die Mannschaftsverwaltung melden oder eine andere Saison wählen.'}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="round">Durchgang</Label>
