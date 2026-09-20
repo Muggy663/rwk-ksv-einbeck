@@ -1,6 +1,5 @@
 // src/lib/permissions/memberPermissions.ts
 // Zentrale Rechte-Logik für die Mitgliederverwaltung (RWK + KM).
-// Bewusst unabhängig von der bekannten useKMAuth-Schwäche (hasKMAccess endet mit "|| true").
 // Der Server (getServerMemberPermissions) ist für die Autorisierung maßgeblich;
 // die Client-Variante (getMemberPermissions) steuert nur die UI-Sichtbarkeit.
 

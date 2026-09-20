@@ -18,35 +18,35 @@ export function useKMAuth() {
   const platformRole = (userAppPermissions as any)?.platformRole;
 
   const isSportleiter = Object.values(clubRoles).includes('SPORTLEITER');
-  const isVorstand = Object.values(clubRoles).includes('VORSTAND');
   const isKVWettkampfleiter = Object.values(kvRoles).includes('KV_WETTKAMPFLEITER');
   const isKVKmOrga = Object.values(kvRoles).includes('KV_KM_ORGA');
 
-  const hasKMAccess = !authLoading && user && (
-    user?.email === 'admin@rwk-einbeck.de' ||
-    user?.email === 'stephanie.buenger@gmx.de' ||
-    platformRole === 'SUPER_ADMIN' ||
-    userAppPermissions?.role === 'superadmin' ||
-    isKVWettkampfleiter ||
-    isKVKmOrga ||
-    (userAppPermissions?.role as any) === 'km_organisator' ||
-    isSportleiter ||
-    isVorstand ||
-    userAppPermissions?.role === 'vereinsvertreter' ||
-    userAppPermissions?.role === 'vereinsvorstand' ||
-    true
+  // KM-Zugang ist auf drei Gruppen beschränkt: Admin/Superadmin, KM-Orga
+  // (Kreis-Wettkampfleiter / KM-Organisator) und Sportleiter des Vereins.
+  // WICHTIG: Hier stand früher ein abschließendes „|| true", wodurch JEDER
+  // eingeloggte Nutzer Zugang bekam und alle Rollenprüfungen wirkungslos waren.
+  // Vorstand, einfache Vereinsvertreter und Mannschaftsführer haben KEINEN
+  // KM-Zugang.
+  const hasKMAccess = Boolean(
+    !authLoading && user && (
+      platformRole === 'SUPER_ADMIN' ||
+      userAppPermissions?.role === 'superadmin' ||
+      (userAppPermissions?.role as any) === 'admin' ||
+      isKVWettkampfleiter ||
+      isKVKmOrga ||
+      (userAppPermissions?.role as any) === 'km_organisator' ||
+      isSportleiter
+    )
   );
 
-  const userRole = user?.email === 'admin@rwk-einbeck.de' ? 'admin' :
-                   user?.email === 'stephanie.buenger@gmx.de' ? 'km_organisator' :
-                   platformRole === 'SUPER_ADMIN' ? 'admin' :
+  const userRole = platformRole === 'SUPER_ADMIN' ? 'admin' :
                    userAppPermissions?.role === 'superadmin' ? 'admin' :
+                   (userAppPermissions?.role as any) === 'admin' ? 'admin' :
                    isKVWettkampfleiter ? 'km_organisator' :
                    isKVKmOrga ? 'km_organisator' :
-                   isSportleiter || isVorstand ? 'verein' :
-                   userAppPermissions?.role === 'vereinsvertreter' ? 'verein' :
-                   userAppPermissions?.role === 'vereinsvorstand' ? 'verein' :
-                   userAppPermissions?.role || '';
+                   (userAppPermissions?.role as any) === 'km_organisator' ? 'km_organisator' :
+                   isSportleiter ? 'verein' :
+                   '';
 
   let userClubIds: string[] = [];
   if (userRole !== 'admin' && userRole !== 'km_organisator') {
