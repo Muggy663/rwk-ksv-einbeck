@@ -32,7 +32,7 @@ import { PWAInstallPrompt } from '@/components/ui/pwa-install-prompt';
 // const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'RWK KSV Einbeck - Live Tabellen & Wettkampf-Management',
+  title: 'RWK KSV Einbeck',
   description: 'Die digitale Plattform für die Rundenwettkämpfe des Kreisschützenverbandes Einbeck',
   appleWebApp: {
     capable: true,
