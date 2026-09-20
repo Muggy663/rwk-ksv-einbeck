@@ -240,6 +240,57 @@ export default function AdminClubsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Übersicht: Ausrichter-Standkapazität je Verein (LG / KKG / KKP) */}
+      {clubs.length > 0 && (
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle>Ausrichter-Stände (Übersicht)</CardTitle>
+            <CardDescription>
+              Welche Disziplinen jeder Verein ausrichten kann. Ungepflegte Vereine sind hervorgehoben.
+              {(() => {
+                const offen = clubs.filter(c => !Array.isArray(c.ausrichterDisziplinen) || c.ausrichterDisziplinen.length === 0).length;
+                return offen > 0 ? ` (${offen} noch offen)` : ' (alle gepflegt ✓)';
+              })()}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-b text-left">
+                    <th className="py-2 pr-4">Verein</th>
+                    <th className="py-2 px-3 text-center">Luftdruck</th>
+                    <th className="py-2 px-3 text-center">KK-Gewehr</th>
+                    <th className="py-2 px-3 text-center">KK-Pistole</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...clubs].sort((a, b) => a.name.localeCompare(b.name)).map(club => {
+                    const d = Array.isArray(club.ausrichterDisziplinen) ? club.ausrichterDisziplinen : [];
+                    const ungepflegt = d.length === 0;
+                    const zelle = (key: string) => d.includes(key)
+                      ? <span className="text-green-600 font-bold">✓</span>
+                      : <span className="text-muted-foreground">–</span>;
+                    return (
+                      <tr key={club.id} className={`border-b ${ungepflegt ? 'bg-amber-50 dark:bg-amber-950/20' : ''}`}>
+                        <td className="py-1.5 pr-4">
+                          {club.name}
+                          {ungepflegt && <span className="ml-2 text-xs text-amber-700 dark:text-amber-300">nicht gepflegt</span>}
+                        </td>
+                        <td className="py-1.5 px-3 text-center">{zelle('LG')}</td>
+                        <td className="py-1.5 px-3 text-center">{zelle('KKG')}</td>
+                        <td className="py-1.5 px-3 text-center">{zelle('KKP')}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle>Vorhandene Vereine</CardTitle>
