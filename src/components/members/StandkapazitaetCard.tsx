@@ -21,6 +21,7 @@ export function StandkapazitaetCard({ clubId, canEdit }: { clubId: string | null
   const { toast } = useToast();
   const [disziplinen, setDisziplinen] = useState<string[]>([]);
   const [clubName, setClubName] = useState<string>('');
+  const [keineStaende, setKeineStaende] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [geladen, setGeladen] = useState(false);
@@ -36,6 +37,7 @@ export function StandkapazitaetCard({ clubId, canEdit }: { clubId: string | null
           const d = snap.data() as any;
           setDisziplinen(Array.isArray(d.ausrichterDisziplinen) ? d.ausrichterDisziplinen : []);
           setClubName(d.name || '');
+          setKeineStaende(!!d.keineEigenenStaende);
         }
       } catch (e) {
         logError('Standkapazität laden fehlgeschlagen:', e);
@@ -66,6 +68,16 @@ export function StandkapazitaetCard({ clubId, canEdit }: { clubId: string | null
       setSaving(false);
     }
   };
+
+  // Verein ohne eigene Stände (z. B. SSG): Standkapazität entfällt.
+  if (keineStaende) {
+    return (
+      <div className="mb-4 rounded-md border p-3 text-sm bg-card">
+        <span className="font-medium">🏠 Ausrichten{clubName ? ` (${clubName})` : ''}:</span>{' '}
+        <span className="text-muted-foreground">entfällt (keine eigenen Stände)</span>
+      </div>
+    );
+  }
 
   const unpflegt = geladen && disziplinen.length === 0;
 

@@ -342,7 +342,7 @@ export default function AddTerminPage() {
                   />
                 )}
                 <p className="text-xs text-green-700 dark:text-green-400 mt-1">
-                  📍 Tipp: Der gewählte Verein wird automatisch mit Google Maps verknüpft – die Anfahrt erscheint am Termin per Klick auf den Ort. Ein Maps-Link muss NICHT extra in die Beschreibung. (Voraussetzung: Der Verein hat in der Vereinsverwaltung einen Anfahrt-Link hinterlegt.)
+                  📍 Tipp: Der gewählte Verein wird automatisch mit Google Maps verknüpft – die Anfahrt erscheint am Termin per Klick auf den Ort. Ein Maps-Link muss NICHT extra in die Beschreibung.
                 </p>
               </div>
               

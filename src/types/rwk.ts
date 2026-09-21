@@ -43,6 +43,9 @@ export interface Club {
   ausrichterDisziplinen?: string[];
   /** Google-Maps-Link zur Anfahrt (Schützenhaus/Stand). Für den Anfahrt-Link an Terminen. */
   mapsUrl?: string;
+  /** Verein hat keine eigenen Stände (z. B. Schießsportgemeinschaft). Dann entfallen
+   *  Standkapazität und Anfahrt-Link, und die Übersichten markieren ihn nicht als "offen". */
+  keineEigenenStaende?: boolean;
 }
 
 export interface Team {

@@ -107,6 +107,22 @@ export default function AdminClubsPage() {
     }
   };
 
+  const [savingFlag, setSavingFlag] = useState<string | null>(null);
+
+  const toggleKeineEigenenStaende = async (club: ClubWithNumber, checked: boolean) => {
+    setSavingFlag(club.id);
+    try {
+      await updateDoc(doc(db, CLUBS_COLLECTION, club.id), { keineEigenenStaende: checked });
+      setClubs(prev => prev.map(c => c.id === club.id ? { ...c, keineEigenenStaende: checked } : c));
+      toast({ title: 'Gespeichert', description: checked ? `${club.name}: keine eigenen Stände.` : `${club.name}: hat eigene Stände.` });
+    } catch (error) {
+      logError('Flag „keine eigenen Stände" speichern fehlgeschlagen:', error);
+      toast({ title: 'Fehler', description: 'Konnte nicht gespeichert werden.', variant: 'destructive' });
+    } finally {
+      setSavingFlag(null);
+    }
+  };
+
   const handleAddNew = () => {
     setFormMode('new');
     setCurrentClub({ name: '', shortName: '', clubNumber: '', ausrichterDisziplinen: [] });
@@ -272,8 +288,9 @@ export default function AdminClubsPage() {
             <CardTitle>Ausrichter-Stände (Übersicht)</CardTitle>
             <CardDescription>
               Welche Disziplinen jeder Verein ausrichten kann. Ungepflegte Vereine sind hervorgehoben.
+              Vereine ohne eigene Stände (z. B. Schießsportgemeinschaft) können per Kästchen gekennzeichnet werden.
               {(() => {
-                const offen = clubs.filter(c => !Array.isArray(c.ausrichterDisziplinen) || c.ausrichterDisziplinen.length === 0).length;
+                const offen = clubs.filter(c => !c.keineEigenenStaende && (!Array.isArray(c.ausrichterDisziplinen) || c.ausrichterDisziplinen.length === 0)).length;
                 return offen > 0 ? ` (${offen} noch offen)` : ' (alle gepflegt ✓)';
               })()}
             </CardDescription>
@@ -287,24 +304,38 @@ export default function AdminClubsPage() {
                     <th className="py-2 px-3 text-center">Luftdruck</th>
                     <th className="py-2 px-3 text-center">KK-Gewehr</th>
                     <th className="py-2 px-3 text-center">KK-Pistole</th>
+                    <th className="py-2 px-3 text-center whitespace-nowrap">Keine eigenen Stände</th>
                   </tr>
                 </thead>
                 <tbody>
                   {[...clubs].sort((a, b) => a.name.localeCompare(b.name)).map(club => {
                     const d = Array.isArray(club.ausrichterDisziplinen) ? club.ausrichterDisziplinen : [];
-                    const ungepflegt = d.length === 0;
-                    const zelle = (key: string) => d.includes(key)
-                      ? <span className="text-green-600 font-bold">✓</span>
-                      : <span className="text-muted-foreground">–</span>;
+                    const ohneStaende = !!club.keineEigenenStaende;
+                    const ungepflegt = !ohneStaende && d.length === 0;
+                    const zelle = (key: string) => ohneStaende
+                      ? <span className="text-muted-foreground">–</span>
+                      : d.includes(key)
+                        ? <span className="text-green-600 font-bold">✓</span>
+                        : <span className="text-muted-foreground">–</span>;
                     return (
                       <tr key={club.id} className={`border-b ${ungepflegt ? 'bg-amber-50 dark:bg-amber-950/20' : ''}`}>
                         <td className="py-1.5 pr-4">
                           {club.name}
                           {ungepflegt && <span className="ml-2 text-xs text-amber-700 dark:text-amber-300">nicht gepflegt</span>}
+                          {ohneStaende && <span className="ml-2 text-xs text-muted-foreground">keine eigenen Stände</span>}
                         </td>
                         <td className="py-1.5 px-3 text-center">{zelle('LG')}</td>
                         <td className="py-1.5 px-3 text-center">{zelle('KKG')}</td>
                         <td className="py-1.5 px-3 text-center">{zelle('KKP')}</td>
+                        <td className="py-1.5 px-3 text-center">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4"
+                            checked={ohneStaende}
+                            disabled={savingFlag === club.id}
+                            onChange={(e) => toggleKeineEigenenStaende(club, e.target.checked)}
+                          />
+                        </td>
                       </tr>
                     );
                   })}
@@ -323,7 +354,7 @@ export default function AdminClubsPage() {
             <CardDescription>
               Link zum Schützenhaus/Stand je Verein. Wird an Terminen als klickbarer Ort angezeigt, damit Gäste den Weg finden. Tipp: In Google Maps „Teilen" → „Link kopieren".
               {(() => {
-                const offen = clubs.filter(c => !c.mapsUrl).length;
+                const offen = clubs.filter(c => !c.keineEigenenStaende && !c.mapsUrl).length;
                 return offen > 0 ? ` (${offen} noch offen)` : ' (alle gepflegt ✓)';
               })()}
             </CardDescription>
@@ -333,7 +364,19 @@ export default function AdminClubsPage() {
               {[...clubs].sort((a, b) => a.name.localeCompare(b.name)).map(club => {
                 const wert = mapsDraft[club.id] ?? club.mapsUrl ?? '';
                 const geaendert = wert.trim() !== (club.mapsUrl ?? '').trim();
-                const ungepflegt = !club.mapsUrl;
+                const ohneStaende = !!club.keineEigenenStaende;
+                const ungepflegt = !ohneStaende && !club.mapsUrl;
+
+                // Vereine ohne eigene Stände: kein Eingabefeld, nur "entfällt".
+                if (ohneStaende) {
+                  return (
+                    <div key={club.id} className="flex items-center gap-2 rounded-md border p-2">
+                      <div className="md:w-56 shrink-0 font-medium">{club.name}</div>
+                      <span className="text-sm text-muted-foreground">entfällt (keine eigenen Stände)</span>
+                    </div>
+                  );
+                }
+
                 return (
                   <div key={club.id} className={`flex flex-col gap-2 rounded-md border p-2 md:flex-row md:items-center ${ungepflegt ? 'border-amber-300 bg-amber-50 dark:bg-amber-950/20' : ''}`}>
                     <div className="md:w-56 shrink-0 font-medium">

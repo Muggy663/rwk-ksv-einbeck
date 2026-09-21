@@ -24,7 +24,7 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM und Schießnachweis.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: Version 3.0.8 - Next.js 16 + Glassmorphism Design
+            Stand: Version 3.0.8.1 - Next.js 16 + Glassmorphism Design
           </p>
         </div>
       </div>

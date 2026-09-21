@@ -4,6 +4,12 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.0.8.1
+- **🏠 Vereine ohne eigene Stände kennzeichnen**: In der Vereinsverwaltung gibt es jetzt ein Kästchen „keine eigenen Stände" (z. B. für Schießsportgemeinschaften). Ist es gesetzt, entfallen Standkapazität und Anfahrt-Link für diesen Verein – er wird in den Übersichten nicht mehr fälschlich als „nicht gepflegt/offen" markiert, sondern zeigt „entfällt". Auf der Mitglieder-Seite erscheint entsprechend „entfällt (keine eigenen Stände)" statt einer Pflege-Aufforderung
+- **✏️ Hinweis beim Termin-Anlegen gekürzt**: Der Anfahrt-Hinweis auf der Termin-Anlegen-Seite wurde gestrafft
+
+---
+
 ## Version 3.0.8
 - **📍 Anfahrt zum Ausrichter mit einem Klick**: An den Terminen ist der Ort jetzt anklickbar und öffnet die Anfahrt in Google Maps (neuer Tab) – so finden auch ortsunkundige Schützen den Weg zum ausrichtenden Verein. Der Link wird pro Verein hinterlegt: Admins pflegen ihn zentral in der Vereinsverwaltung („Anfahrt (Google-Maps-Links)"), Sportleiter/Vorstand können den Link ihres eigenen Vereins direkt auf der Mitglieder-Seite eintragen, ändern oder löschen (mit Sicherheitsabfrage). Zum Eintragen einfach in Google Maps „Teilen → Link kopieren" und einfügen
 - **🔗 Lange Links in Termin-Beschreibungen aufgeräumt**: Enthält eine Termin-Beschreibung einen langen Link (z. B. eine Google-Maps-URL), wird dieser jetzt als kurzer, klickbarer Link („📍 Karte öffnen") dargestellt, statt als lange Zeichenkette aus dem Kasten zu laufen

@@ -20,6 +20,7 @@ export function AnfahrtCard({ clubId, canEdit }: { clubId: string | null; canEdi
   const [mapsUrl, setMapsUrl] = useState<string>('');
   const [entwurf, setEntwurf] = useState<string>('');
   const [clubName, setClubName] = useState<string>('');
+  const [keineStaende, setKeineStaende] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [bearbeiten, setBearbeiten] = useState(false);
@@ -38,6 +39,7 @@ export function AnfahrtCard({ clubId, canEdit }: { clubId: string | null; canEdi
           setMapsUrl(typeof d.mapsUrl === 'string' ? d.mapsUrl : '');
           setEntwurf(typeof d.mapsUrl === 'string' ? d.mapsUrl : '');
           setClubName(d.name || '');
+          setKeineStaende(!!d.keineEigenenStaende);
         }
       } catch (e) {
         logError('Anfahrt-Link laden fehlgeschlagen:', e);
@@ -49,6 +51,16 @@ export function AnfahrtCard({ clubId, canEdit }: { clubId: string | null; canEdi
   }, [clubId]);
 
   if (!clubId || loading) return null;
+
+  // Verein ohne eigene Stände (z. B. SSG): Anfahrt entfällt.
+  if (keineStaende) {
+    return (
+      <div className="mb-4 rounded-md border p-3 text-sm bg-card">
+        <span className="font-medium">📍 Anfahrt{clubName ? ` (${clubName})` : ''}:</span>{' '}
+        <span className="text-muted-foreground">entfällt (keine eigenen Stände)</span>
+      </div>
+    );
+  }
 
   const istGueltigerLink = (v: string) => /^https?:\/\/\S+/i.test(v.trim());
 
