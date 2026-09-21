@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
 import { fetchEvents, deleteEvent, Event } from '@/lib/services/calendar-service';
+import { LinkifiedText } from '@/components/ui/linkified-text';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -170,7 +171,9 @@ export default function TermineVerwaltungPage() {
                           {format(event.date, 'dd.MM.yyyy', { locale: de })} um {event.time} Uhr
                         </p>
                         {event.description && (
-                          <p className="text-sm mt-2 text-muted-foreground">{event.description}</p>
+                          <p className="text-sm mt-2 text-muted-foreground break-words">
+                            <LinkifiedText text={event.description} />
+                          </p>
                         )}
                       </div>
                       <div className="flex flex-col items-end">

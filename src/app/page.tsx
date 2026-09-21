@@ -15,6 +15,7 @@ import { collection, query, orderBy, limit as firestoreLimit, getDocs, Timestamp
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { fetchEvents } from '@/lib/services/calendar-service';
+import { LinkifiedText } from '@/components/ui/linkified-text';
 import { newsService } from '@/lib/services/news-service';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
@@ -309,8 +310,8 @@ export default function HomePage() {
                         {event.time} Uhr, {event.location}
                       </div>
                       {event.description && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {event.description}
+                        <div className="text-xs text-muted-foreground mt-1 break-words">
+                          <LinkifiedText text={event.description} />
                         </div>
                       )}
                     </div>

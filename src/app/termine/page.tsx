@@ -17,6 +17,7 @@ import { de } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { cleanupExpiredEvents } from '@/lib/services/event-cleanup';
+import { LinkifiedText } from '@/components/ui/linkified-text';
 
 const sanitizeText = (text: string | undefined | null): string => {
   return String(text || '').replace(/[<>"'&]/g, (char) => {
@@ -416,7 +417,9 @@ export default function TerminePage() {
                       <p className="text-sm text-muted-foreground mt-1">{sanitizeText(event.location)}</p>
                       <p className="text-sm mt-2">Uhrzeit: {sanitizeText(event.time)} Uhr</p>
                       {event.description && (
-                        <p className="text-sm mt-2 text-muted-foreground">{sanitizeText(event.description)}</p>
+                        <p className="text-sm mt-2 text-muted-foreground break-words">
+                          <LinkifiedText text={event.description} />
+                        </p>
                       )}
                       <div className="mt-4 flex justify-end">
                         <Button 
@@ -464,7 +467,9 @@ export default function TerminePage() {
                             <p className="font-medium">{sanitizeText(event.title)}</p>
                             <p className="text-xs text-muted-foreground">{sanitizeText(event.location)}</p>
                             {event.description && (
-                              <p className="text-sm text-muted-foreground mt-1">{sanitizeText(event.description)}</p>
+                              <p className="text-sm text-muted-foreground mt-1 break-words">
+                                <LinkifiedText text={event.description} />
+                              </p>
                             )}
                           </div>
                           <div className="flex flex-col items-end ml-4">
