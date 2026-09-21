@@ -292,6 +292,9 @@ export default function HomePage() {
             <CardDescription>
               Die nächsten anstehenden Wettkämpfe
             </CardDescription>
+            <p className="mt-1 text-xs font-semibold text-red-600 dark:text-red-400">
+              📍 Neu: Auf den Vereinsnamen tippen öffnet die Anfahrt in Google Maps.
+            </p>
           </CardHeader>
           <CardContent>
             {isLoadingEvents ? (
