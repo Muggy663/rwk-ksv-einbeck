@@ -83,6 +83,30 @@ export default function AdminClubsPage() {
     fetchClubs();
   }, []);
 
+  // Entwurf je Verein für die Anfahrt-Link-Übersicht (clubId -> Eingabewert).
+  const [mapsDraft, setMapsDraft] = useState<Record<string, string>>({});
+  const [savingMaps, setSavingMaps] = useState<string | null>(null);
+
+  const speichereMapsLink = async (club: ClubWithNumber) => {
+    const wert = (mapsDraft[club.id] ?? club.mapsUrl ?? '').trim();
+    if (wert && !/^https?:\/\/\S+/i.test(wert)) {
+      toast({ title: 'Ungültiger Link', description: 'Bitte einen vollständigen Link eingeben (http:// oder https://).', variant: 'destructive' });
+      return;
+    }
+    setSavingMaps(club.id);
+    try {
+      await updateDoc(doc(db, CLUBS_COLLECTION, club.id), { mapsUrl: wert });
+      setClubs(prev => prev.map(c => c.id === club.id ? { ...c, mapsUrl: wert } : c));
+      setMapsDraft(prev => ({ ...prev, [club.id]: wert }));
+      toast({ title: 'Gespeichert', description: `Anfahrt-Link für ${club.name} aktualisiert.` });
+    } catch (error) {
+      logError('Anfahrt-Link speichern fehlgeschlagen:', error);
+      toast({ title: 'Fehler', description: 'Konnte nicht gespeichert werden.', variant: 'destructive' });
+    } finally {
+      setSavingMaps(null);
+    }
+  };
+
   const handleAddNew = () => {
     setFormMode('new');
     setCurrentClub({ name: '', shortName: '', clubNumber: '', ausrichterDisziplinen: [] });
@@ -286,6 +310,57 @@ export default function AdminClubsPage() {
                   })}
                 </tbody>
               </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Übersicht: Anfahrt (Google-Maps-Link) je Verein */}
+      {clubs.length > 0 && (
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle>Anfahrt (Google-Maps-Links)</CardTitle>
+            <CardDescription>
+              Link zum Schützenhaus/Stand je Verein. Wird an Terminen als klickbarer Ort angezeigt, damit Gäste den Weg finden. Tipp: In Google Maps „Teilen" → „Link kopieren".
+              {(() => {
+                const offen = clubs.filter(c => !c.mapsUrl).length;
+                return offen > 0 ? ` (${offen} noch offen)` : ' (alle gepflegt ✓)';
+              })()}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {[...clubs].sort((a, b) => a.name.localeCompare(b.name)).map(club => {
+                const wert = mapsDraft[club.id] ?? club.mapsUrl ?? '';
+                const geaendert = wert.trim() !== (club.mapsUrl ?? '').trim();
+                const ungepflegt = !club.mapsUrl;
+                return (
+                  <div key={club.id} className={`flex flex-col gap-2 rounded-md border p-2 md:flex-row md:items-center ${ungepflegt ? 'border-amber-300 bg-amber-50 dark:bg-amber-950/20' : ''}`}>
+                    <div className="md:w-56 shrink-0 font-medium">
+                      {club.name}
+                      {ungepflegt && <span className="ml-2 text-xs text-amber-700 dark:text-amber-300">offen</span>}
+                    </div>
+                    <Input
+                      type="url"
+                      inputMode="url"
+                      placeholder="https://maps.app.goo.gl/…"
+                      value={wert}
+                      onChange={(e) => setMapsDraft(prev => ({ ...prev, [club.id]: e.target.value }))}
+                      className="flex-1"
+                    />
+                    <div className="flex items-center gap-2">
+                      {club.mapsUrl && (
+                        <a href={club.mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:text-blue-800 underline whitespace-nowrap">
+                          Öffnen
+                        </a>
+                      )}
+                      <Button size="sm" variant={geaendert ? 'default' : 'outline'} onClick={() => speichereMapsLink(club)} disabled={savingMaps === club.id || !geaendert}>
+                        {savingMaps === club.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Speichern'}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>

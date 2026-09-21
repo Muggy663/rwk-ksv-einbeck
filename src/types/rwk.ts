@@ -41,6 +41,8 @@ export interface Club {
   phone?: string;
   /** Welche Disziplinen der Verein ausrichten kann (Standkapazität): 'LG' | 'KKG' | 'KKP' */
   ausrichterDisziplinen?: string[];
+  /** Google-Maps-Link zur Anfahrt (Schützenhaus/Stand). Für den Anfahrt-Link an Terminen. */
+  mapsUrl?: string;
 }
 
 export interface Team {

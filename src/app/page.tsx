@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { fetchEvents } from '@/lib/services/calendar-service';
 import { LinkifiedText } from '@/components/ui/linkified-text';
+import { findMapsUrlForLocation, type ClubMapsInfo } from '@/lib/utils/club-maps';
 import { newsService } from '@/lib/services/news-service';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
@@ -47,6 +48,7 @@ export default function HomePage() {
   const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(true);
   const [latestNews, setLatestNews] = useState<any[]>([]);
   const [isLoadingNews, setIsLoadingNews] = useState<boolean>(true);
+  const [clubsMaps, setClubsMaps] = useState<ClubMapsInfo[]>([]);
   const [isNativeApp, setIsNativeApp] = useState(false);
   
   useEffect(() => {
@@ -64,7 +66,7 @@ export default function HomePage() {
       
       try {
         // Parallele Abfragen für bessere Performance
-        const [updatesResult, eventsResult, newsResult] = await Promise.allSettled([
+        const [updatesResult, eventsResult, newsResult, clubsResult] = await Promise.allSettled([
           // Updates laden
           getDocs(query(
             collection(db, LEAGUE_UPDATES_COLLECTION),
@@ -80,7 +82,9 @@ export default function HomePage() {
             return fetchEvents(today, endDate);
           })(),
           // News laden (neueste 3)
-          newsService.getPublishedArticles(3)
+          newsService.getPublishedArticles(3),
+          // Vereine laden (für Anfahrt-Link am Termin-Ort)
+          getDocs(collection(db, 'clubs'))
         ]);
         
         // Updates verarbeiten
@@ -131,6 +135,17 @@ export default function HomePage() {
           setLatestNews(newsResult.value || []);
         } else {
           logError("Fehler beim Laden der News:", newsResult.reason);
+        }
+
+        // Vereine verarbeiten (nur name + mapsUrl für den Anfahrt-Link nötig)
+        if (clubsResult.status === 'fulfilled') {
+          const list: ClubMapsInfo[] = clubsResult.value.docs.map(d => {
+            const data = d.data() as any;
+            return { id: d.id, name: data.name || '', mapsUrl: data.mapsUrl };
+          });
+          setClubsMaps(list);
+        } else {
+          logError("Fehler beim Laden der Vereine:", clubsResult.reason);
         }
         
       } catch (error) {
@@ -307,7 +322,23 @@ export default function HomePage() {
                         {isToday ? 'HEUTE' : format(new Date(event.date), 'EEEE, d. MMMM', { locale: de })}
                       </div>
                       <div className="text-sm" style={isToday ? { color: '#e2e8f0' } : {}}>
-                        {event.time} Uhr, {event.location}
+                        {event.time} Uhr,{' '}
+                        {(() => {
+                          const mapsUrl = findMapsUrlForLocation(event.location, clubsMaps);
+                          return mapsUrl ? (
+                            <a
+                              href={mapsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 underline"
+                              title="Anfahrt in Google Maps öffnen"
+                            >
+                              📍 {event.location}
+                            </a>
+                          ) : (
+                            <span>{event.location}</span>
+                          );
+                        })()}
                       </div>
                       {event.description && (
                         <div className="text-xs text-muted-foreground mt-1 break-words">

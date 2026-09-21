@@ -16,6 +16,7 @@ import { useClubContext } from '@/contexts/ClubContext';
 import { getMemberPermissions } from '@/lib/permissions/memberPermissions';
 import { MemberList } from '@/components/members/MemberList';
 import { StandkapazitaetCard } from '@/components/members/StandkapazitaetCard';
+import { AnfahrtCard } from '@/components/members/AnfahrtCard';
 
 export default function MitgliederPage() {
   const { user, userAppPermissions, loading } = useAuthContext();
@@ -151,7 +152,10 @@ export default function MitgliederPage() {
       {/* Standkapazität (welche Disziplinen der Verein ausrichten kann) – nur bei
           konkret aktivem Verein, nicht in der "alle Vereine"-Admin-Ansicht. */}
       {effectiveClubId && (
-        <StandkapazitaetCard clubId={effectiveClubId} canEdit={permissions.canEdit} />
+        <>
+          <StandkapazitaetCard clubId={effectiveClubId} canEdit={permissions.canEdit} />
+          <AnfahrtCard clubId={effectiveClubId} canEdit={permissions.canEdit} />
+        </>
       )}
 
       <MemberList

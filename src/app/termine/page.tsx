@@ -18,6 +18,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { cleanupExpiredEvents } from '@/lib/services/event-cleanup';
 import { LinkifiedText } from '@/components/ui/linkified-text';
+import { findMapsUrlForLocation, type ClubMapsInfo } from '@/lib/utils/club-maps';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 
 const sanitizeText = (text: string | undefined | null): string => {
   return String(text || '').replace(/[<>"'&]/g, (char) => {
@@ -47,6 +50,7 @@ export default function TerminePage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvents, setSelectedEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [clubsMaps, setClubsMaps] = useState<ClubMapsInfo[]>([]);
   
   const [, setSeasons] = useState<Array<{ id: string; name: string; year: number }>>([]);
   const [, setLeagues] = useState<Array<{ id: string; name: string; type: string }>>([]);
@@ -76,6 +80,21 @@ export default function TerminePage() {
     };
     
     loadSeasons();
+  }, []);
+
+  // Vereine laden (für den Anfahrt-Link am Termin-Ort)
+  useEffect(() => {
+    (async () => {
+      try {
+        const snap = await getDocs(collection(db, 'clubs'));
+        setClubsMaps(snap.docs.map(d => {
+          const data = d.data() as any;
+          return { id: d.id, name: data.name || '', mapsUrl: data.mapsUrl } as ClubMapsInfo;
+        }));
+      } catch (error) {
+        logError('Fehler beim Laden der Vereine (Anfahrt):', error);
+      }
+    })();
   }, []);
   
   // Lade Ligen, wenn sich die Saison ändert
@@ -414,7 +433,16 @@ export default function TerminePage() {
                           {getBadgeText(event.type, event.isKreisverband)}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">{sanitizeText(event.location)}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {(() => {
+                          const mapsUrl = findMapsUrlForLocation(event.location, clubsMaps);
+                          return mapsUrl ? (
+                            <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline" title="Anfahrt in Google Maps öffnen">
+                              📍 {sanitizeText(event.location)}
+                            </a>
+                          ) : sanitizeText(event.location);
+                        })()}
+                      </p>
                       <p className="text-sm mt-2">Uhrzeit: {sanitizeText(event.time)} Uhr</p>
                       {event.description && (
                         <p className="text-sm mt-2 text-muted-foreground break-words">
@@ -465,7 +493,16 @@ export default function TerminePage() {
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
                             <p className="font-medium">{sanitizeText(event.title)}</p>
-                            <p className="text-xs text-muted-foreground">{sanitizeText(event.location)}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {(() => {
+                                const mapsUrl = findMapsUrlForLocation(event.location, clubsMaps);
+                                return mapsUrl ? (
+                                  <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline" title="Anfahrt in Google Maps öffnen">
+                                    📍 {sanitizeText(event.location)}
+                                  </a>
+                                ) : sanitizeText(event.location);
+                              })()}
+                            </p>
                             {event.description && (
                               <p className="text-sm text-muted-foreground mt-1 break-words">
                                 <LinkifiedText text={event.description} />

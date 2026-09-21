@@ -4,6 +4,12 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.0.8
+- **📍 Anfahrt zum Ausrichter mit einem Klick**: An den Terminen ist der Ort jetzt anklickbar und öffnet die Anfahrt in Google Maps (neuer Tab) – so finden auch ortsunkundige Schützen den Weg zum ausrichtenden Verein. Der Link wird pro Verein hinterlegt: Admins pflegen ihn zentral in der Vereinsverwaltung („Anfahrt (Google-Maps-Links)"), Sportleiter/Vorstand können den Link ihres eigenen Vereins direkt auf der Mitglieder-Seite eintragen, ändern oder löschen (mit Sicherheitsabfrage). Zum Eintragen einfach in Google Maps „Teilen → Link kopieren" und einfügen
+- **🔗 Lange Links in Termin-Beschreibungen aufgeräumt**: Enthält eine Termin-Beschreibung einen langen Link (z. B. eine Google-Maps-URL), wird dieser jetzt als kurzer, klickbarer Link („📍 Karte öffnen") dargestellt, statt als lange Zeichenkette aus dem Kasten zu laufen
+
+---
+
 ## Version 3.0.7
 - **🔒 KM-Bereich: Zugriff korrekt beschränkt**: Wichtiger Sicherheits-Fix — der Kreismeisterschafts-Bereich war durch einen Programmierfehler für jeden eingeloggten Nutzer zugänglich, unabhängig von der Rolle. Jetzt kommen nur noch Sportleiter, KM-Organisatoren (Kreis-Wettkampfleiter) und Administratoren hinein. Vorstände, Mannschaftsführer und einfache Vereinsvertreter haben keinen KM-Zugang mehr
 - **💾 Ergebniserfassung: sicheres Speichern**: Beim gemeinsamen Speichern mehrerer Ergebnisse wird jetzt entweder alles oder nichts geschrieben. Vorher konnte bei einem Abbruch mitten im Vorgang ein Teil der Ergebnisse fehlen, während trotzdem „erfolgreich" gemeldet wurde – das ist ausgeschlossen
