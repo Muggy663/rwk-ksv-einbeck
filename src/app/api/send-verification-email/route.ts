@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
               <li>Import von elektronischen Anlagen (Meyton, Sius, etc.)</li>
               <li>Detaillierte Statistiken und Auswertungen</li>
               <li>PDF-Export für Behörden</li>
-              <li>30 Tage Premium kostenlos testen</li>
+              <li>Kostenlos für alle registrierten Nutzer</li>
             </ul>
           </div>
           

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
-import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
+import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { UserCog, Loader2, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -47,10 +47,6 @@ interface UserPermissionFormData {
   selectedClubId: string;
   clubRole: string;
   selectedClubIds: string[];
-
-  isPremium: boolean;
-  premiumMonths?: number;
-  autoRenew?: boolean;
 }
 
 export default function AdminUserManagementPage() {
@@ -66,10 +62,6 @@ export default function AdminUserManagementPage() {
     selectedClubId: '',
     clubRole: 'NO_CLUB_ROLE',
     selectedClubIds: [],
-
-    isPremium: false,
-    premiumMonths: 1,
-    autoRenew: false,
   });
   
   const [allClubs, setAllClubs] = useState<Club[]>([]);
@@ -133,14 +125,11 @@ export default function AdminUserManagementPage() {
           clubRole: (Object.values((data as any).clubRoles || {})[0] as string) || 'NO_CLUB_ROLE',
           selectedClubId: data.clubId || Object.keys((data as any).clubRoles || {})[0] || '',
           selectedClubIds,
-          isPremium: (data as any).isPremium || false,
-          premiumMonths: 1,
-          autoRenew: (data as any).autoRenew || false,
         });
         toast({title: "Benutzerdaten geladen", description: `Berechtigungen für UID ${uidToFetch.trim()} geladen.`});
       } else {
         setFormData(prev => ({
-          ...prev, uid: uidToFetch.trim(), email: '', displayName: '', platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE', selectedClubId: '', isPremium: false,
+          ...prev, uid: uidToFetch.trim(), email: '', displayName: '', platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE', selectedClubId: '',
         }));
         toast({title: "Neuer Benutzer?", description: `Keine Berechtigungen für UID ${uidToFetch.trim()} gefunden. Bitte E-Mail und Anzeigenamen eintragen.`, variant: "default"});
       }
@@ -157,7 +146,7 @@ export default function AdminUserManagementPage() {
       fetchAndSetExistingPermissions(formData.uid);
     } else if (formData.uid.trim().length === 0) {
         setFormData(prev => ({
-        ...prev, email: '', displayName: '', platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE', selectedClubId: '', isPremium: false,
+        ...prev, email: '', displayName: '', platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE', selectedClubId: '',
       }));
     }
   }, [formData.uid, fetchAndSetExistingPermissions]);
@@ -239,35 +228,9 @@ export default function AdminUserManagementPage() {
       
 
       
-      // Premium-Status
-      if (formData.isPremium) {
-        const expiresAt = new Date();
-        expiresAt.setMonth(expiresAt.getMonth() + (formData.premiumMonths || 1));
-        
-        permissionData.isPremium = true;
-        permissionData.premiumUntil = Timestamp.fromDate(expiresAt);
-        permissionData.premiumActivatedAt = Timestamp.now();
-        permissionData.autoRenew = formData.autoRenew || false;
-        permissionData.paymentMethod = 'admin_activated';
-        
-        // Automatische E-Mail-Verifizierung für Admin-aktivierte Premium-Nutzer
-        try {
-          // Setze emailVerified auf true für diesen User
-          // Hinweis: Das funktioniert nur mit Admin SDK, nicht mit Client SDK
-          logDebug('📧 E-Mail-Verifizierung für Premium-User:', formData.email);
-          
-          // Speichere Flag in Firestore dass E-Mail als verifiziert gilt
-          permissionData.emailVerifiedByAdmin = true;
-          permissionData.emailVerifiedAt = Timestamp.now();
-          
-        } catch (error) {
-          logWarn('E-Mail-Verifizierung fehlgeschlagen:', error instanceof Error ? error.message : String(error));
-        }
-      } else {
-        permissionData.isPremium = false;
-        permissionData.premiumUntil = null;
-        permissionData.autoRenew = false;
-      }
+      // E-Mail wird für über das Admin-Panel angelegte Nutzer als verifiziert markiert.
+      permissionData.emailVerifiedByAdmin = true;
+      permissionData.emailVerifiedAt = Timestamp.now();
 
       // Erst bestehende Daten laden, dann gezielt überschreiben
       const existingDoc = await getDoc(userPermissionRef);
@@ -292,8 +255,7 @@ export default function AdminUserManagementPage() {
       setFormData({
         uid: '', email: '', displayName: '', 
         platformRole: 'NO_PLATFORM_ROLE', kvRole: 'NO_KV_ROLE', clubRole: 'NO_CLUB_ROLE',
-        selectedClubId: '', selectedClubIds: [], isPremium: false,
-        premiumMonths: 1, autoRenew: false,
+        selectedClubId: '', selectedClubIds: [],
       });
       
       setRefreshTrigger(prev => prev + 1);
@@ -330,9 +292,6 @@ export default function AdminUserManagementPage() {
       clubRole: (Object.values((user as any).clubRoles || {})[0] as string) || 'NO_CLUB_ROLE',
       selectedClubId: user.clubId || Object.keys((user as any).clubRoles || {})[0] || '',
       selectedClubIds,
-      isPremium: (user as any).isPremium || false,
-      premiumMonths: 1,
-      autoRenew: (user as any).autoRenew || false,
     });
     setActiveTab("edit");
   };
@@ -371,8 +330,7 @@ export default function AdminUserManagementPage() {
                 Benutzer anlegen und Rollen zuweisen. Kombiniert Erstellung und Rollenverwaltung in einem Formular.<br/>
                 <strong>Platform-Rollen:</strong> System-weite Berechtigungen (SUPER_ADMIN)<br/>
                 <strong>KV-Rollen:</strong> Kreisverband-Berechtigungen (KV_WETTKAMPFLEITER)<br/>
-                <strong>Club-Rollen:</strong> Vereins-spezifische Rollen (SPORTLEITER, VORSTAND, MANNSCHAFTSFÜHRER, etc.)<br/>
-                <strong>Premium:</strong> Schießnachweis Premium-Features
+                <strong>Club-Rollen:</strong> Vereins-spezifische Rollen (SPORTLEITER, MANNSCHAFTSFÜHRER)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -437,57 +395,6 @@ export default function AdminUserManagementPage() {
                 </div>
                 
                 <div className="grid grid-cols-1 gap-6">
-
-                  
-                  <div className="space-y-3">
-                    <Label>💎 Premium-Status (Schießnachweis)</Label>
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id="isPremium"
-                        checked={formData.isPremium || false}
-                        onChange={(e) => setFormData(prev => ({ ...prev, isPremium: e.target.checked }))}
-                        className="rounded"
-                      />
-                      <Label htmlFor="isPremium" className="text-sm">
-                        Premium-Features aktivieren (Cloud-Sync, erweiterte Stats)
-                      </Label>
-                    </div>
-                    {formData.isPremium && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200">
-                        <div className="space-y-1.5">
-                          <Label htmlFor="premiumMonths" className="text-sm font-medium">Laufzeit (Monate)</Label>
-                          <Input 
-                            id="premiumMonths"
-                            name="premiumMonths"
-                            type="number"
-                            min="1"
-                            max="12"
-                            placeholder="1"
-                            value={formData.premiumMonths || 1}
-                            onChange={(e) => setFormData(prev => ({ ...prev, premiumMonths: parseInt(e.target.value) || 1 }))}
-                            className="w-full"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-sm font-medium">Auto-Renewal</Label>
-                          <div className="flex items-center space-x-2">
-                            <input 
-                              type="checkbox" 
-                              id="autoRenew"
-                              checked={formData.autoRenew || false}
-                              onChange={(e) => setFormData(prev => ({ ...prev, autoRenew: e.target.checked }))}
-                              className="rounded"
-                            />
-                            <Label htmlFor="autoRenew" className="text-sm">
-                              Automatische Verlängerung
-                            </Label>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <Label>🏠 Vereine auswählen (Multi-Verein)</Label>

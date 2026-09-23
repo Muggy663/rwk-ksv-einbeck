@@ -297,7 +297,6 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
                     <TableHead className="w-[150px]">Name</TableHead>
                     <TableHead className="w-[200px]">Rolle</TableHead>
                     <TableHead className="w-[250px]">Vereine</TableHead>
-                    <TableHead className="w-[100px]">Premium</TableHead>
                     <TableHead className="w-[80px]">E-Mail ✓</TableHead>
                     <TableHead className="w-[100px] text-right">Aktionen</TableHead>
                   </TableRow>
@@ -317,24 +316,6 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
                             </Badge>
                           )}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {(user as any).isPremium ? (
-                          <div className="flex flex-col gap-1">
-                            <Badge variant="default" className="bg-yellow-500 text-white text-xs">
-                              📎 Premium
-                            </Badge>
-                            {(user as any).autoRenew && (
-                              <Badge variant="outline" className="text-xs">
-                                Auto-Renewal
-                              </Badge>
-                            )}
-                          </div>
-                        ) : (
-                          <Badge variant="outline" className="text-xs text-muted-foreground">
-                            Standard
-                          </Badge>
-                        )}
                       </TableCell>
                       <TableCell>
                         {(user as any).emailVerifiedByAdmin ? (

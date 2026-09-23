@@ -324,12 +324,6 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Premium-Subscriptions
-    match /premium_subscriptions/{userId} {
-      allow read, write: if isSuperAdmin() ||
-                         (isAuthenticated() && request.auth.uid == userId);
-    }
-
     // === SYSTEM & ADMIN ===
 
     match /user_permissions/{userId} {
@@ -338,10 +332,8 @@ service cloud.firestore {
       allow update: if isSuperAdmin() ||
                     (isAuthenticated() &&
                      request.auth.uid == userId &&
-                     // Erlaube Premium-Updates durch API
-                     (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isPremium', 'premiumUntil', 'premiumPlan', 'updatedAt']) ||
-                      // Erlaube Social Settings Updates
-                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['socialSettings', 'updatedAt']) ||
+                     // Erlaube Social Settings Updates
+                     (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['socialSettings', 'updatedAt']) ||
                       // Erlaube Notification Settings Updates
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notificationSettings', 'updatedAt']) ||
                       // Erlaube Profil Updates

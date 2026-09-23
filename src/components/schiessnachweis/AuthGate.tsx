@@ -83,8 +83,8 @@ export function AuthGate({ children }: AuthGateProps) {
             </CardTitle>
             <CardDescription>
               {isLogin 
-                ? 'Melden Sie sich an, um Premium-Features zu nutzen'
-                : 'Erstellen Sie ein Konto für Premium-Features'
+                ? 'Melden Sie sich an, um den Schießnachweis zu nutzen'
+                : 'Erstellen Sie ein Konto für den Schießnachweis'
               }
             </CardDescription>
           </CardHeader>

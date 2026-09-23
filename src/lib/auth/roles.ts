@@ -34,7 +34,6 @@ export interface AccessLevels {
   rwk: boolean;           // RWK-Tabellen ansehen
   km: boolean;            // KM-Bereiche ansehen
   schiessnachweis: boolean; // Schießnachweis nutzen
-  premiumFeatures: boolean; // Premium-Features
   vereinssoftware: boolean; // Vereinssoftware
   admin: boolean;         // Admin-Bereiche
 }
@@ -44,7 +43,6 @@ export const getAccessLevels = (permissions: UserPermissions, clubId?: string): 
     rwk: canAccessRWK(permissions),
     km: canAccessKM(permissions),
     schiessnachweis: canAccessSchiessnachweis(permissions),
-    premiumFeatures: canAccessPremiumFeatures(permissions),
     vereinssoftware: clubId ? canAccessVereinssoftware(permissions, clubId) : false,
     admin: permissions.platformRole === 'SUPER_ADMIN'
   };
@@ -58,10 +56,6 @@ export interface UserPermissions {
   
   // Nutzertyp
   userType: UserType;
-  
-  // Premium-Status (für Schießnachweis)
-  isPremium?: boolean;
-  premiumUntil?: Date;
   
   // Legacy (für Migration)
   role?: LegacyRole;
@@ -148,12 +142,7 @@ export const canAccessSchiessnachweis = (permissions: UserPermissions): boolean 
   return permissions.userType !== 'GUEST';
 };
 
-export const canAccessPremiumFeatures = (permissions: UserPermissions): boolean => {
-  if (permissions.platformRole === 'SUPER_ADMIN') return true;
-  if (!permissions.isPremium) return false;
-  if (permissions.premiumUntil && permissions.premiumUntil < new Date()) return false;
-  return true;
-};
+
 
 // Nutzertyp bestimmen
 export const determineUserType = (permissions: UserPermissions): UserType => {
