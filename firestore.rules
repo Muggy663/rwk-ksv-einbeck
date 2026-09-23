@@ -3,229 +3,114 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // === HELPER FUNCTIONS (AdminSDK + 3-Ebenen-Architektur) ===
-    
+    // === HELPER FUNCTIONS ===
+    //
+    // Aufgeräumte Fassung: Es sind nur noch die Rollen enthalten, die im
+    // Anwendungscode tatsächlich geprüft werden:
+    //   Platform : SUPER_ADMIN
+    //   KV       : KV_WETTKAMPFLEITER, KV_KM_ORGA
+    //   Verein   : SPORTLEITER, MANNSCHAFTSFUEHRER, VORSTAND (Rest-Kompatibilität)
+    //   Legacy   : role = 'vereinsvertreter' | 'mannschaftsfuehrer' | 'km_organisator'
+    //
+    // WICHTIG (Abwärtskompatibilität): KV-Rollen liegen in Bestandsdaten mal als
+    // Einzelfeld `kvRole` (String) und mal als Map `kvRoles` vor. Alle Prüfungen
+    // akzeptieren daher BEIDE Varianten, damit niemand ausgesperrt wird.
+
     function isAuthenticated() {
       return request.auth != null;
     }
 
     function getUserPermissions() {
-      return request.auth != null && 
+      return request.auth != null &&
              exists(/databases/$(database)/documents/user_permissions/$(request.auth.uid)) ?
              get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data : null;
     }
 
-    // 👑 Globale Rollen
+    // 👑 Super-Admin (per E-Mail oder platformRole)
     function isSuperAdmin() {
-      return request.auth != null && 
+      return request.auth != null &&
              (request.auth.token.email == 'admin@rwk-einbeck.de' ||
               (getUserPermissions() != null && getUserPermissions().platformRole == 'SUPER_ADMIN'));
     }
-    
-    // TEMPORÄR: Direkte E-Mail-Prüfung für Admin
-    function isAdminEmail() {
-      return request.auth != null && request.auth.token.email == 'admin@rwk-einbeck.de';
-    }
-    
-    function isSystemAdmin() {
-      return isAuthenticated() && 
-             getUserPermissions() != null && 
-             getUserPermissions().platformRole == 'SYSTEM_ADMIN';
-    }
-    
-    function isDataManager() {
-      return isAuthenticated() && 
-             getUserPermissions() != null && 
-             getUserPermissions().platformRole == 'DATA_MANAGER';
+
+    // 🎯 KV-Rollen – akzeptiert kvRole (Einzahl) UND kvRoles (Map).
+    function hasKvRoleAny(rollen) {
+      return isAuthenticated() && getUserPermissions() != null &&
+             (
+               (getUserPermissions().kvRole != null && (getUserPermissions().kvRole in rollen)) ||
+               (getUserPermissions().kvRoles != null &&
+                getUserPermissions().kvRoles.values().hasAny(rollen))
+             );
     }
 
-    // 🎯 KV-Rollen
-    function getUserKvRole(kvId) {
-      return isAuthenticated() && getUserPermissions() != null && getUserPermissions().kvRoles != null ?
-             getUserPermissions().kvRoles[kvId] : null;
+    // KM-Orga: Wettkampfleiter, KM-Orga, sowie Legacy-role 'km_organisator'.
+    function isKmOrgaGlobal() {
+      return hasKvRoleAny(['KV_KM_ORGA', 'KM_ORGANISATOR', 'KV_WETTKAMPFLEITER']) ||
+             (isAuthenticated() && getUserPermissions() != null &&
+              getUserPermissions().role == 'km_organisator');
     }
 
-    function isKvWettkampfleiter(kvId) {
-      return getUserKvRole(kvId) == 'KV_WETTKAMPFLEITER';
-    }
-    
-    function isKvKmOrga(kvId) {
-      return getUserKvRole(kvId) == 'KV_KM_ORGA' || getUserKvRole(kvId) == 'KM_ORGANISATOR';
-    }
-    
-    function isKvPressewart(kvId) {
-      return getUserKvRole(kvId) == 'KV_PRESSEWART';
-    }
-    
-    function isKvKampfrichter(kvId) {
-      return getUserKvRole(kvId) == 'KV_KAMPFRICHTER';
-    }
-
-    // 🏢 Vereins-Rollen (Neue Struktur)
+    // 🏢 Vereins-Rollen (Map clubRoles: { clubId: ROLE })
     function getUserClubRole(clubId) {
       return isAuthenticated() && getUserPermissions() != null && getUserPermissions().clubRoles != null ?
              getUserPermissions().clubRoles[clubId] : null;
     }
 
-    function isVorstand(clubId) { 
-      return getUserClubRole(clubId) == 'VORSTAND'; 
-    }
-    
-    function isSportleiter(clubId) { 
-      return getUserClubRole(clubId) == 'SPORTLEITER'; 
-    }
-    
-    function isKassenwart(clubId) { 
-      return getUserClubRole(clubId) == 'KASSENWART'; 
-    }
-    
-    function isSchriftfuehrer(clubId) { 
-      return getUserClubRole(clubId) == 'SCHRIFTFUEHRER'; 
-    }
-    
-    function isJugendwart(clubId) { 
-      return getUserClubRole(clubId) == 'JUGENDWART'; 
-    }
-    
-    function isDamenwart(clubId) { 
-      return getUserClubRole(clubId) == 'DAMENWART'; 
-    }
-    
-    function isZeugwart(clubId) { 
-      return getUserClubRole(clubId) == 'ZEUGWART'; 
-    }
-    
-    function isPressewart(clubId) { 
-      return getUserClubRole(clubId) == 'PRESSEWART'; 
+    function isVorstand(clubId) {
+      return getUserClubRole(clubId) == 'VORSTAND';
     }
 
-    function isTrainer(clubId) { 
-      return getUserClubRole(clubId) == 'TRAINER'; 
+    function isSportleiter(clubId) {
+      return getUserClubRole(clubId) == 'SPORTLEITER';
     }
 
-    function isAusbilder(clubId) { 
-      return getUserClubRole(clubId) == 'AUSBILDER'; 
-    }
-
-    function isVereinsschuetze(clubId) { 
-      return getUserClubRole(clubId) == 'VEREINSSCHUETZE'; 
-    }
-
-    function isEhrenmitglied(clubId) { 
-      return getUserClubRole(clubId) == 'EHRENMITGLIED'; 
-    }
-
-    // Legacy-Support (Übergangszeit)
-    function hasLegacyClubAccess(clubId) {
-      return isAuthenticated() && 
-             getUserPermissions() != null && 
-             (getUserPermissions().role == 'vereinsvertreter' || getUserPermissions().role == 'mannschaftsfuehrer') &&
-             (getUserPermissions().clubId == clubId || 
-              getUserPermissions().assignedClubId == clubId ||
-              (getUserPermissions().role == 'mannschaftsfuehrer' && clubId != null));
-    }
-    
     function isMannschaftsfuehrer(clubId) {
       return getUserClubRole(clubId) == 'MANNSCHAFTSFUEHRER';
     }
-    
-    function isLegacyMannschaftsfuehrer() {
-      return isAuthenticated() && 
-             getUserPermissions() != null && 
-             getUserPermissions().role == 'mannschaftsfuehrer';
+
+    // Legacy-Support (Alt-Nutzer mit role-Feld statt clubRoles-Map)
+    function hasLegacyClubAccess(clubId) {
+      return isAuthenticated() &&
+             getUserPermissions() != null &&
+             (getUserPermissions().role == 'vereinsvertreter' || getUserPermissions().role == 'mannschaftsfuehrer') &&
+             (getUserPermissions().clubId == clubId ||
+              getUserPermissions().assignedClubId == clubId ||
+              (getUserPermissions().role == 'mannschaftsfuehrer' && clubId != null));
     }
 
+    // Irgendeine Vereins-Rolle (oder Legacy) für diesen Verein?
     function hasClubAccess(clubId) {
-      return isSuperAdmin() || 
+      return isSuperAdmin() ||
              getUserClubRole(clubId) != null ||
              hasLegacyClubAccess(clubId);
     }
 
+    // Schreibrecht auf Vereins-Ebene (Standkapazität, Anfahrt, Vereinsdaten):
+    // Admin, Sportleiter/Vorstand des eigenen Vereins, Legacy.
     function canWriteClub(clubId) {
-      return isSuperAdmin() || 
-             isVorstand(clubId) ||
-             hasLegacyClubAccess(clubId); // Legacy
-    }
-
-    function canReadFinances(clubId) {
-      return isSuperAdmin() || 
-             isVorstand(clubId) || 
-             isKassenwart(clubId) ||
-             hasLegacyClubAccess(clubId); // Legacy
-    }
-
-    function canWriteFinances(clubId) {
-      return isSuperAdmin() || 
-             isVorstand(clubId) || 
-             isKassenwart(clubId) ||
-             hasLegacyClubAccess(clubId); // Legacy
-    }
-
-    // 🎓 Erweiterte Berechtigungen
-    function canAccessLicenses(clubId) {
-      return isSuperAdmin() || 
-             isVorstand(clubId) ||
+      return isSuperAdmin() ||
              isSportleiter(clubId) ||
-             isTrainer(clubId) ||
-             isAusbilder(clubId) ||
-             hasLegacyClubAccess(clubId);
-    }
-
-    function canAccessJubilees(clubId) {
-      return isSuperAdmin() || 
-             isVorstand(clubId) ||
-             isKassenwart(clubId) ||
-             isSchriftfuehrer(clubId) ||
-             hasLegacyClubAccess(clubId);
-    }
-
-    function canAccessTasks(clubId) {
-      return isSuperAdmin() || 
              isVorstand(clubId) ||
              hasLegacyClubAccess(clubId);
-    }
-
-    function canReadMembers(clubId) {
-      return isSuperAdmin() || 
-             isVorstand(clubId) || 
-             isKassenwart(clubId) || 
-             isSchriftfuehrer(clubId) ||
-             isSportleiter(clubId) || // Mannschaftsplanung
-             isMannschaftsfuehrer(clubId) || // Mannschaftsplanung
-             isJugendwart(clubId) ||
-             isDamenwart(clubId) ||
-             hasLegacyClubAccess(clubId); // Legacy
-    }
-
-    function canWriteMembers(clubId) {
-      return isSuperAdmin() || 
-             isVorstand(clubId) || 
-             isKassenwart(clubId) ||
-             isSportleiter(clubId) || // SPORTLEITER kann Mitglieder bearbeiten
-             hasLegacyClubAccess(clubId); // Legacy
-    }
-
-    function canReadProtocols(clubId) {
-      return isSuperAdmin() || 
-             isVorstand(clubId) || 
-             isSchriftfuehrer(clubId) ||
-             isKassenwart(clubId) || // Kann lesen
-             hasLegacyClubAccess(clubId); // Legacy
-    }
-
-    function canWriteProtocols(clubId) {
-      return isSuperAdmin() || 
-             isVorstand(clubId) || 
-             isSchriftfuehrer(clubId) ||
-             hasLegacyClubAccess(clubId); // Legacy
     }
 
     function isValidRingCount(rings) {
       return rings is number && rings >= 0 && rings <= 600;
     }
 
+    // Hat der eingeloggte Nutzer IRGENDEINE erfassungsberechtigte Rolle?
+    // (Für Schützen-/Ergebnis-Erstellung – bewusst breit, da Mannschaftsführer
+    //  und Sportleiter Ergebnisse eintragen dürfen.)
+    function hasAnyClubOrKvRole() {
+      return isAuthenticated() && getUserPermissions() != null &&
+             (getUserPermissions().clubRoles != null ||
+              getUserPermissions().kvRoles != null ||
+              getUserPermissions().kvRole != null ||
+              getUserPermissions().role != null);
+    }
+
     // === ÖFFENTLICHE BEREICHE ===
-    
+
     match /seasons/{season} {
       allow read: if true;
       allow write: if isSuperAdmin();
@@ -234,12 +119,9 @@ service cloud.firestore {
     match /clubs/{club} {
       allow read: if true;
       // Admin darf alles. Sportleiter/Vorstand des jeweiligen Vereins dürfen ihren
-      // eigenen Verein aktualisieren (z. B. Standkapazität ausrichterDisziplinen).
+      // eigenen Verein aktualisieren (Standkapazität, Anfahrt-Link).
       allow create, delete: if isSuperAdmin();
-      allow update: if isSuperAdmin() ||
-                    isSportleiter(club) ||
-                    isVorstand(club) ||
-                    hasLegacyClubAccess(club);
+      allow update: if canWriteClub(club);
     }
 
     match /rwk_leagues/{league} {
@@ -249,11 +131,7 @@ service cloud.firestore {
 
     match /shooters/{shooter} {
       allow read: if true;
-      allow create, update: if isAuthenticated() &&
-                            (request.auth.token.email == 'admin@rwk-einbeck.de' ||
-                             (exists(/databases/$(database)/documents/user_permissions/$(request.auth.uid)) &&
-                              (get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles != null ||
-                               get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role != null)));
+      allow create, update: if isSuperAdmin() || hasAnyClubOrKvRole();
       allow delete: if false; // NUR über AdminSDK-API
     }
 
@@ -268,16 +146,16 @@ service cloud.firestore {
     }
 
     // === RWK-SYSTEM ===
-    
+
     match /rwk_teams/{team} {
       allow read: if true;
-      allow create: if isSuperAdmin() || 
-                    hasLegacyClubAccess(request.resource.data.clubId) || // Legacy
+      allow create: if isSuperAdmin() ||
+                    hasLegacyClubAccess(request.resource.data.clubId) ||
                     isSportleiter(request.resource.data.clubId) ||
                     isVorstand(request.resource.data.clubId) ||
                     isMannschaftsfuehrer(request.resource.data.clubId);
-      allow update, delete: if isSuperAdmin() || 
-                            hasLegacyClubAccess(resource.data.clubId) || // Legacy
+      allow update, delete: if isSuperAdmin() ||
+                            hasLegacyClubAccess(resource.data.clubId) ||
                             isSportleiter(resource.data.clubId) ||
                             isVorstand(resource.data.clubId) ||
                             isMannschaftsfuehrer(resource.data.clubId);
@@ -285,26 +163,20 @@ service cloud.firestore {
 
     match /rwk_scores/{score} {
       allow read: if true;
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                     isValidRingCount(request.resource.data.totalRinge) &&
-                    (request.auth.token.email == 'admin@rwk-einbeck.de' ||
-                     (exists(/databases/$(database)/documents/user_permissions/$(request.auth.uid)) &&
-                      (get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles != null ||
-                       get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role != null)));
+                    (isSuperAdmin() || hasAnyClubOrKvRole());
       allow update: if isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
 
-   // RWK Scores nach Saison (rwk_scores_[seasonId])
+    // RWK Scores nach Saison (rwk_scores_[seasonId])
     match /{collection}/{score} {
       allow read: if collection.matches('rwk_scores_.*');
-      allow create: if collection.matches('rwk_scores_.*') && 
-                    isAuthenticated() && 
+      allow create: if collection.matches('rwk_scores_.*') &&
+                    isAuthenticated() &&
                     isValidRingCount(request.resource.data.totalRinge) &&
-                    (request.auth.token.email == 'admin@rwk-einbeck.de' ||
-                     (exists(/databases/$(database)/documents/user_permissions/$(request.auth.uid)) &&
-                      (get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles != null ||
-                       get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role != null)));
+                    (isSuperAdmin() || hasAnyClubOrKvRole());
       allow update: if collection.matches('rwk_scores_.*') && isSuperAdmin();
       allow delete: if collection.matches('rwk_scores_.*') && isSuperAdmin();
     }
@@ -314,41 +186,36 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
-    // Ausrichter-Historie (1. Durchgang) – öffentlich lesbar, Schreiben für Admin/KV/Sportleiter
+    // Ausrichter-Historie (1. Durchgang) – öffentlich lesbar,
+    // Schreiben für Admin / KV-Orga/Wettkampfleiter / Sportleiter/Vorstand.
     match /ausrichter_historie/{eintrag} {
       allow read: if true;
       allow write: if isSuperAdmin() ||
+                   isKmOrgaGlobal() ||
                    (isAuthenticated() && getUserPermissions() != null &&
-                    (getUserPermissions().kvRole == 'KV_WETTKAMPFLEITER' ||
-                     (getUserPermissions().kvRoles != null &&
-                      getUserPermissions().kvRoles.values().hasAny(['KV_WETTKAMPFLEITER', 'KV_KM_ORGA'])) ||
-                     (getUserPermissions().clubRoles != null &&
-                      getUserPermissions().clubRoles.values().hasAny(['SPORTLEITER', 'VORSTAND']))));
+                    getUserPermissions().clubRoles != null &&
+                    getUserPermissions().clubRoles.values().hasAny(['SPORTLEITER', 'VORSTAND']));
     }
 
     // === KM-SYSTEM ===
-    
+
     match /km_meldungen/{meldung} {
       allow read: if true;
-      allow write: if isSuperAdmin() || 
-                   hasLegacyClubAccess(resource.data.clubId) || // Legacy
+      allow write: if isSuperAdmin() ||
+                   isKmOrgaGlobal() ||
+                   hasLegacyClubAccess(resource.data.clubId) ||
                    isSportleiter(resource.data.clubId) ||
                    isVorstand(resource.data.clubId);
     }
 
     match /{collection}/{document=**} {
-      allow read: if true && collection.matches('km_meldungen_.*');
-      allow write: if isSuperAdmin() && collection.matches('km_meldungen_.*');
+      allow read: if collection.matches('km_meldungen_.*');
+      allow write: if (isSuperAdmin() || isKmOrgaGlobal()) && collection.matches('km_meldungen_.*');
     }
 
     match /km_ergebnisse/{ergebnis} {
       allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-
-    match /km_startlisten/{startliste} {
-      allow read: if true;
-      allow write, delete: if isSuperAdmin();
+      allow write: if isSuperAdmin() || isKmOrgaGlobal();
     }
 
     match /km_disziplinen/{disziplin} {
@@ -368,44 +235,27 @@ service cloud.firestore {
 
     match /km_shooters/{shooter} {
       allow read: if true;
-      allow write, update, delete: if isSuperAdmin() || 
-                           (isAuthenticated() && getUserPermissions() != null && 
-                            (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
-                             getUserPermissions().role == 'km_organisator'));
+      allow write, update, delete: if isSuperAdmin() || isKmOrgaGlobal();
     }
 
     match /km_startlisten_configs/{config} {
       allow read: if true;
-      allow write: if isSuperAdmin() || 
-                   (isAuthenticated() && getUserPermissions() != null && 
-                    (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
-                     getUserPermissions().role == 'km_organisator'));
+      allow write: if isSuperAdmin() || isKmOrgaGlobal();
     }
 
     match /km_startlisten/{startliste} {
       allow read: if true;
-      allow write, delete: if isSuperAdmin() || 
-                           (isAuthenticated() && getUserPermissions() != null && 
-                            (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
-                             getUserPermissions().role == 'km_organisator'));        
+      allow write, delete: if isSuperAdmin() || isKmOrgaGlobal();
     }
 
-       match /km_startlisten_v2/{startliste} {
+    match /km_startlisten_v2/{startliste} {
       allow read: if true;
-      allow write, delete: if isSuperAdmin() || 
-                           (isAuthenticated() && getUserPermissions() != null && 
-                            (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
-                             getUserPermissions().role == 'km_organisator'));
+      allow write, delete: if isSuperAdmin() || isKmOrgaGlobal();
     }
-
 
     match /km_startlisten_aenderungen/{aenderung} {
       allow read: if true;
-      allow write, delete: if isSuperAdmin() || 
-                           (isAuthenticated() && getUserPermissions() != null && 
-                            (getUserPermissions().kvRole == 'KV_KM_ORGA' ||
-                            getUserPermissions().kvRole == 'KV_WETTKAMPFLEITER' ||
-                             getUserPermissions().role == 'km_organisator'));
+      allow write, delete: if isSuperAdmin() || isKmOrgaGlobal();
     }
 
     // 🔒 Fallback für alle anderen Club-Dokumente
@@ -415,97 +265,78 @@ service cloud.firestore {
     }
 
     // === E-MAIL SYSTEM ===
-    
+
     match /email_contacts/{document} {
-      allow read, write: if request.auth != null && (
-        // Super-Admin
-        request.auth.token.email == 'admin@rwk-einbeck.de' ||
-        // Benutzer mit Admin-Berechtigung in user_permissions
-        exists(/databases/$(database)/documents/user_permissions/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.keys().hasAny(['role', 'clubRoles', 'kvRole']) &&
-        (
-          get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.role == 'superadmin' ||
-          get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.kvRole in ['KV_WETTKAMPFLEITER'] ||
-          get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles != null &&
-          get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles.keys().size() > 0 &&
-          get(/databases/$(database)/documents/user_permissions/$(request.auth.uid)).data.clubRoles.values().hasAny(['SPORTLEITER', 'VORSTAND'])
-        )
-      );
+      allow read, write: if isSuperAdmin() ||
+                         isKmOrgaGlobal() ||
+                         (isAuthenticated() && getUserPermissions() != null &&
+                          getUserPermissions().clubRoles != null &&
+                          getUserPermissions().clubRoles.values().hasAny(['SPORTLEITER', 'VORSTAND']));
     }
 
     match /email_history/{document} {
-      allow read, write: if isSuperAdmin() || 
-                         (isAuthenticated() && getUserPermissions() != null && 
-                          (getUserPermissions().kvRole == 'KV_WETTKAMPFLEITER' ||
-                           (getUserPermissions().clubRoles != null && 
-                            getUserPermissions().clubRoles.values().hasAny(['SPORTLEITER', 'VORSTAND']))));
+      allow read, write: if isSuperAdmin() ||
+                         isKmOrgaGlobal() ||
+                         (isAuthenticated() && getUserPermissions() != null &&
+                          getUserPermissions().clubRoles != null &&
+                          getUserPermissions().clubRoles.values().hasAny(['SPORTLEITER', 'VORSTAND']));
     }
 
     match /email_templates/{document} {
-      allow read, write: if isSuperAdmin() || 
-                         (isAuthenticated() && getUserPermissions() != null && 
-                          (getUserPermissions().kvRole == 'KV_WETTKAMPFLEITER' ||
-                           (getUserPermissions().clubRoles != null && 
-                            getUserPermissions().clubRoles.values().hasAny(['SPORTLEITER', 'VORSTAND']))));
+      allow read, write: if isSuperAdmin() ||
+                         isKmOrgaGlobal() ||
+                         (isAuthenticated() && getUserPermissions() != null &&
+                          getUserPermissions().clubRoles != null &&
+                          getUserPermissions().clubRoles.values().hasAny(['SPORTLEITER', 'VORSTAND']));
     }
 
     match /admin_settings/{document} {
-      allow read, write: if request.auth.token.email == 'admin@rwk-einbeck.de';
+      allow read, write: if isSuperAdmin();
     }
 
     match /system_config/{document} {
-      allow read, write: if request.auth.token.email == 'admin@rwk-einbeck.de';
+      allow read, write: if isSuperAdmin();
     }
 
     match /app_stats/{document} {
-      allow read, write: if request.auth.token.email == 'admin@rwk-einbeck.de';
+      allow read, write: if isSuperAdmin();
     }
 
     // === SUPPORT SYSTEM ===
-    
+
     match /support_sessions/{document} {
-      allow read: if isSuperAdmin() || 
+      allow read: if isSuperAdmin() ||
                   (isAuthenticated() && resource.data.clubId != null && hasClubAccess(resource.data.clubId));
       allow create: if isAuthenticated() && hasClubAccess(request.resource.data.clubId);
-      allow update: if isSuperAdmin() || 
+      allow update: if isSuperAdmin() ||
                     (isAuthenticated() && resource.data.clubId != null && hasClubAccess(resource.data.clubId));
       allow delete: if isSuperAdmin();
     }
 
-
-
     // === PREMIUM & SCHIESSNACHWEISE ===
-    
-    function isPremiumUser() {
-      return isAuthenticated() && 
-             getUserPermissions() != null && 
-             getUserPermissions().isPremium == true &&
-             (getUserPermissions().premiumUntil == null || 
-              getUserPermissions().premiumUntil > request.time);
-    }
-    
-   // Schießnachweis-Daten - Jeder angemeldete User kann seine eigenen Daten lesen/schreiben
+
+    // Schießnachweis-Daten - Jeder angemeldete User kann seine eigenen Daten lesen/schreiben
     match /schiessnachweis_data/{userId} {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
-    
+
     match /schiessnachweis_data/{userId}/{document=**} {
       allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
-    
+
     // Premium-Subscriptions
     match /premium_subscriptions/{userId} {
-      allow read, write: if isSuperAdmin() || 
+      allow read, write: if isSuperAdmin() ||
                          (isAuthenticated() && request.auth.uid == userId);
     }
 
     // === SYSTEM & ADMIN ===
-    
+
     match /user_permissions/{userId} {
       allow read: if true; // Öffentlich lesbar für Namen-Anzeige
       allow write: if isSuperAdmin();
-      allow update: if isSuperAdmin() || 
-                    (isAuthenticated() && 
+      allow update: if isSuperAdmin() ||
+                    (isAuthenticated() &&
                      request.auth.uid == userId &&
                      // Erlaube Premium-Updates durch API
                      (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isPremium', 'premiumUntil', 'premiumPlan', 'updatedAt']) ||
@@ -517,7 +348,7 @@ service cloud.firestore {
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'lastName', 'verein', 'kreisverband', 'strasse', 'plz', 'wohnort', 'updatedAt']) ||
                       // Erlaube Social Training Profile Updates
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'firstName', 'lastName', 'clubName', 'disciplines', 'birthYear', 'onboardingCompleted', 'updatedAt', 'createdAt'])));
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                     request.auth.uid == userId &&
                     // Erlaube Social Training Onboarding
                     (// Nur INDIVIDUAL userType und keine Rollen erlaubt
@@ -531,7 +362,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSuperAdmin();
-      allow write: if isSuperAdmin() || 
+      allow write: if isSuperAdmin() ||
                    (isAuthenticated() && request.auth.uid == userId);
     }
 
@@ -540,7 +371,7 @@ service cloud.firestore {
       allow create: if true; // AdminSDK erstellt Logs
       allow update, delete: if false;
     }
-    
+
     match /login_events/{event} {
       allow create: if true; // Jeder kann Login-Events schreiben (auch nicht eingeloggt)
       allow read: if isSuperAdmin();
@@ -548,7 +379,7 @@ service cloud.firestore {
     }
 
     // === LEGACY & FALLBACK ===
-    
+
     match /events/{event} {
       allow read: if true;
       allow create, update: if isAuthenticated();
@@ -567,7 +398,7 @@ service cloud.firestore {
     }
 
     match /protests/{protest} {
-      allow read: if isSuperAdmin() || 
+      allow read: if isSuperAdmin() ||
                   (isAuthenticated() && resource.data.submittedBy == request.auth.token.email);
       allow create: if isAuthenticated();
       allow update: if isSuperAdmin();
@@ -586,68 +417,68 @@ service cloud.firestore {
     }
 
     // === SOCIAL TRAINING FEATURES ===
-    
-       // Social Training Profile (getrennt von RWK/KM)
+
+    // Social Training Profile (getrennt von RWK/KM)
     match /social_profiles/{userId} {
       allow read: if true; // Öffentlich lesbar für Community
       allow write: if isAuthenticated() && request.auth.uid == userId;
       allow create: if isAuthenticated() && request.auth.uid == userId;
     }
-    
+
     // Öffentliche Profile (Legacy - wird durch social_profiles ersetzt)
     match /public_profiles/{userId} {
       allow read: if true; // Öffentlich lesbar
       allow write: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
     }
-    
+
     // Trainingsgruppen
     match /training_groups/{groupId} {
       allow read: if isSuperAdmin() || isAuthenticated();
       allow create: if isAuthenticated();
-           allow update: if isSuperAdmin() || (isAuthenticated() && 
+      allow update: if isSuperAdmin() || (isAuthenticated() &&
                     (resource.data.admins.hasAny([request.auth.uid]) ||
                      // Erlaube Join-Operation: User fügt sich zu members hinzu
                      (request.resource.data.members.hasAll(resource.data.members) &&
                       request.resource.data.members.hasAny([request.auth.uid]) &&
                       request.resource.data.members.size() == resource.data.members.size() + 1)));
-      allow delete: if isSuperAdmin() || (isAuthenticated() && 
+      allow delete: if isSuperAdmin() || (isAuthenticated() &&
                     resource.data.createdBy == request.auth.uid);
     }
-    
+
     // Gruppen-Mitglieder
     match /training_groups/{groupId}/members/{userId} {
-     allow read: if isSuperAdmin() || (isAuthenticated() && 
-                  (request.auth.uid == userId || 
+      allow read: if isSuperAdmin() || (isAuthenticated() &&
+                  (request.auth.uid == userId ||
                    get(/databases/$(database)/documents/training_groups/$(groupId)).data.members.hasAny([request.auth.uid]) ||
                    get(/databases/$(database)/documents/training_groups/$(groupId)).data.admins.hasAny([request.auth.uid])));
       allow create: if isSuperAdmin() || isAuthenticated();
-      allow update: if isSuperAdmin() || (isAuthenticated() && 
+      allow update: if isSuperAdmin() || (isAuthenticated() &&
                     (request.auth.uid == userId ||
                      get(/databases/$(database)/documents/training_groups/$(groupId)).data.admins.hasAny([request.auth.uid])));
-      allow delete: if isSuperAdmin() || (isAuthenticated() && 
+      allow delete: if isSuperAdmin() || (isAuthenticated() &&
                     get(/databases/$(database)/documents/training_groups/$(groupId)).data.admins.hasAny([request.auth.uid]));
     }
-    
+
     // Live-Wettkämpfe (Premium)
     match /live_competitions/{competitionId} {
-      allow read: if isAuthenticated() && 
-                                    get(/databases/$(database)/documents/training_groups/$(resource.data.groupId)).data.members.hasAny([request.auth.uid]);
-      allow create: if isAuthenticated() && 
+      allow read: if isAuthenticated() &&
+                  get(/databases/$(database)/documents/training_groups/$(resource.data.groupId)).data.members.hasAny([request.auth.uid]);
+      allow create: if isAuthenticated() &&
                     get(/databases/$(database)/documents/training_groups/$(request.resource.data.groupId)).data.members.hasAny([request.auth.uid]);
-      allow update: if isAuthenticated() && 
-         get(/databases/$(database)/documents/training_groups/$(resource.data.groupId)).data.members.hasAny([request.auth.uid]);
+      allow update: if isAuthenticated() &&
+                    get(/databases/$(database)/documents/training_groups/$(resource.data.groupId)).data.members.hasAny([request.auth.uid]);
       allow delete: if isSuperAdmin() || (isAuthenticated() && resource.data.createdBy == request.auth.uid);
     }
-    
+
     // Wettkampf-Ergebnisse
     match /live_competitions/{competitionId}/results/{userId} {
-      allow read: if isSuperAdmin() || (isAuthenticated() && 
-                  (request.auth.uid == userId || 
+      allow read: if isSuperAdmin() || (isAuthenticated() &&
+                  (request.auth.uid == userId ||
                    get(/databases/$(database)/documents/live_competitions/$(competitionId)).data.participants.hasAny([request.auth.uid])));
       allow write: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId);
     }
 
-   // Social Training Ergebnisse
+    // Social Training Ergebnisse
     match /social_training_results/{resultId} {
       allow read: if true; // Öffentlich lesbar für Community-Features
       allow create: if isAuthenticated();
@@ -657,34 +488,34 @@ service cloud.firestore {
 
     // Gruppen-Ergebnisse (Subcollection)
     match /training_groups/{groupId}/results/{resultId} {
-      allow read: if isAuthenticated() && 
+      allow read: if isAuthenticated() &&
                   get(/databases/$(database)/documents/training_groups/$(groupId)).data.members.hasAny([request.auth.uid]);
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                     get(/databases/$(database)/documents/training_groups/$(groupId)).data.members.hasAny([request.auth.uid]);
-      allow update, delete: if isSuperAdmin() || 
+      allow update, delete: if isSuperAdmin() ||
                             (isAuthenticated() && resource.data.userId == request.auth.uid);
     }
-    
-        // === DUELLE SYSTEM ===
-    
+
+    // === DUELLE SYSTEM ===
+
     // Duelle zwischen Gruppenmitgliedern
     match /duels/{duelId} {
-      allow read: if isAuthenticated() && 
+      allow read: if isAuthenticated() &&
                   (resource.data.challengerId == request.auth.uid ||
                    resource.data.opponentId == request.auth.uid ||
                    get(/databases/$(database)/documents/training_groups/$(resource.data.groupId)).data.members.hasAny([request.auth.uid]));
-      allow create: if isAuthenticated() && 
+      allow create: if isAuthenticated() &&
                     get(/databases/$(database)/documents/training_groups/$(request.resource.data.groupId)).data.members.hasAny([request.auth.uid]) &&
                     request.resource.data.challengerId == request.auth.uid;
-      allow update: if isAuthenticated() && 
+      allow update: if isAuthenticated() &&
                     (resource.data.challengerId == request.auth.uid ||
                      resource.data.opponentId == request.auth.uid);
       allow delete: if isSuperAdmin();
     }
-    
-// === AUSBILDUNGSMODUL ===
 
-    // Kurse: öffentlich lesbar (nur nicht-Entwürfe), schreiben nur Admin
+    // === AUSBILDUNGSMODUL ===
+
+    // Kurse: öffentlich lesbar, schreiben nur Admin
     match /ausbildung_kurse/{kursId} {
       allow read: if true;
       allow write: if isSuperAdmin();
