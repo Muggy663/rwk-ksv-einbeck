@@ -50,16 +50,6 @@ export default function DashboardAuswahl() {
   const clubRolesList: string[] = hasClubRoles && userAppPermissions?.clubRoles ? Object.values(userAppPermissions.clubRoles) : [];
   const isSportleiter = clubRolesList.includes('SPORTLEITER');
   const isVorstand = clubRolesList.includes('VORSTAND');
-  const isKassenwart = clubRolesList.includes('KASSENWART');
-  const isSchriftfuehrer = clubRolesList.includes('SCHRIFTFUEHRER');
-  const isJugendwart = clubRolesList.includes('JUGENDWART');
-  const isDamenwart = clubRolesList.includes('DAMENWART');
-  const isZeugwart = clubRolesList.includes('ZEUGWART');
-  const isPressewart = clubRolesList.includes('PRESSEWART');
-  const isTrainer = clubRolesList.includes('TRAINER');
-  const isAusbilder = clubRolesList.includes('AUSBILDER');
-  const isVereinsschuetze = clubRolesList.includes('VEREINSSCHUETZE');
-  const isEhrenmitglied = clubRolesList.includes('EHRENMITGLIED');
   const isMannschaftsfuehrer = clubRolesList.includes('MANNSCHAFTSFUEHRER');
   
   // Prüfe ob Benutzer nur Schießnachweis/Social Training Zugriff hat (INDIVIDUAL userType)
@@ -130,68 +120,6 @@ export default function DashboardAuswahl() {
       </div>
     );
   }
-  
-  // Rollen-spezifische Bereiche für Vereinssoftware (Phase 2)
-  const getVereinssoftwareBereiche = () => {
-    if (isVorstand) {
-      return ['👥 Alle Mitgliederverwaltung', '💰 Vollzugriff Finanzen & SEPA', '🎂 Geburtstage & Jubiläen', '🏆 Lizenzen & Ausbildungen', '⚖️ Vereinsrecht & Protokolle', '📋 Aufgaben-Management'];
-    }
-    if (isKassenwart) {
-      return ['👥 Mitgliederverwaltung', '💰 SEPA-Lastschrift & Beiträge', '🎂 Geburtstage & Jubiläen', '📊 Finanz-Statistiken'];
-    }
-    if (isSchriftfuehrer) {
-      return ['👥 Mitglieder (Lesezugriff)', '⚖️ Vereinsrecht & Protokolle', '📋 Sitzungsverwaltung', '🗳️ Wahlen & Beschlüsse'];
-    }
-    if (isSportleiter) {
-      return ['👥 Mitglieder (Lesezugriff)', '🏆 Lizenzen & Ausbildungen', '📊 Sport-Statistiken'];
-    }
-    // Phase 2 Rollen
-    if (isJugendwart) {
-      return ['🧒 Jugend-Mitglieder verwalten', '🏆 Jugend-Ausbildungen', '📊 Jugend-Statistiken', '🏅 Jugend-Wettkämpfe'];
-    }
-    if (isDamenwart) {
-      return ['👩 Damen-Mitglieder verwalten', '🎉 Damen-Events organisieren', '📊 Damen-Statistiken', '📅 Damen-Termine'];
-    }
-    if (isZeugwart) {
-      return ['🔧 Waffen & Ausrüstung verwalten', '📊 Inventar führen', '🔍 Wartungspläne', '💰 Anschaffungen'];
-    }
-    if (isPressewart) {
-      return ['📰 Vereins-News schreiben', '📝 Berichte erstellen', '📷 Foto-Verwaltung', '🌐 Öffentlichkeitsarbeit'];
-    }
-    if (isTrainer) {
-      return ['🏃 Training durchführen', '🏆 Lizenzen verwalten', '📊 Trainings-Statistiken', '🎯 Leistungsanalyse'];
-    }
-    if (isAusbilder) {
-      return ['🎓 Fortgeschrittene Schulungen', '📝 Prüfungen abnehmen', '🏆 Ausbilder-Lizenzen', '📊 Ausbildungs-Statistiken'];
-    }
-    if (isVereinsschuetze) {
-      return ['👥 Eigene Daten einsehen', '🏆 Eigene Lizenzen', '📊 Eigene Statistiken', '📅 Termine einsehen'];
-    }
-    if (isEhrenmitglied) {
-      return ['🏅 Vereinsgeschichte einsehen', '📜 Ehrungen verwalten', '📊 Historische Daten', '📅 Jubiläums-Termine'];
-    }
-    return ['👥 Basis-Funktionen'];
-  };
-  
-  const getRollenBeschreibung = () => {
-    if (isVorstand) return 'Vollzugriff auf alle Vereinssoftware-Bereiche';
-    if (isKassenwart) return 'Finanz- und Mitgliederverwaltung';
-    if (isSchriftfuehrer) return 'Protokolle und Mitglieder-Lesezugriff';
-    if (isSportleiter) return 'Sport-Bereiche und Mitglieder-Lesezugriff';
-    // Phase 2 Beschreibungen
-    if (isJugendwart) return 'Jugendbereich und Nachwuchsförderung';
-    if (isDamenwart) return 'Damenbereich und Events';
-    if (isZeugwart) return 'Waffen, Ausrüstung und Inventar';
-    if (isPressewart) return 'Öffentlichkeitsarbeit und Berichterstattung';
-    if (isTrainer) return 'Training und Leistungsentwicklung';
-    if (isAusbilder) return 'Ausbildung und Prüfungswesen';
-    if (isVereinsschuetze) return 'Eigene Daten und Vereinsinformationen';
-    if (isEhrenmitglied) return 'Vereinsgeschichte und Ehrungen';
-    return 'Basis-Zugriff auf Vereinssoftware';
-  };
-  // Reserviert für Phase-2-Vereinssoftware-Ansicht (aktuell nicht gerendert)
-  void getVereinssoftwareBereiche;
-  void getRollenBeschreibung;
   
   // Debug entfernt - verhindert Endlosschleife
   
