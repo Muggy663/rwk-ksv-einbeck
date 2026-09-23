@@ -84,6 +84,7 @@ export async function requireKMAuth(request: Request): Promise<KMAuthResult> {
       data && (
         data.platformRole === 'SUPER_ADMIN' ||
         data.role === 'km_organisator' ||
+        (typeof data.kvRole === 'string' && data.kvRole.length > 0) ||
         (data.kvRoles && Object.keys(data.kvRoles).length > 0) ||
         (data.clubRoles && Object.keys(data.clubRoles).length > 0) ||
         data.role === 'vereinsvertreter' ||

@@ -25,6 +25,7 @@ export interface PermissionSource {
   clubIds?: string[];
   representedClubs?: string[];
   platformRole?: string;
+  kvRole?: string;
   kvRoles?: Record<string, string>;
   clubRoles?: Record<string, string>;
 }
@@ -46,7 +47,8 @@ export function derivePermissions(
 ): MemberPermissions {
   const mail = (email ?? p?.email ?? '').toLowerCase();
   const clubRoleList = values(p?.clubRoles);
-  const kvRoleList = values(p?.kvRoles);
+  // KV-Rolle kann als Map (kvRoles) ODER Einzelfeld (kvRole) vorliegen — beides berücksichtigen.
+  const kvRoleList = [...values(p?.kvRoles), ...(p?.kvRole ? [p.kvRole] : [])];
 
   const isAdmin =
     mail === ADMIN_EMAIL ||

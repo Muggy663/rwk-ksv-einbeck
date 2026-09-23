@@ -15,11 +15,16 @@ export function useKMAuth() {
 
   const clubRoles = (userAppPermissions as any)?.clubRoles || {};
   const kvRoles = (userAppPermissions as any)?.kvRoles || {};
+  // KV-Rolle kann als Einzelfeld (kvRole) ODER als Map (kvRoles) vorliegen.
+  // Beide Varianten berücksichtigen, damit Bestandsnutzer mit nur kvRole
+  // (z. B. reine KM-Organisatoren) korrekt erkannt werden.
+  const kvRoleSingle = (userAppPermissions as any)?.kvRole;
+  const kvRoleValues = [...Object.values(kvRoles), ...(kvRoleSingle ? [kvRoleSingle] : [])];
   const platformRole = (userAppPermissions as any)?.platformRole;
 
   const isSportleiter = Object.values(clubRoles).includes('SPORTLEITER');
-  const isKVWettkampfleiter = Object.values(kvRoles).includes('KV_WETTKAMPFLEITER');
-  const isKVKmOrga = Object.values(kvRoles).includes('KV_KM_ORGA');
+  const isKVWettkampfleiter = kvRoleValues.includes('KV_WETTKAMPFLEITER');
+  const isKVKmOrga = kvRoleValues.includes('KV_KM_ORGA') || kvRoleValues.includes('KM_ORGANISATOR');
 
   // KM-Zugang ist auf drei Gruppen beschränkt: Admin/Superadmin, KM-Orga
   // (Kreis-Wettkampfleiter / KM-Organisator) und Sportleiter des Vereins.
