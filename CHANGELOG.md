@@ -4,6 +4,14 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.0.9
+- **🔑 KM-Zugang für KM-Organisatoren repariert**: Reine KM-Organisatoren (deren Rolle als Einzelfeld hinterlegt ist) wurden vom System teilweise nicht als solche erkannt und sahen ihren KM-Bereich nicht. Das Erkennen der KV-Rolle berücksichtigt jetzt beide gespeicherten Formen – der KM-Bereich erscheint wieder zuverlässig. Auch neu über die Benutzerverwaltung vergebene KV-Rollen werden jetzt korrekt gespeichert
+- **📍 Anfahrt zum Ausrichter (aus 3.0.8)**: Der Termin-Ort ist anklickbar und öffnet Google Maps; Anfahrt-Link je Verein pflegbar in Vereinsverwaltung und auf der Mitglieder-Seite
+- **🏠 Vereine ohne eigene Stände**: Neues Kästchen „keine eigenen Stände" (z. B. Schießsportgemeinschaft) – Standkapazität und Anfahrt entfallen dann und werden nicht mehr als „offen" markiert
+- **🧹 Aufräumen im Hintergrund**: Nicht mehr genutzte Reste einer früher angedachten Vereinssoftware und das alte Premium-System wurden aus Code und Sicherheitsregeln entfernt. Die Zugriffsregeln (Firestore-Rules) wurden verschlankt und robuster gemacht, ohne die Berechtigungen der aktiven Rollen (Sportleiter, Mannschaftsführer, KM-Orga, Admin) zu verändern. Der Schießnachweis ist unverändert für alle registrierten Nutzer kostenlos nutzbar
+
+---
+
 ## Version 3.0.8.1
 - **🏠 Vereine ohne eigene Stände kennzeichnen**: In der Vereinsverwaltung gibt es jetzt ein Kästchen „keine eigenen Stände" (z. B. für Schießsportgemeinschaften). Ist es gesetzt, entfallen Standkapazität und Anfahrt-Link für diesen Verein – er wird in den Übersichten nicht mehr fälschlich als „nicht gepflegt/offen" markiert, sondern zeigt „entfällt". Auf der Mitglieder-Seite erscheint entsprechend „entfällt (keine eigenen Stände)" statt einer Pflege-Aufforderung
 - **✏️ Hinweis beim Termin-Anlegen gekürzt**: Der Anfahrt-Hinweis auf der Termin-Anlegen-Seite wurde gestrafft
