@@ -121,7 +121,7 @@ export default function AdminUserManagementPage() {
           email: data.email || '',
           displayName: data.displayName || '',
           platformRole: (data as any).platformRole || 'NO_PLATFORM_ROLE',
-          kvRole: (data as any).kvRole || 'NO_KV_ROLE',
+          kvRole: (data as any).kvRole || (Object.values((data as any).kvRoles || {})[0] as string) || 'NO_KV_ROLE',
           clubRole: (Object.values((data as any).clubRoles || {})[0] as string) || 'NO_CLUB_ROLE',
           selectedClubId: data.clubId || Object.keys((data as any).clubRoles || {})[0] || '',
           selectedClubIds,
@@ -197,9 +197,16 @@ export default function AdminUserManagementPage() {
         permissionData.platformRole = formData.platformRole;
       }
       
-      // KV-Rolle
+      // KV-Rolle: als Map kvRoles speichern (so liest der gesamte App-Code sie),
+      // zusätzlich das Einzelfeld kvRole für Abwärtskompatibilität mit Altpfaden.
+      // Der Map-Key 'einbeck' entspricht dem Bestand (Kreisverband Einbeck).
       if (formData.kvRole !== 'NO_KV_ROLE') {
-        permissionData.kvRole = formData.kvRole;
+        permissionData.kvRole = formData.kvRole;          // Legacy-Einzelfeld
+        permissionData.kvRoles = { einbeck: formData.kvRole }; // maßgebliche Map
+      } else {
+        // KV-Rolle entfernt: beide Felder leeren, damit kein Alt-Zugang bleibt.
+        permissionData.kvRole = null;
+        permissionData.kvRoles = {};
       }
       
       // Vereine und Club-Rollen verwalten
@@ -288,7 +295,7 @@ export default function AdminUserManagementPage() {
       email: user.email || '',
       displayName: user.displayName || '',
       platformRole: (user as any).platformRole || 'NO_PLATFORM_ROLE',
-      kvRole: (user as any).kvRole || 'NO_KV_ROLE',
+      kvRole: (user as any).kvRole || (Object.values((user as any).kvRoles || {})[0] as string) || 'NO_KV_ROLE',
       clubRole: (Object.values((user as any).clubRoles || {})[0] as string) || 'NO_CLUB_ROLE',
       selectedClubId: user.clubId || Object.keys((user as any).clubRoles || {})[0] || '',
       selectedClubIds,
