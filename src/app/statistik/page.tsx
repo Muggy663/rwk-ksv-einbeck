@@ -30,6 +30,15 @@ const cards = [
     glow: 'group-hover:shadow-amber-500/30',
     badge: 'Neu in 3.0',
   },
+  {
+    href: '/statistik/mannschaft',
+    icon: Users,
+    title: 'Mannschafts-Übersicht',
+    text: 'Alle Schützen einer Mannschaft auf einer Seite – mit Kennzahlen (Summe, Schnitt, Spanne, bestes/schlechtestes Ergebnis) und Verlaufsdiagramm je Schütze.',
+    gradient: 'from-rose-500 to-pink-600',
+    glow: 'group-hover:shadow-rose-500/30',
+    badge: 'Neu',
+  },
 ];
 
 export default function StatistikPage() {
@@ -68,7 +77,7 @@ export default function StatistikPage() {
       </div>
 
       {/* Karten */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         {cards.map((c, i) => {
           const Icon = c.icon;
           return (
