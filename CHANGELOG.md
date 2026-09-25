@@ -4,6 +4,13 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.0.10
+- **👥 Neu: Mannschafts-Statistik**: Unter „Statistiken → Mannschafts-Übersicht" werden alle Schützen einer Mannschaft auf einer Seite gezeigt – je Schütze mit Kennzahlen (Summe, Schnitt, Spanne, bestes/schlechtestes Ergebnis, Anzahl Durchgänge) und einem Verlaufsdiagramm über die Durchgänge. Auswahl über Saison → Liga → Mannschaft
+- **🔎 Schützensuche verbessert (saisonübergreifend)**: In der saisonübergreifenden Statistik findet man einen Schützen jetzt auch, wenn nur der Vor- ODER nur der Nachname bekannt ist (vorher musste der Name von vorne passen). Zusätzlich lassen sich pro Saison die einzelnen Durchgänge aufklappen, um die Berechnung nachzuvollziehen
+- **📊 Statistiken besser auffindbar**: Neuer „Statistiken"-Button in den RWK-Tabellen und ein Hinweis-Banner auf der Startseite führen direkt zum Statistik-Bereich
+
+---
+
 ## Version 3.0.9
 - **🔑 KM-Zugang für KM-Organisatoren repariert**: Reine KM-Organisatoren (deren Rolle als Einzelfeld hinterlegt ist) wurden vom System teilweise nicht als solche erkannt und sahen ihren KM-Bereich nicht. Das Erkennen der KV-Rolle berücksichtigt jetzt beide gespeicherten Formen – der KM-Bereich erscheint wieder zuverlässig. Auch neu über die Benutzerverwaltung vergebene KV-Rollen werden jetzt korrekt gespeichert
 - **📍 Anfahrt zum Ausrichter (aus 3.0.8)**: Der Termin-Ort ist anklickbar und öffnet Google Maps; Anfahrt-Link je Verein pflegbar in Vereinsverwaltung und auf der Mitglieder-Seite
