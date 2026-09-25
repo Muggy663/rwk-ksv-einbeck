@@ -18,7 +18,6 @@ import { SkipLink } from '@/components/ui/skip-link';
 import '@/lib/utils/suppress-preload-warnings';
 
 import { OfflineIndicator } from '@/components/ui/offline-indicator';
-import { AppUpdateChecker } from '@/components/app-update-checker';
 import { NativeAppProvider } from '@/components/ui/native-app-detector';
 import { AppVersionChecker } from '@/components/AppVersionChecker';
 import { VersionCheck } from '@/components/VersionCheck';
@@ -90,9 +89,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 <Header />
                 
                 <div className="flex-1 overflow-auto">
-                  <div className="container py-6">
-                    <AppUpdateChecker />
-                  </div>
                   <main id="main-content" tabIndex={-1} className="focus:outline-none">
                     {children}
                   </main>
