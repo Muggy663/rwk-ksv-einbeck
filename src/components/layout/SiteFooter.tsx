@@ -55,6 +55,10 @@ export function SiteFooter() {
                   Copyright
                 </Link>
                 <span className="text-muted-foreground"> | </span>
+                <Link href="/app" className="text-muted-foreground hover:text-primary underline">
+                  📱 Android App
+                </Link>
+                <span className="text-muted-foreground"> | </span>
                 <Link 
                   href="http://www.ksv-einbeck.de/index.htm" 
                   target="_blank" 

@@ -469,31 +469,6 @@ export default function HomePage() {
 
       {/* Weihnachtsgrüße entfernt - Januar 2026 */}
 
-      {/* Play Store App */}
-      <div className="mb-6">
-        <Link href="/app" className="block">
-          <div className="bg-gradient-to-r from-green-500 to-blue-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
-            <div className="flex items-center">
-              <div className="bg-white p-3 rounded-full mr-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600">
-                  <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
-                  <path d="M12 18h.01"/>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h2 style={{color: 'white'}} className="text-xl font-bold mb-1">📱 Android App — Tester gesucht!</h2>
-                <p style={{color: 'white'}}>Hilf mit, die App in den Play Store zu bringen</p>
-              </div>
-              <div className="text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m9 18 6-6-6-6"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </Link>
-      </div>
-
       {/* Desktop-Hinweis für Mobile - am Ende der Seite */}
       {!isNativeApp && typeof window !== 'undefined' && window.innerWidth <= 768 && (
         <Card className="mt-8 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
