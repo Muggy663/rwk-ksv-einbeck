@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Search, TrendingUp, Medal, LineChart as LineChartIcon } from 'lucide-react';
+import { Loader2, Search, TrendingUp, Medal, LineChart as LineChartIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
@@ -35,6 +35,14 @@ interface ShooterScore {
   totalRinge: number;
 }
 
+// Einzelergebnis eines Durchgangs (für die aufklappbare Detailansicht/Kontrolle).
+interface RoundResult {
+  durchgang: number;
+  totalRinge: number;
+  leagueName: string;
+  leagueType: string;
+}
+
 interface ShooterStats {
   shooterId: string;
   shooterName: string;
@@ -45,7 +53,8 @@ interface ShooterStats {
   bestScore: number;
   worstScore: number;
   overallAverage: number;
-  scoresByYear: { [year: number]: number[] };
+  // Einzelne Durchgänge je Saison (sortiert nach Durchgang) – zum Nachvollziehen der Berechnung.
+  detailsByYear: { [year: number]: RoundResult[] };
 }
 
 export function CrossSeasonStats() {
@@ -57,6 +66,8 @@ export function CrossSeasonStats() {
   const [shooterStats, setShooterStats] = useState<ShooterStats | null>(null);
   const [searchResults, setSearchResults] = useState<{ id: string; name: string; clubName?: string }[]>([]);
   const [clubMap, setClubMap] = useState<Record<string, string>>({});
+  // Welche Saison-Zeile in den Details ist aufgeklappt (zeigt die Einzeldurchgänge).
+  const [expandedYear, setExpandedYear] = useState<number | null>(null);
 
   // Vereine einmalig laden (id → Name), um sie in der Trefferliste anzuzeigen.
   useEffect(() => {
@@ -88,26 +99,32 @@ export function CrossSeasonStats() {
 
     setIsLoading(true);
     try {
-      // Suche nach Schützen in der Firestore-Datenbank
+      // Alle Schützen laden und client-seitig als Teilstring filtern.
+      // So findet man einen Schützen auch, wenn nur der Vor- ODER nur der
+      // Nachname bekannt ist (die frühere Präfix-Suche auf 'name' fand nur
+      // Treffer, die am Namensanfang begannen – also faktisch nur den Vornamen).
       const shootersRef = collection(db, 'shooters');
-      const q = query(
-        shootersRef,
-        where('name', '>=', searchTerm),
-        where('name', '<=', searchTerm + '\uf8ff'),
-        orderBy('name')
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const results = querySnapshot.docs.map(doc => {
-        const data = doc.data() as any;
-        const clubId = data.clubId || data.kmClubId || data.rwkClubId;
-        return {
-          id: doc.id,
-          name: data.name,
-          clubName: clubId ? (clubMap[clubId] || undefined) : undefined,
-        };
-      });
-      
+      const querySnapshot = await getDocs(query(shootersRef, orderBy('name')));
+
+      const begriffe = searchTerm.trim().toLowerCase().split(/\s+/).filter(Boolean);
+
+      const results = querySnapshot.docs
+        .map(doc => {
+          const data = doc.data() as any;
+          const clubId = data.clubId || data.kmClubId || data.rwkClubId;
+          const vollname = (data.name || `${data.firstName || ''} ${data.lastName || ''}`).trim();
+          return {
+            id: doc.id,
+            name: vollname,
+            clubName: clubId ? (clubMap[clubId] || undefined) : undefined,
+            _such: `${vollname} ${data.firstName || ''} ${data.lastName || ''}`.toLowerCase(),
+          };
+        })
+        // Jeder eingegebene Begriff muss irgendwo im Namen vorkommen
+        // (Vorname, Nachname oder Kombination – Reihenfolge egal).
+        .filter(r => begriffe.every(b => r._such.includes(b)))
+        .map(({ _such, ...rest }) => rest);
+
       setSearchResults(results);
       
       if (results.length === 0) {
@@ -213,16 +230,25 @@ export function CrossSeasonStats() {
       const averageByYear: { [year: number]: number } = {};
       const totalByYear: { [year: number]: number } = {};
       const roundsByYear: { [year: number]: number } = {};
-      const scoresByYear: { [year: number]: number[] } = {};
+      const detailsByYear: { [year: number]: RoundResult[] } = {};
       
       let allRingScores: number[] = [];
       
       statYears.forEach(year => {
-        const yearScores = scores
+        // Einzelne Durchgänge dieser Saison, nach Durchgang sortiert.
+        const yearDetails: RoundResult[] = scores
           .filter(score => score.competitionYear === year)
-          .map(score => score.totalRinge);
-        
-        scoresByYear[year] = yearScores;
+          .map(score => ({
+            durchgang: score.durchgang,
+            totalRinge: score.totalRinge,
+            leagueName: score.leagueName,
+            leagueType: score.leagueType,
+          }))
+          .sort((a, b) => a.durchgang - b.durchgang);
+
+        const yearScores = yearDetails.map(d => d.totalRinge);
+
+        detailsByYear[year] = yearDetails;
         totalByYear[year] = yearScores.reduce((sum, score) => sum + score, 0);
         roundsByYear[year] = yearScores.length;
         averageByYear[year] = totalByYear[year] / roundsByYear[year];
@@ -244,7 +270,7 @@ export function CrossSeasonStats() {
         bestScore,
         worstScore,
         overallAverage,
-        scoresByYear
+        detailsByYear
       });
       
     } catch (error) {
@@ -327,16 +353,18 @@ export function CrossSeasonStats() {
   const renderProgressionChart = () => {
     if (!shooterStats) return null;
     
-    // Erstelle einen flachen Array mit allen Ergebnissen und ihren Metadaten
+    // Erstelle einen flachen Array mit allen Ergebnissen und ihren Metadaten.
+    // Es werden die ECHTEN Durchgangsnummern verwendet (nicht der Array-Index),
+    // damit der Verlauf mit den Saisondetails übereinstimmt.
     const allScores: { year: number; round: number; score: number }[] = [];
     
     shooterStats.years.forEach(year => {
-      const yearScores = shooterStats.scoresByYear[year];
-      yearScores.forEach((score, index) => {
+      const yearDetails = shooterStats.detailsByYear[year] || [];
+      yearDetails.forEach(d => {
         allScores.push({
           year,
-          round: index + 1,
-          score
+          round: d.durchgang,
+          score: d.totalRinge
         });
       });
     });
@@ -534,10 +562,14 @@ export function CrossSeasonStats() {
               
               <TabsContent value="details" className="pt-4">
                 <h3 className="text-lg font-semibold mb-4">Detaillierte Saisonübersicht</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Auf eine Saison klicken, um die einzelnen Durchgänge und die Berechnung anzuzeigen.
+                </p>
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="border-b">
+                        <th className="text-left py-2 px-4 w-8"></th>
                         <th className="text-left py-2 px-4">Saison</th>
                         <th className="text-center py-2 px-4">Durchgänge</th>
                         <th className="text-center py-2 px-4">Gesamtergebnis</th>
@@ -551,21 +583,58 @@ export function CrossSeasonStats() {
                         const prevAvg = prevYear ? shooterStats.averageByYear[prevYear] : null;
                         const currentAvg = shooterStats.averageByYear[year];
                         const diff = prevAvg ? currentAvg - prevAvg : null;
-                        
+                        const isExpanded = expandedYear === year;
+                        const details = shooterStats.detailsByYear[year] || [];
+
                         return (
-                          <tr key={year} className="border-b hover:bg-muted/20">
-                            <td className="py-2 px-4 font-medium">{year}</td>
-                            <td className="py-2 px-4 text-center">{shooterStats.roundsByYear[year]}</td>
-                            <td className="py-2 px-4 text-center">{shooterStats.totalByYear[year]}</td>
-                            <td className="py-2 px-4 text-center font-medium">{currentAvg.toFixed(2)}</td>
-                            <td className="py-2 px-4 text-center">
-                              {diff !== null ? (
-                                <span className={diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}>
-                                  {diff > 0 ? '+' : ''}{diff.toFixed(2)}
-                                </span>
-                              ) : '-'}
-                            </td>
-                          </tr>
+                          <React.Fragment key={year}>
+                            <tr
+                              className="border-b hover:bg-muted/20 cursor-pointer"
+                              onClick={() => setExpandedYear(isExpanded ? null : year)}
+                            >
+                              <td className="py-2 px-4 text-muted-foreground">
+                                {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                              </td>
+                              <td className="py-2 px-4 font-medium">{year}</td>
+                              <td className="py-2 px-4 text-center">{shooterStats.roundsByYear[year]}</td>
+                              <td className="py-2 px-4 text-center">{shooterStats.totalByYear[year]}</td>
+                              <td className="py-2 px-4 text-center font-medium">{currentAvg.toFixed(2)}</td>
+                              <td className="py-2 px-4 text-center">
+                                {diff !== null ? (
+                                  <span className={diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-muted-foreground'}>
+                                    {diff > 0 ? '+' : ''}{diff.toFixed(2)}
+                                  </span>
+                                ) : '-'}
+                              </td>
+                            </tr>
+                            {isExpanded && (
+                              <tr className="bg-muted/10">
+                                <td></td>
+                                <td colSpan={5} className="py-3 px-4">
+                                  <div className="space-y-2">
+                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                                      {details.map((d, i) => (
+                                        <div key={i} className="rounded-md border bg-background px-2 py-1.5 text-sm">
+                                          <div className="text-xs text-muted-foreground">DG {d.durchgang}</div>
+                                          <div className="font-semibold">{d.totalRinge} Ringe</div>
+                                          {d.leagueName && (
+                                            <div className="text-[10px] text-muted-foreground truncate" title={d.leagueName}>
+                                              {d.leagueName}
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      Kontrolle: {details.map(d => d.totalRinge).join(' + ')} = <strong>{shooterStats.totalByYear[year]}</strong> Ringe
+                                      {' '}bei {shooterStats.roundsByYear[year]} Durchgängen →
+                                      Ø <strong>{currentAvg.toFixed(2)}</strong>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
                         );
                       })}
                     </tbody>
