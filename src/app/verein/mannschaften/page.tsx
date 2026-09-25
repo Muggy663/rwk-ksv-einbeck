@@ -3,6 +3,7 @@
 "use client";
 import React, { useState, useEffect, FormEvent, useMemo, useCallback } from 'react';
 import { logError, logWarn, getErrorMessage } from '@/lib/utils/secure-logger';
+import { formatGender } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Loader2, AlertTriangle, InfoIcon, ChevronDown, ChevronRight } from 'lucide-react';
@@ -1365,7 +1366,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                                         {shooter.firstName && shooter.lastName ? `${shooter.firstName} ${shooter.lastName}` : shooter.name}
                                       </div>
                                       <div className="text-xs text-muted-foreground">
-                                        {shooter.gender === 'male' ? 'M' : shooter.gender === 'female' ? 'W' : '?'} • {shooter.birthYear || 'Jg. N/A'}
+                                        {formatGender(shooter.gender)} • {shooter.birthYear || 'Jg. N/A'}
                                       </div>
                                     </div>
                                   </div>

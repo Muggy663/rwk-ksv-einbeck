@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
+import { formatGender } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -487,7 +488,7 @@ export default function SubstitutionsPage() {
                                       {shooter.firstName && shooter.lastName ? `${shooter.firstName} ${shooter.lastName}` : shooter.name}
                                     </div>
                                     <div className="text-xs text-muted-foreground">
-                                      {shooter.gender === 'male' ? 'M' : shooter.gender === 'female' ? 'W' : '?'} • {shooter.birthYear || 'Jg. N/A'}
+                                      {formatGender(shooter.gender)} • {shooter.birthYear || 'Jg. N/A'}
                                     </div>
                                   </div>
                                 </div>

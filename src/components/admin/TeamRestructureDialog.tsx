@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
+import { formatGender } from '@/lib/utils/altersklassen';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -350,7 +351,7 @@ export function TeamRestructureDialog({
                 <div className="flex items-center justify-between">
                   <div className="font-medium">{shooterDisplayName(action.shooter)}</div>
                   <Badge variant="outline">
-                    {action.shooter.gender === 'male' ? 'M' : action.shooter.gender === 'female' ? 'W' : '?'}
+                    {formatGender(action.shooter.gender)}
                     {action.shooter.birthYear ? ` • ${action.shooter.birthYear}` : ''}
                   </Badge>
                 </div>

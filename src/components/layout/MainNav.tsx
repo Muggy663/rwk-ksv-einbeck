@@ -58,10 +58,10 @@ export function MainNav() {
       active: pathname === '/rwk-tabellen',
     },
     {
-      href: '/statistiken',
+      href: '/statistik',
       label: 'Statistiken',
       icon: <TrendingUp className="h-4 w-4 mr-2" />,
-      active: pathname === '/statistiken',
+      active: pathname === '/statistik',
     },
     {
       href: '/schiessnachweis',

@@ -28,7 +28,7 @@ export function Sidebar() {
   const publicRoutes = [
     { href: '/', label: 'Startseite', icon: Home },
     { href: '/rwk-tabellen', label: 'RWK Tabellen', icon: FileBarChart },
-    { href: '/statistiken', label: 'Statistiken', icon: TrendingUp },
+    { href: '/statistik', label: 'Statistiken', icon: TrendingUp },
     { href: '/termine', label: 'Termine', icon: CalendarDays },
     { href: '/ligalisten', label: 'Ligalisten', icon: FileText },
     { href: '/dokumente', label: 'Dokumente', icon: FileText },

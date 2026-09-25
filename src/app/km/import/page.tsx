@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
+import { formatGender, getGenderBadgeClass } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -275,13 +276,8 @@ export default function ExcelImport() {
                         <td className="p-2 text-sm">{member.vorname} {member.name}</td>
                         <td className="p-2 text-sm">{member.geburtsdatum ? new Date(member.geburtsdatum).getFullYear() : '?'}</td>
                         <td className="p-2">
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            member.gender === 'male' ? 'bg-blue-100 text-blue-700' :
-                            member.gender === 'female' ? 'bg-pink-100 text-pink-700' :
-                            'bg-yellow-100 text-yellow-700'
-                          }`}>
-                            {member.gender === 'male' ? 'M' :
-                             member.gender === 'female' ? 'W' : '?'}
+                          <span className={`px-2 py-1 rounded text-xs ${getGenderBadgeClass(member.gender)}`}>
+                            {formatGender(member.gender)}
                           </span>
                         </td>
                       </tr>

@@ -2,6 +2,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
+import { formatGender } from '@/lib/utils/altersklassen';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Edit, Trash2, Users as TeamsIcon, Loader2, AlertTriangle, InfoIcon, ChevronDown, ChevronRight } from 'lucide-react';
@@ -809,7 +810,7 @@ export default function AdminTeamsPage() {
                                         {shooter.firstName && shooter.lastName ? `${shooter.firstName} ${shooter.lastName}` : shooter.name}
                                       </div>
                                       <div className="text-xs text-muted-foreground">
-                                        {shooter.gender === 'male' ? 'M' : shooter.gender === 'female' ? 'W' : '?'} • {shooter.birthYear || 'Jg. N/A'}
+                                        {formatGender(shooter.gender)} • {shooter.birthYear || 'Jg. N/A'}
                                       </div>
                                     </div>
                                   </div>
