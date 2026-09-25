@@ -1902,6 +1902,12 @@ function RwkTabellenPageComponent() {
           </Button>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button asChild variant="outline" className="w-full sm:w-auto border-primary/40 text-primary hover:bg-primary/10">
+            <Link href="/statistik" className="flex items-center justify-center">
+              <LineChartIcon className="mr-2 h-4 w-4" />
+              Statistiken
+            </Link>
+          </Button>
           <NativeSelect
             value={selectedCompetition ? `${selectedCompetition.year}-${selectedCompetition.discipline}` : ""}
             onValueChange={(value) => handleCompetitionChange(value)}

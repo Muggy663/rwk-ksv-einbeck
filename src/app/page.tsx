@@ -446,7 +446,26 @@ export default function HomePage() {
         </Card>
       </div>
 
-
+      {/* Statistik-Teaser */}
+      <div className="mb-6">
+        <Link href="/statistik" className="block">
+          <div className="bg-gradient-to-r from-primary to-emerald-600 p-4 rounded-lg shadow-lg transform hover:scale-[1.01] transition-all cursor-pointer">
+            <div className="flex items-center">
+              <div className="bg-white p-3 rounded-full mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                  <path d="M3 3v18h18" />
+                  <path d="m19 9-5 5-4-4-3 3" />
+                </svg>
+              </div>
+              <div className="text-white flex-1">
+                <h3 className="font-bold text-lg">📊 Statistiken entdecken</h3>
+                <p className="text-sm text-white/90">Leistungsentwicklung einzelner Schützen und ganzer Mannschaften – über Durchgänge und Saisons hinweg.</p>
+              </div>
+              <ChevronRight className="h-6 w-6 text-white shrink-0" />
+            </div>
+          </div>
+        </Link>
+      </div>
 
       {/* Weihnachtsgrüße entfernt - Januar 2026 */}
 
