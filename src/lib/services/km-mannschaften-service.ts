@@ -25,13 +25,7 @@ export async function generateMannschaftenForVerein(
     ...doc.data()
   })) as KMMeldung[];
   
-  // Filtere nach Verein und Disziplin
-  const vereinsMeldungen = alleMeldungen.filter(m => {
-    // TODO: Verein über Schütze ermitteln
-    return m.disziplinId === disziplinId;
-  });
-  
-  // Lade Schützen-Daten
+  // Lade Schützen-Daten des Vereins
   const schuetzenQuery = query(
     collection(db, 'shooters'),
     where('clubId', '==', vereinId)
@@ -42,6 +36,12 @@ export async function generateMannschaftenForVerein(
     id: doc.id,
     ...doc.data()
   })) as Shooter[];
+  
+  // Filtere Meldungen nach Verein (über die Schützen des Vereins) und Disziplin
+  const vereinsSchuetzenIds = new Set(schuetzen.map(s => s.id));
+  const vereinsMeldungen = alleMeldungen.filter(m =>
+    m.disziplinId === disziplinId && vereinsSchuetzenIds.has(m.schuetzeId)
+  );
   
   // Gruppiere Meldungen nach Wettkampfklassen
   const klassenGruppen = new Map<string, {

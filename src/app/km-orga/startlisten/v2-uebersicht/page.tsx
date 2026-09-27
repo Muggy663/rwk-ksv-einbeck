@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { logWarn, logError } from '@/lib/utils/secure-logger';
 import { authFetch } from '@/lib/auth/authFetch';
+import { useAuthContext } from '@/components/auth/AuthContext';
 
 interface Aenderungswunsch {
   id: string;
@@ -64,6 +65,7 @@ interface StartlistenDoc {
 
 export default function StartlistenV2Uebersicht() {
   const { toast } = useToast();
+  const { user } = useAuthContext();
   const [startlisten, setStartlisten] = useState<StartlistenDoc[]>([]);
   const [saisons, setSaisons] = useState<Array<{ id: string; jahr?: number; name?: string; status?: string; [key: string]: any }>>([]);
   const [meldungen, setMeldungen] = useState<Array<{ id: string; name?: string; disziplin?: string; verein?: string; altersklasse?: string; anmerkung?: string; lmTeilnahme?: boolean; [key: string]: any }>>([]);
@@ -308,7 +310,7 @@ export default function StartlistenV2Uebersicht() {
       
       await addDoc(collection(correctDb, 'km_startlisten_aenderungen'), {
         text: neuerWunsch,
-        autor: 'KM-Orga', // TODO: Echten Benutzernamen verwenden
+        autor: user?.displayName || user?.email || 'KM-Orga',
         timestamp: new Date(),
         status: 'offen',
         prioritaet: 'normal',
@@ -1010,8 +1012,7 @@ export default function StartlistenV2Uebersicht() {
                             const [schuetzenRes, mannschaftenRes, disziplinenRes] = await Promise.all([
                               authFetch('/api/shooters'),
                               fetch('/api/km/mannschaften'),
-                              fetch('/api/km/disziplinen'),
-                              authFetch('/api/km/meldungen')
+                              fetch('/api/km/disziplinen')
                             ]);
                             
                             const schuetzenData = schuetzenRes.ok ? (await schuetzenRes.json()).data || [] : [];
@@ -1033,23 +1034,34 @@ export default function StartlistenV2Uebersicht() {
                             const pageWidth = doc.internal.pageSize.width;
                             const pageHeight = doc.internal.pageSize.height;
                             
+                            // Logo einmal synchron als Base64 laden (verlässlich, kein onload-Timing-Bug)
+                            let logoBase64 = '';
+                            try {
+                              const response = await fetch('/images/logo2.png');
+                              const blob = await response.blob();
+                              const reader = new FileReader();
+                              logoBase64 = await new Promise<string>((resolve) => {
+                                reader.onload = () => resolve(reader.result as string);
+                                reader.onerror = () => resolve('');
+                                reader.readAsDataURL(blob);
+                              });
+                            } catch (error) {
+                              logWarn('Logo konnte nicht geladen werden:', { data: error });
+                            }
+                            
                             // Erste Seite - Vollständige Titelseite
                             doc.setFontSize(18);
                             doc.setFont('helvetica', 'bold');
                             doc.text('KREISSCHÜTZENVERBAND', pageWidth / 2, 40, { align: 'center' });
                             doc.text('EINBECK e.V.', pageWidth / 2, 55, { align: 'center' });
                             
-                            // Logo laden und einfügen
-                            try {
-                              const logoImg = new Image();
-                              logoImg.src = '/images/logo2.png';
-                              await new Promise((resolve) => {
-                                logoImg.onload = resolve;
-                                logoImg.onerror = resolve;
-                              });
-                              doc.addImage(logoImg, 'PNG', pageWidth / 2 - 25, 70, 50, 50);
-                            } catch (error) {
-                              logWarn('Logo konnte nicht geladen werden:', { data: error });
+                            // Logo einfügen
+                            if (logoBase64) {
+                              try {
+                                doc.addImage(logoBase64, 'PNG', pageWidth / 2 - 25, 70, 50, 50);
+                              } catch (error) {
+                                logWarn('Logo konnte nicht eingefügt werden');
+                              }
                             }
                             
                             doc.setFontSize(20);
@@ -1105,12 +1117,12 @@ export default function StartlistenV2Uebersicht() {
                                 
                                 // Header nur bei neuer Seite
                                 if (currentY < 50) {
-                                  try {
-                                    const logoImg = new Image();
-                                    logoImg.src = '/images/logo2.png';
-                                    doc.addImage(logoImg, 'PNG', 15, 10, 20, 20);
-                                  } catch (error) {
-                                    logWarn('Logo konnte nicht geladen werden');
+                                  if (logoBase64) {
+                                    try {
+                                      doc.addImage(logoBase64, 'PNG', 15, 10, 20, 20);
+                                    } catch (error) {
+                                      logWarn('Logo konnte nicht eingefügt werden');
+                                    }
                                   }
                                   
                                   doc.setFontSize(12);
@@ -1118,7 +1130,10 @@ export default function StartlistenV2Uebersicht() {
                                   doc.text('KREISSCHÜTZENVERBAND EINBECK e.V.', 40, 15);
                                   doc.text('- Kreisschießsportleiterin -', 40, 22);
                                   
+                                  // Dezente Trennlinie unter dem Kopf
                                   doc.setFont('helvetica', 'normal');
+                                  doc.setDrawColor(180, 180, 180);
+                                  doc.setLineWidth(0.3);
                                   doc.line(40, 25, pageWidth - 20, 25);
                                   currentY = 35;
                                 }
@@ -1198,26 +1213,32 @@ export default function StartlistenV2Uebersicht() {
                                   startY: currentY,
                                   head: [['Stand', 'Mitgl.-Nr.', 'Name', 'Vorname', 'Verein', 'Disz.', 'WKl', 'E/M', 'LM']],
                                   body: tableData,
+                                  theme: 'grid',
                                   styles: { 
                                     fontSize: 9,
-                                    cellPadding: 3,
+                                    cellPadding: 2,
                                     textColor: [0, 0, 0],
                                     fillColor: [255, 255, 255],
                                     valign: 'middle',
                                     halign: 'center',
-                                    minCellHeight: 16
+                                    minCellHeight: 10,
+                                    lineWidth: 0.1,
+                                    lineColor: [200, 200, 200]
                                   },
                                   headStyles: { 
-                                    fillColor: [220, 220, 220],
+                                    fillColor: [235, 235, 235],
                                     textColor: [0, 0, 0],
                                     fontStyle: 'bold',
-                                    lineWidth: 1,
-                                    lineColor: [0, 0, 0]
+                                    lineWidth: 0.1,
+                                    lineColor: [200, 200, 200]
                                   },
                                   bodyStyles: {
-                                    lineWidth: 0.8,
-                                    lineColor: [0, 0, 0],
+                                    lineWidth: 0.1,
+                                    lineColor: [200, 200, 200],
                                     textColor: [0, 0, 0]
+                                  },
+                                  alternateRowStyles: {
+                                    fillColor: [248, 248, 248]
                                   },
                                   margin: { left: 10, right: 10 },
                                   columnStyles: {
@@ -1240,15 +1261,22 @@ export default function StartlistenV2Uebersicht() {
                             const totalPages = doc.getNumberOfPages();
                             for (let i = 1; i <= totalPages; i++) {
                               doc.setPage(i);
+                              // Dünne Trennlinie über dem Footer
+                              doc.setDrawColor(200, 200, 200);
+                              doc.setLineWidth(0.2);
+                              doc.line(20, pageHeight - 14, pageWidth - 20, pageHeight - 14);
+                              
                               doc.setFontSize(8);
                               doc.setFont('helvetica', 'normal');
+                              doc.setTextColor(120, 120, 120);
                               doc.text(
-                                `Erstellt am ${new Date().toLocaleDateString('de-DE')} - RWK Einbeck`,
+                                `Erstellt am ${new Date().toLocaleDateString('de-DE')} - Kreisschützenverband Einbeck e.V.`,
                                 pageWidth / 2,
                                 pageHeight - 10,
                                 { align: 'center' }
                               );
                               doc.text(`Seite ${i} von ${totalPages}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
+                              doc.setTextColor(0, 0, 0);
                             }
                             
                             const sanitizedDatum = String(startliste.konfiguration?.datum || new Date().toISOString().split('T')[0]).replace(/[<>"'&\/\\]/g, '');
