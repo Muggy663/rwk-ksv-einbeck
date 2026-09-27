@@ -1,9 +1,10 @@
 "use client";
 
-// Öffentliche Vereins-Übersicht: zeigt alle Vereine mit Vereinsnummer und – falls
-// hinterlegt – einem Anfahrt-Link (Google Maps). Reine Ansicht, nicht bearbeitbar.
+// Öffentliche Vereins-Übersicht: zeigt alle Vereine mit Vereinsnummer, Anfahrt-Link
+// (Google Maps) und – sofern gepflegt – der Standkapazität (welche Disziplinen der
+// Verein ausrichten kann). Reine Ansicht, nicht bearbeitbar.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { logError } from '@/lib/utils/secure-logger';
@@ -11,7 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BackButton } from '@/components/ui/back-button';
-import { Building2, MapPin, Search, Hash } from 'lucide-react';
+import { Building2, MapPin, Search, Hash, Target } from 'lucide-react';
 
 interface ClubInfo {
   id: string;
@@ -19,7 +20,16 @@ interface ClubInfo {
   shortName?: string;
   clubNumber?: string;
   mapsUrl?: string;
+  ausrichterDisziplinen: string[];
+  keineEigenenStaende: boolean;
 }
+
+// Anzeige-Konfiguration der Ausrichter-Disziplinen (Standkapazität).
+const DISZIPLIN_LABELS: { key: string; label: string; short: string }[] = [
+  { key: 'LG', label: 'Luftdruck (10m)', short: 'Luftdruck' },
+  { key: 'KKG', label: 'KK-Gewehr (50m)', short: 'KK-Gewehr' },
+  { key: 'KKP', label: 'KK-Pistole (25m)', short: 'KK-Pistole' },
+];
 
 export default function VereineUebersichtPage() {
   const [clubs, setClubs] = useState<ClubInfo[]>([]);
@@ -38,9 +48,10 @@ export default function VereineUebersichtPage() {
             shortName: data.shortName || undefined,
             clubNumber: data.clubNumber || undefined,
             mapsUrl: typeof data.mapsUrl === 'string' && data.mapsUrl.trim() ? data.mapsUrl.trim() : undefined,
+            ausrichterDisziplinen: Array.isArray(data.ausrichterDisziplinen) ? data.ausrichterDisziplinen : [],
+            keineEigenenStaende: !!data.keineEigenenStaende,
           };
         });
-        // Nach Vereinsnummer sortieren (08-001, 08-002 …), Vereine ohne Nummer ans Ende.
         list.sort((a, b) => {
           if (a.clubNumber && b.clubNumber) return a.clubNumber.localeCompare(b.clubNumber);
           if (a.clubNumber) return -1;
@@ -56,23 +67,25 @@ export default function VereineUebersichtPage() {
     })();
   }, []);
 
-  const gefiltert = clubs.filter(c => {
+  const gefiltert = useMemo(() => {
     const q = suche.trim().toLowerCase();
-    if (!q) return true;
-    return (
+    if (!q) return clubs;
+    return clubs.filter(c =>
       c.name.toLowerCase().includes(q) ||
       (c.shortName || '').toLowerCase().includes(q) ||
       (c.clubNumber || '').toLowerCase().includes(q)
     );
-  });
+  }, [clubs, suche]);
 
-  const mitAnfahrt = clubs.filter(c => c.mapsUrl).length;
+  const mitAnfahrt = useMemo(() => clubs.filter(c => c.mapsUrl).length, [clubs]);
+  const mitStaenden = useMemo(() => clubs.filter(c => c.ausrichterDisziplinen.length > 0).length, [clubs]);
 
   return (
     <div className="container py-8 max-w-6xl mx-auto">
       {/* Hero */}
       <div className="relative mb-8 overflow-hidden rounded-2xl border bg-gradient-to-br from-indigo-500/10 via-background to-background p-6 animate-fade-in">
         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-indigo-500/10 blur-3xl" />
+        <div className="absolute -bottom-12 right-24 h-32 w-32 rounded-full bg-violet-500/10 blur-3xl" />
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 p-2.5 text-white shadow-lg">
@@ -83,11 +96,24 @@ export default function VereineUebersichtPage() {
                 Vereine im KSV Einbeck
               </h1>
               <p className="text-sm text-muted-foreground">
-                {clubs.length} Vereine · {mitAnfahrt} mit Anfahrt-Link
+                Übersicht aller Mitgliedsvereine mit Vereinsnummer, Anfahrt und Ausrichter-Ständen
               </p>
             </div>
           </div>
           <BackButton fallbackHref="/" />
+        </div>
+
+        {/* Kennzahlen */}
+        <div className="relative mt-6 flex flex-wrap gap-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1 text-sm shadow-sm backdrop-blur">
+            <Building2 className="h-4 w-4 text-indigo-500" /> {clubs.length} Vereine
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1 text-sm shadow-sm backdrop-blur">
+            <MapPin className="h-4 w-4 text-emerald-500" /> {mitAnfahrt} mit Anfahrt
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-background/70 px-3 py-1 text-sm shadow-sm backdrop-blur">
+            <Target className="h-4 w-4 text-amber-500" /> {mitStaenden} mit Ständen gepflegt
+          </span>
         </div>
       </div>
 
@@ -105,7 +131,7 @@ export default function VereineUebersichtPage() {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-32 rounded-xl border bg-muted/30 animate-pulse" />
+            <div key={i} className="h-44 rounded-xl border bg-muted/30 animate-pulse" />
           ))}
         </div>
       ) : gefiltert.length === 0 ? (
@@ -115,11 +141,12 @@ export default function VereineUebersichtPage() {
           {gefiltert.map((club, i) => (
             <Card
               key={club.id}
-              className="group overflow-hidden border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg animate-fade-in"
+              className="group flex flex-col overflow-hidden border shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg animate-fade-in"
               style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}
             >
               <div className="h-1.5 w-full bg-gradient-to-r from-indigo-500 to-violet-600" />
-              <CardContent className="p-5">
+              <CardContent className="flex flex-1 flex-col p-5">
+                {/* Kopf */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h2 className="font-semibold text-lg leading-tight truncate" title={club.name}>
@@ -129,21 +156,39 @@ export default function VereineUebersichtPage() {
                       <p className="text-xs text-muted-foreground mt-0.5">{club.shortName}</p>
                     )}
                   </div>
-                  <div className="rounded-lg bg-indigo-500/10 p-2 text-indigo-600 dark:text-indigo-300 shrink-0">
-                    <Building2 className="h-5 w-5" />
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center gap-2 text-sm">
-                  <Hash className="h-4 w-4 text-muted-foreground shrink-0" />
-                  {club.clubNumber ? (
-                    <span className="font-mono font-medium">{club.clubNumber}</span>
-                  ) : (
-                    <span className="text-muted-foreground">keine Vereinsnummer</span>
+                  {club.clubNumber && (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-indigo-500/10 px-2 py-1 text-xs font-mono font-medium text-indigo-700 dark:text-indigo-300 shrink-0">
+                      <Hash className="h-3 w-3" />
+                      {club.clubNumber}
+                    </span>
                   )}
                 </div>
 
+                {/* Standkapazität */}
                 <div className="mt-4">
+                  <p className="text-xs font-medium text-muted-foreground mb-1.5">Ausrichter-Stände</p>
+                  {club.keineEigenenStaende ? (
+                    <span className="text-xs text-muted-foreground italic">keine eigenen Stände</span>
+                  ) : club.ausrichterDisziplinen.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {DISZIPLIN_LABELS.filter(d => club.ausrichterDisziplinen.includes(d.key)).map(d => (
+                        <span
+                          key={d.key}
+                          className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300"
+                          title={d.label}
+                        >
+                          <Target className="h-3 w-3" />
+                          {d.short}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">noch nicht gepflegt</span>
+                  )}
+                </div>
+
+                {/* Anfahrt (unten fixiert) */}
+                <div className="mt-auto pt-4 border-t">
                   {club.mapsUrl ? (
                     <Button asChild size="sm" className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
                       <a href={club.mapsUrl} target="_blank" rel="noopener noreferrer">
@@ -165,7 +210,7 @@ export default function VereineUebersichtPage() {
       )}
 
       <p className="mt-8 text-center text-xs text-muted-foreground">
-        Anfahrts-Links werden von den Vereinen bzw. der Verwaltung gepflegt.
+        Anfahrts-Links und Ausrichter-Stände werden von den Vereinen bzw. der Verwaltung gepflegt.
       </p>
     </div>
   );
