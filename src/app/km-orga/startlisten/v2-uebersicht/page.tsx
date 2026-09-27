@@ -377,10 +377,15 @@ export default function StartlistenV2Uebersicht() {
 
   const handleEdit = (startliste: StartlistenDoc) => {
     setEditingId(startliste.id);
-    setEditData(startliste);
+    // Tiefe Kopie, damit Edits nicht das Objekt im Listen-State mutieren
+    setEditData(structuredClone(startliste));
   };
 
   const handleSave = async () => {
+    if (!editingId) {
+      toast({ title: 'Fehler', description: 'Keine Startliste zum Speichern ausgewählt.', variant: 'destructive' });
+      return;
+    }
     try {
       // Verwende die korrekte Datenbank-Instanz
       const { getFirestore } = await import('firebase/firestore');
@@ -388,11 +393,13 @@ export default function StartlistenV2Uebersicht() {
       const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
       const correctDb = getFirestore(app, databaseId);
       
-      await updateDoc(doc(correctDb, 'km_startlisten_v2', editingId || ''), editData);
+      await updateDoc(doc(correctDb, 'km_startlisten_v2', editingId), editData);
       setEditingId(null);
       loadData();
+      toast({ title: '✅ Gespeichert', description: 'Die Startliste wurde erfolgreich gespeichert.' });
     } catch (error) {
       logError('Fehler beim Speichern:', error);
+      toast({ title: 'Fehler', description: 'Startliste konnte nicht gespeichert werden.', variant: 'destructive' });
     }
   };
 
@@ -465,37 +472,6 @@ export default function StartlistenV2Uebersicht() {
       ...editData,
       startliste: updatedStartliste
     });
-  };
-
-  const calculateAgeClass = (schuetze: any, disziplin: any, selectedSaison: any) => {
-    if (!schuetze?.birthYear) return 'Unbekannt';
-    
-    const currentSaison = saisons.find(s => s.id === selectedSaison);
-    const age = (currentSaison?.jahr || 2026) - schuetze.birthYear;
-    const isAuflage = disziplin?.toLowerCase().includes('auflage');
-    const isMale = schuetze.gender === 'male';
-    
-    if (age <= 14) return 'Schüler';
-    if (age <= 16) return 'Jugend';
-    if (age <= 18) return `Junioren II ${isMale ? 'm' : 'w'}`;
-    if (age <= 20) return `Junioren I ${isMale ? 'm' : 'w'}`;
-    
-    if (isAuflage) {
-      if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
-      if (age <= 50) return 'Senioren 0';
-      if (age <= 60) return 'Senioren I';
-      if (age <= 65) return 'Senioren II';
-      if (age <= 70) return 'Senioren III';
-      if (age <= 75) return 'Senioren IV';
-      if (age <= 80) return 'Senioren V';
-      return 'Senioren VI';
-    } else {
-      if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
-      if (age <= 50) return `${isMale ? 'Herren' : 'Damen'} II`;
-      if (age <= 60) return `${isMale ? 'Herren' : 'Damen'} III`;
-      if (age <= 70) return `${isMale ? 'Herren' : 'Damen'} IV`;
-      return `${isMale ? 'Herren' : 'Damen'} V`;
-    }
   };
 
   const addShooterToStartliste = async (meldung: any) => {
@@ -1788,22 +1764,13 @@ export default function StartlistenV2Uebersicht() {
                               const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
                               
                               if (dragData.type === 'newShooter') {
-                                // Neuen Schützen an dieser Position einfügen
+                                // Neuen Schützen an dieser Position einfügen.
+                                // Altersklasse aus der gespeicherten Meldung uebernehmen
+                                // (Single Source of Truth), nicht neu berechnen.
                                 let altersklasse = dragData.meldung.altersklasse || dragData.meldung.ageClass || dragData.meldung.wettkampfklasse;
                                 if (!altersklasse || altersklasse === 'Unbekannt') {
-                                  // Hole Schützen-Daten für Altersklassen-Berechnung
-                                  try {
-                                    const shootersRes = await authFetch('/api/shooters');
-                                    if (shootersRes.ok) {
-                                      const shootersData = await shootersRes.json();
-                                      const schuetze = shootersData.data?.find((s: any) => s.name === dragData.meldung.name);
-                                      if (schuetze) {
-                                        altersklasse = calculateAgeClass(schuetze, dragData.meldung.disziplin, selectedSaison);
-                                      }
-                                    }
-                                  } catch (error) {
-                                    logError('Fehler bei Altersklassen-Berechnung:', error);
-                                  }
+                                  const meldung = meldungen.find(m => m.name === dragData.meldung.name && m.disziplin === dragData.meldung.disziplin);
+                                  altersklasse = meldung?.altersklasse || 'Unbekannt';
                                 }
                                 
                                 const newStarter = {
@@ -1830,11 +1797,12 @@ export default function StartlistenV2Uebersicht() {
                                 // Bestehenden Starter verschieben
                                 const draggedIndex = dragData.starterIndex;
                                 
-                                if (draggedIndex === (editData.startliste || []).findIndex(s => s === starter)) return;
+                                if (draggedIndex === index) return;
                                 
                                 const newStartliste = [...(editData.startliste || [])];
                                 const [draggedItem] = newStartliste.splice(draggedIndex, 1);
-                                const realIndex = (editData.startliste || []).findIndex(s => s === starter);
+                                // Nach dem Entfernen kann sich der Zielindex verschieben
+                                const realIndex = draggedIndex < index ? index - 1 : index;
                                 newStartliste.splice(realIndex, 0, draggedItem);
                                 
                                 // Only recalculate if auto-recalculate is enabled
@@ -1894,8 +1862,7 @@ export default function StartlistenV2Uebersicht() {
                           }}
                           onClick={() => {
                             if (swapMode) {
-                              const realIndex = (editData.startliste || []).findIndex(s => s === starter);
-                              toggleSwapSelection(realIndex);
+                              toggleSwapSelection(index);
                             }
                           }}
                           className={`grid grid-cols-9 gap-2 p-2 rounded border transition-all ${
@@ -1912,15 +1879,13 @@ export default function StartlistenV2Uebersicht() {
                             type="text"
                             value={starter.name || starter.schuetzeName || ''}
                             onChange={(e) => {
-                              const realIndex = (editData.startliste || []).findIndex(s => s === starter);
-                              updateStarter(realIndex, 'name', e.target.value);
+                              updateStarter(index, 'name', e.target.value);
                             }}
                             className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-full"
                           />
                           <button
                             onClick={() => {
-                            const realIndex = (editData.startliste || []).findIndex(s => s === starter);
-                            removeStarter(realIndex);
+                            removeStarter(index);
                           }}
                             className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 mt-1"
                           >
@@ -1931,8 +1896,7 @@ export default function StartlistenV2Uebersicht() {
                           type="text"
                           value={starter.verein || ''}
                           onChange={(e) => {
-                          const realIndex = (editData.startliste || []).findIndex(s => s === starter);
-                          updateStarter(realIndex, 'verein', e.target.value);
+                          updateStarter(index, 'verein', e.target.value);
                         }}
                           className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-40"
                         />
@@ -1940,8 +1904,7 @@ export default function StartlistenV2Uebersicht() {
                           type="text"
                           value={starter.disziplin || ''}
                           onChange={(e) => {
-                          const realIndex = (editData.startliste || []).findIndex(s => s === starter);
-                          updateStarter(realIndex, 'disziplin', e.target.value);
+                          updateStarter(index, 'disziplin', e.target.value);
                         }}
                           className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-40"
                         />
@@ -2064,8 +2027,7 @@ export default function StartlistenV2Uebersicht() {
                           type="text"
                           value={starter.anmerkung || ''}
                           onChange={(e) => {
-                            const realIndex = (editData.startliste || []).findIndex(s => s === starter);
-                            updateStarter(realIndex, 'anmerkung', e.target.value);
+                            updateStarter(index, 'anmerkung', e.target.value);
                           }}
                           className="p-1 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white w-24"
                         />
@@ -2074,8 +2036,7 @@ export default function StartlistenV2Uebersicht() {
                             type="checkbox"
                             checked={starter.lmTeilnahme === true || meldungen.find(m => m.name === starter.name && m.disziplin === starter.disziplin)?.lmTeilnahme === true}
                             onChange={(e) => {
-                              const realIndex = (editData.startliste || []).findIndex(s => s === starter);
-                              updateStarter(realIndex, 'lmTeilnahme', e.target.checked);
+                              updateStarter(index, 'lmTeilnahme', e.target.checked);
                             }}
                             className="w-4 h-4 rounded"
                             title="Landesmeisterschaft Teilnahme"
@@ -2111,22 +2072,13 @@ export default function StartlistenV2Uebersicht() {
                                 const dragData = JSON.parse(e.dataTransfer.getData('text/plain'));
                                 
                                 if (dragData.type === 'newShooter') {
-                                  // Neuen Schützen am Ende hinzufügen
+                                  // Neuen Schützen am Ende hinzufügen.
+                                  // Altersklasse aus der gespeicherten Meldung uebernehmen
+                                  // (Single Source of Truth), nicht neu berechnen.
                                   let altersklasse = dragData.meldung.altersklasse || dragData.meldung.ageClass || dragData.meldung.wettkampfklasse;
                                   if (!altersklasse || altersklasse === 'Unbekannt') {
-                                    // Hole Schützen-Daten für Altersklassen-Berechnung
-                                    try {
-                                      const shootersRes = await authFetch('/api/shooters');
-                                      if (shootersRes.ok) {
-                                        const shootersData = await shootersRes.json();
-                                        const schuetze = shootersData.data?.find((s: any) => s.name === dragData.meldung.name);
-                                        if (schuetze) {
-                                          altersklasse = calculateAgeClass(schuetze, dragData.meldung.disziplin, selectedSaison);
-                                        }
-                                      }
-                                    } catch (error) {
-                                      logError('Fehler bei Altersklassen-Berechnung:', error);
-                                    }
+                                    const meldung = meldungen.find(m => m.name === dragData.meldung.name && m.disziplin === dragData.meldung.disziplin);
+                                    altersklasse = meldung?.altersklasse || 'Unbekannt';
                                   }
                                   
                                   const newStarter = {
