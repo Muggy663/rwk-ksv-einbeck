@@ -733,25 +733,35 @@ export default function StartlistenV2Uebersicht() {
           ← Zurück
         </Link>
         <h1 className="text-3xl font-bold text-gray-800">📄 Gespeicherte Startlisten V2</h1>
-        <div className="ml-auto flex items-center gap-4">
-          <label className="text-sm font-medium">Saison:</label>
-          <select
-            value={selectedSaison}
-            onChange={(e) => setSelectedSaison(e.target.value)}
-            className="px-3 py-2 border rounded-lg bg-white"
-            disabled={verfuegbareJahre.length === 0}
-          >
-            {verfuegbareJahre.length === 0 ? (
-              <option value="">Lade Jahre...</option>
-            ) : (
-              verfuegbareJahre.map(jahr => (
-                <option key={jahr} value={jahr}>
-                  {jahr}
-                </option>
-              ))
-            )}
-          </select>
-        </div>
+      </div>
+
+      {/* Saison-Auswahl - prominent hervorgehoben */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl p-4">
+        <label htmlFor="saison-select" className="flex items-center gap-2 text-lg font-bold text-blue-900 dark:text-blue-100">
+          📅 Saison
+        </label>
+        <select
+          id="saison-select"
+          value={selectedSaison}
+          onChange={(e) => setSelectedSaison(e.target.value)}
+          className="px-4 py-3 text-xl font-bold border-2 border-blue-400 dark:border-blue-600 rounded-lg bg-white dark:bg-gray-800 text-blue-900 dark:text-blue-100 focus:ring-2 focus:ring-blue-500 focus:outline-none w-full sm:w-auto"
+          disabled={verfuegbareJahre.length === 0}
+        >
+          {verfuegbareJahre.length === 0 ? (
+            <option value="">Lade Jahre...</option>
+          ) : (
+            verfuegbareJahre.map(jahr => (
+              <option key={jahr} value={jahr}>
+                {jahr}
+              </option>
+            ))
+          )}
+        </select>
+        {selectedSaison && (
+          <span className="sm:ml-auto text-sm text-blue-800 dark:text-blue-200">
+            Angezeigt: Startlisten der Saison <strong>{selectedSaison}</strong>
+          </span>
+        )}
       </div>
 
       {/* Bedienungsanleitung */}
