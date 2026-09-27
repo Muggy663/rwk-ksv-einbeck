@@ -501,21 +501,22 @@ function RwkTabellenPageComponent() {
   const [isShooterDetailModalOpen, setIsShooterDetailModalOpen] = useState(false);
   const [selectedShooterForDetail, setSelectedShooterForDetail] = useState<IndividualShooterDisplayData | null>(null);
   const [teamSubstitutions, setTeamSubstitutions] = useState<Map<string, any>>(new Map());
-  const [isPortrait, setIsPortrait] = useState(false);
+  // Karten-Ansicht auf allen kleineren Bildschirmen (< lg / 1024px) statt
+  // horizontal scrollender Tabelle - kein "Gerät drehen" mehr noetig.
+  const [useMobileCards, setUseMobileCards] = useState(false);
   
-  // Detect orientation changes
   useEffect(() => {
-    const checkOrientation = () => {
-      setIsPortrait(window.innerHeight > window.innerWidth && window.innerWidth < 768);
+    const checkViewport = () => {
+      setUseMobileCards(window.innerWidth < 1024);
     };
     
-    checkOrientation();
-    window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', checkOrientation);
+    checkViewport();
+    window.addEventListener('resize', checkViewport);
+    window.addEventListener('orientationchange', checkViewport);
     
     return () => {
-      window.removeEventListener('resize', checkOrientation);
-      window.removeEventListener('orientationchange', checkOrientation);
+      window.removeEventListener('resize', checkViewport);
+      window.removeEventListener('orientationchange', checkViewport);
     };
   }, []);
 
@@ -1891,38 +1892,48 @@ function RwkTabellenPageComponent() {
       <div className="rounded-lg border-2 border-dashed border-amber-400 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
         🧪 <strong>Vorschau-Version</strong> der RWK-Tabellen (nur Admin). Diese Seite dient zum Testen des neuen Designs. Die öffentliche Seite unter <code>/rwk-tabellen</code> bleibt unverändert.
       </div>
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="flex items-center space-x-3">
-          <BackButton className="mr-2" fallbackHref="/admin" />
-          <TableIconLucide className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold text-primary">{pageTitle}</h1>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="ml-2 text-muted-foreground hover:text-primary p-2"
-            onClick={() => document.getElementById('rwk-legend')?.scrollIntoView({ behavior: 'smooth' })}
-          >
-            <Info className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button asChild variant="outline" className="w-full sm:w-auto border-primary/40 text-primary hover:bg-primary/10">
-            <Link href="/statistik" className="flex items-center justify-center">
-              <LineChartIcon className="mr-2 h-4 w-4" />
-              Statistiken
-            </Link>
-          </Button>
-          <NativeSelect
-            value={selectedCompetition ? `${selectedCompetition.year}-${selectedCompetition.discipline}` : ""}
-            onValueChange={(value) => handleCompetitionChange(value)}
-            disabled={availableCompetitions.length === 0 || loadingData}
-            className="w-full sm:w-[300px] shadow-md"
-            placeholder={availableCompetitions.length === 0 ? "Keine Wettkämpfe" : "Wettkampf wählen"}
-            options={availableCompetitions.map(comp => ({
-              value: `${comp.year}-${comp.discipline}`,
-              label: comp.displayName
-            }))}
-          />
+      {/* Moderner Header mit Gradient */}
+      <div className="rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 p-5 sm:p-6">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <BackButton fallbackHref="/admin" />
+            <div className="flex items-center justify-center h-11 w-11 rounded-xl bg-primary/15 text-primary shrink-0">
+              <TableIconLucide className="h-6 w-6" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-primary truncate">{pageTitle}</h1>
+              <p className="text-sm text-muted-foreground">Rundenwettkampf-Tabellen</p>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="ml-auto text-muted-foreground hover:text-primary p-2 shrink-0"
+              onClick={() => document.getElementById('rwk-legend')?.scrollIntoView({ behavior: 'smooth' })}
+              aria-label="Legende anzeigen"
+            >
+              <Info className="h-5 w-5" />
+            </Button>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+            <label className="text-sm font-semibold text-foreground sm:min-w-[90px]">Wettkampf</label>
+            <NativeSelect
+              value={selectedCompetition ? `${selectedCompetition.year}-${selectedCompetition.discipline}` : ""}
+              onValueChange={(value) => handleCompetitionChange(value)}
+              disabled={availableCompetitions.length === 0 || loadingData}
+              className="w-full sm:flex-1 sm:max-w-md shadow-sm bg-white dark:bg-gray-800 font-medium"
+              placeholder={availableCompetitions.length === 0 ? "Keine Wettkämpfe" : "Wettkampf wählen"}
+              options={availableCompetitions.map(comp => ({
+                value: `${comp.year}-${comp.discipline}`,
+                label: comp.displayName
+              }))}
+            />
+            <Button asChild variant="outline" className="w-full sm:w-auto border-primary/40 text-primary hover:bg-primary/10">
+              <Link href="/statistik" className="flex items-center justify-center">
+                <LineChartIcon className="mr-2 h-4 w-4" />
+                Statistiken
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -1950,16 +1961,6 @@ function RwkTabellenPageComponent() {
 
         <TabsContent value="mannschaften">
 
-          
-          {/* Orientierungs-Hinweis für Portrait-Modus */}
-          {isPortrait && (
-            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-center gap-2 text-blue-900 dark:text-blue-100 text-sm">
-                <span>🔄</span>
-                <span><strong>Bessere Ansicht:</strong> Drehen Sie Ihr Gerät ins Querformat für die vollständige Tabellen-Ansicht!</span>
-              </div>
-            </div>
-          )}
           
           {!loadingData && !error && (!teamData || teamData.leagues.length === 0) && (
             <Card className="shadow-lg">
@@ -2117,7 +2118,7 @@ function RwkTabellenPageComponent() {
                       </div>
                     </div>
                     {league.teams.length > 0 ? (
-                      isPortrait ? (
+                      useMobileCards ? (
                         (() => {
                           // Berechne liga-weit vollständigen Durchgang auch für Mobile
                           const leagueCompleteRound = determineLeagueCompleteRound(league.teams, currentNumRoundsState);
@@ -2158,15 +2159,15 @@ function RwkTabellenPageComponent() {
                             transform: 'translateZ(0)'
                           }}>
                           <TableHeader>
-                            <TableRow className="bg-muted/50">
-                              <TableHead className="w-[50px] text-center px-2 py-2 text-xs font-medium text-muted-foreground">#</TableHead>
-                              <TableHead className="min-w-[150px] px-2 py-2 text-sm font-medium text-muted-foreground">Mannschaft</TableHead>
+                            <TableRow className="bg-muted/80 backdrop-blur supports-[backdrop-filter]:bg-muted/60 sticky top-0 z-10">
+                              <TableHead className="w-[50px] text-center px-2 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">#</TableHead>
+                              <TableHead className="min-w-[150px] px-2 py-2.5 text-sm font-semibold text-muted-foreground">Mannschaft</TableHead>
                               {[...Array(currentNumRoundsState)].map((_, i) => (
-                                <TableHead key={`dg-header-${i + 1}`} className="px-1 py-1.5 text-center text-xs text-muted-foreground font-normal">DG {i + 1}</TableHead>
+                                <TableHead key={`dg-header-${i + 1}`} className="px-1 py-2.5 text-center text-xs text-muted-foreground font-medium">DG {i + 1}</TableHead>
                               ))}
-                              <TableHead className="text-center px-1 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap">Gesamt</TableHead>
-                              {!isNativeApp && <TableHead className="text-center px-1 py-1.5 text-xs font-medium text-muted-foreground whitespace-nowrap">Schnitt</TableHead>}
-                              {!isNativeApp && <TableHead className="w-[60px] text-right pr-4 px-2 py-2"></TableHead>}
+                              <TableHead className="text-center px-1 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">Gesamt</TableHead>
+                              {!isNativeApp && <TableHead className="text-center px-1 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap">Schnitt</TableHead>}
+                              {!isNativeApp && <TableHead className="w-[60px] text-right pr-4 px-2 py-2.5"></TableHead>}
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -2174,12 +2175,25 @@ function RwkTabellenPageComponent() {
                               .filter(team => showOutOfCompetitionTeams || !team.outOfCompetition)
                               .map(team => (
                               <React.Fragment key={team.id}>
-                                <TableRow className="hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => isNativeApp ? toggleTeamExpansion(team.id) : toggleTeamExpansion(team.id)}>
+                                <TableRow className="odd:bg-muted/20 hover:bg-primary/5 transition-colors cursor-pointer" onClick={() => toggleTeamExpansion(team.id)}>
                                   <TableCell className="text-center font-medium px-2 py-2">
                                     {team.outOfCompetition ? 
-                                      <span className="text-amber-500 dark:text-amber-400" title="Außer Konkurrenz">AK</span> : 
+                                      <span className="text-amber-500 dark:text-amber-400 font-semibold" title="Außer Konkurrenz">AK</span> : 
                                       team.istEinzelwertung ?
                                         <span className="text-slate-500" title="Einzelmeldung – außer Wertung">—</span> :
+                                        (team.rank === 1 || team.rank === 2 || team.rank === 3) ? (
+                                          <span
+                                            className={cn(
+                                              "inline-flex items-center justify-center w-7 h-7 rounded-full font-bold text-sm",
+                                              team.rank === 1 && "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+                                              team.rank === 2 && "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
+                                              team.rank === 3 && "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300"
+                                            )}
+                                            title={`Platz ${team.rank}`}
+                                          >
+                                            {team.rank}
+                                          </span>
+                                        ) :
                                         <span className="text-foreground dark:text-foreground">{team.rank}</span>
                                     }
                                   </TableCell>
@@ -2448,7 +2462,7 @@ function RwkTabellenPageComponent() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {isPortrait ? (
+                  {useMobileCards ? (
                     <MobileShooterCards
                       shooters={filteredIndividualData
                         .filter(shooter => showOutOfCompetitionShooters || !shooter.teamOutOfCompetition)
