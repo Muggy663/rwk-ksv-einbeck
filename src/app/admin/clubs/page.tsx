@@ -86,6 +86,8 @@ export default function AdminClubsPage() {
   // Entwurf je Verein für die Anfahrt-Link-Übersicht (clubId -> Eingabewert).
   const [mapsDraft, setMapsDraft] = useState<Record<string, string>>({});
   const [savingMaps, setSavingMaps] = useState<string | null>(null);
+  const [homepageDraft, setHomepageDraft] = useState<Record<string, string>>({});
+  const [savingHomepage, setSavingHomepage] = useState<string | null>(null);
 
   const speichereMapsLink = async (club: ClubWithNumber) => {
     const wert = (mapsDraft[club.id] ?? club.mapsUrl ?? '').trim();
@@ -104,6 +106,26 @@ export default function AdminClubsPage() {
       toast({ title: 'Fehler', description: 'Konnte nicht gespeichert werden.', variant: 'destructive' });
     } finally {
       setSavingMaps(null);
+    }
+  };
+
+  const speichereHomepage = async (club: ClubWithNumber) => {
+    const wert = (homepageDraft[club.id] ?? (club as any).homepageUrl ?? '').trim();
+    if (wert && !/^https?:\/\/\S+/i.test(wert)) {
+      toast({ title: 'Ungültiger Link', description: 'Bitte einen vollständigen Link eingeben (http:// oder https://).', variant: 'destructive' });
+      return;
+    }
+    setSavingHomepage(club.id);
+    try {
+      await updateDoc(doc(db, CLUBS_COLLECTION, club.id), { homepageUrl: wert });
+      setClubs(prev => prev.map(c => c.id === club.id ? { ...c, homepageUrl: wert } as ClubWithNumber : c));
+      setHomepageDraft(prev => ({ ...prev, [club.id]: wert }));
+      toast({ title: 'Gespeichert', description: `Homepage für ${club.name} aktualisiert.` });
+    } catch (error) {
+      logError('Homepage speichern fehlgeschlagen:', error);
+      toast({ title: 'Fehler', description: 'Konnte nicht gespeichert werden.', variant: 'destructive' });
+    } finally {
+      setSavingHomepage(null);
     }
   };
 
@@ -350,7 +372,7 @@ export default function AdminClubsPage() {
       {clubs.length > 0 && (
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle>Anfahrt (Google-Maps-Links)</CardTitle>
+            <CardTitle>Anfahrt & Homepage</CardTitle>
             <CardDescription>
               Link zum Schützenhaus/Stand je Verein. Wird an Terminen als klickbarer Ort angezeigt, damit Gäste den Weg finden. Tipp: In Google Maps „Teilen" → „Link kopieren".
               {(() => {
@@ -362,43 +384,48 @@ export default function AdminClubsPage() {
           <CardContent>
             <div className="space-y-2">
               {[...clubs].sort((a, b) => a.name.localeCompare(b.name)).map(club => {
-                const wert = mapsDraft[club.id] ?? club.mapsUrl ?? '';
-                const geaendert = wert.trim() !== (club.mapsUrl ?? '').trim();
+                const mapsWert = mapsDraft[club.id] ?? club.mapsUrl ?? '';
+                const mapsGeaendert = mapsWert.trim() !== (club.mapsUrl ?? '').trim();
+                const hpWert = homepageDraft[club.id] ?? (club as any).homepageUrl ?? '';
+                const hpGeaendert = hpWert.trim() !== ((club as any).homepageUrl ?? '').trim();
                 const ohneStaende = !!club.keineEigenenStaende;
                 const ungepflegt = !ohneStaende && !club.mapsUrl;
 
-                // Vereine ohne eigene Stände: kein Eingabefeld, nur "entfällt".
-                if (ohneStaende) {
-                  return (
-                    <div key={club.id} className="flex items-center gap-2 rounded-md border p-2">
-                      <div className="md:w-56 shrink-0 font-medium">{club.name}</div>
-                      <span className="text-sm text-muted-foreground">entfällt (keine eigenen Stände)</span>
-                    </div>
-                  );
-                }
-
                 return (
-                  <div key={club.id} className={`flex flex-col gap-2 rounded-md border p-2 md:flex-row md:items-center ${ungepflegt ? 'border-amber-300 bg-amber-50 dark:bg-amber-950/20' : ''}`}>
-                    <div className="md:w-56 shrink-0 font-medium">
+                  <div key={club.id} className={`flex flex-col gap-2 rounded-md border p-2 ${ungepflegt ? 'border-amber-300 bg-amber-50 dark:bg-amber-950/20' : ''}`}>
+                    <div className="font-medium">
                       {club.name}
-                      {ungepflegt && <span className="ml-2 text-xs text-amber-700 dark:text-amber-300">offen</span>}
+                      {ohneStaende && <span className="ml-2 text-xs text-muted-foreground">keine eigenen Stände</span>}
+                      {ungepflegt && <span className="ml-2 text-xs text-amber-700 dark:text-amber-300">Anfahrt offen</span>}
                     </div>
-                    <Input
-                      type="url"
-                      inputMode="url"
-                      placeholder="https://maps.app.goo.gl/…"
-                      value={wert}
-                      onChange={(e) => setMapsDraft(prev => ({ ...prev, [club.id]: e.target.value }))}
-                      className="flex-1"
-                    />
-                    <div className="flex items-center gap-2">
-                      {club.mapsUrl && (
-                        <a href={club.mapsUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:text-blue-800 underline whitespace-nowrap">
-                          Öffnen
-                        </a>
-                      )}
-                      <Button size="sm" variant={geaendert ? 'default' : 'outline'} onClick={() => speichereMapsLink(club)} disabled={savingMaps === club.id || !geaendert}>
+                    {/* Anfahrt */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <span className="text-xs text-muted-foreground w-20 shrink-0">📍 Anfahrt</span>
+                      <Input
+                        type="url"
+                        inputMode="url"
+                        placeholder="https://maps.app.goo.gl/…"
+                        value={mapsWert}
+                        onChange={(e) => setMapsDraft(prev => ({ ...prev, [club.id]: e.target.value }))}
+                        className="flex-1"
+                      />
+                      <Button size="sm" variant={mapsGeaendert ? 'default' : 'outline'} onClick={() => speichereMapsLink(club)} disabled={savingMaps === club.id || !mapsGeaendert}>
                         {savingMaps === club.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Speichern'}
+                      </Button>
+                    </div>
+                    {/* Homepage */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <span className="text-xs text-muted-foreground w-20 shrink-0">🌐 Homepage</span>
+                      <Input
+                        type="url"
+                        inputMode="url"
+                        placeholder="https://www.verein.de"
+                        value={hpWert}
+                        onChange={(e) => setHomepageDraft(prev => ({ ...prev, [club.id]: e.target.value }))}
+                        className="flex-1"
+                      />
+                      <Button size="sm" variant={hpGeaendert ? 'default' : 'outline'} onClick={() => speichereHomepage(club)} disabled={savingHomepage === club.id || !hpGeaendert}>
+                        {savingHomepage === club.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Speichern'}
                       </Button>
                     </div>
                   </div>

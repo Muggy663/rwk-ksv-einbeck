@@ -1,12 +1,12 @@
 # 🎯 RWK Einbeck App
 
-**Version: 3.0.10** | **Android: 1.0.0** | **20.09.2026**
+**Version: 3.0.11** | **Android: 1.0.0** | **20.09.2026**
 
 > **Digitale Plattform für den deutschen Schießsport**
 
 Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeisterschaften (KM) und den digitalen Schießnachweis. Automatische Tabellen, KI-gestützte Ergebniserfassung und moderne Vereinsverwaltung.
 
-[![Version](https://img.shields.io/badge/Version-3.0.10-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-3.0.11-green?style=for-the-badge)](#)
 [![Tech Stack](https://img.shields.io/badge/Tech-Next.js_16_+_Firebase-blue?style=for-the-badge)](#)
 [![Design](https://img.shields.io/badge/Design-Glassmorphism-purple?style=for-the-badge)](#)
 
@@ -96,7 +96,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
-**Aktuell: Version 3.0.10 (20.09.2026)** – Neue Mannschafts-Statistik (alle Schützen einer Mannschaft mit Kennzahlen und Verlauf auf einer Seite), verbesserte Schützensuche (Vor- oder Nachname) mit aufklappbaren Durchgängen und bessere Auffindbarkeit der Statistiken (Button in den RWK-Tabellen, Teaser auf der Startseite). Baut auf 3.0.9 auf (KM-Zugang-Fix, Anfahrt-Link je Verein, Aufräumen von Code und Firestore-Rules).
+**Aktuell: Version 3.0.11 (20.09.2026)** – Neue öffentliche Vereins-Übersicht (Vereinsnummer, Anfahrt-Link, Ausrichter-Stände) und aufgeräumte Startseite (Android-App als dezenter Link, Statistik-Hinweis Dark-Mode-lesbar). Baut auf 3.0.10 auf (Mannschafts-Statistik, verbesserte Schützensuche, bessere Auffindbarkeit der Statistiken).
 
 ## 📸 Screenshots
 
@@ -136,7 +136,7 @@ Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
 **Copyright © 2025-2026 KSV Einbeck. Alle Rechte vorbehalten.**
 
-*Letzte Aktualisierung: 20.09.2026 - Version 3.0.10*
+*Letzte Aktualisierung: 20.09.2026 - Version 3.0.11*
 
 Diese Software ist urheberrechtlich geschützt und ausschließlich für den RWK Einbeck und autorisierte Schützenvereine entwickelt. 
 

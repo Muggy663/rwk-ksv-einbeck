@@ -4,6 +4,14 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.0.11
+- **🏢 Neu: Vereins-Übersicht**: Eine neue öffentliche Seite „Vereine" (in Menü und Seitenleiste verlinkt) listet alle Mitgliedsvereine mit Vereinsnummer, Anfahrt-Link (Google Maps), Homepage und – sofern gepflegt – den Ausrichter-Ständen (Luftdruck / KK-Gewehr / KK-Pistole). Mit Suchfeld und Kennzahlen. Reine Ansicht
+- **🌐 Vereins-Homepage pflegbar**: Vereine können jetzt ihre Website hinterlegen (Sportleiter/Vorstand auf der Mitglieder-Seite, Admin in der Vereinsverwaltung). Der Link erscheint in der Vereins-Übersicht
+- **🗂️ Vereinsdaten gebündelt**: Auf der Mitglieder-Seite sind Ausrichter-Stände, Anfahrt und Homepage jetzt in einer aufgeräumten „Vereinsdaten"-Karte zusammengefasst
+- **🎨 Startseite aufgeräumt**: Das große „Android App"-Banner ist einem dezenten Link im Fußbereich gewichen. Der Statistik-Hinweis ist jetzt auch im Dark Mode gut lesbar
+
+---
+
 ## Version 3.0.10
 - **👥 Neu: Mannschafts-Statistik**: Unter „Statistiken → Mannschafts-Übersicht" werden alle Schützen einer Mannschaft auf einer Seite gezeigt – je Schütze mit Kennzahlen (Summe, Schnitt, Spanne, bestes/schlechtestes Ergebnis, Anzahl Durchgänge) und einem Verlaufsdiagramm über die Durchgänge. Auswahl über Saison → Liga → Mannschaft
 - **🔎 Schützensuche verbessert (saisonübergreifend)**: In der saisonübergreifenden Statistik findet man einen Schützen jetzt auch, wenn nur der Vor- ODER nur der Nachname bekannt ist (vorher musste der Name von vorne passen). Zusätzlich lassen sich pro Saison die einzelnen Durchgänge aufklappen, um die Berechnung nachzuvollziehen

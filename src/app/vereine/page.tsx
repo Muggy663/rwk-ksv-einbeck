@@ -12,7 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BackButton } from '@/components/ui/back-button';
-import { Building2, MapPin, Search, Hash, Target } from 'lucide-react';
+import { Building2, MapPin, Search, Hash, Target, Globe } from 'lucide-react';
 
 interface ClubInfo {
   id: string;
@@ -20,6 +20,7 @@ interface ClubInfo {
   shortName?: string;
   clubNumber?: string;
   mapsUrl?: string;
+  homepageUrl?: string;
   ausrichterDisziplinen: string[];
   keineEigenenStaende: boolean;
 }
@@ -48,6 +49,7 @@ export default function VereineUebersichtPage() {
             shortName: data.shortName || undefined,
             clubNumber: data.clubNumber || undefined,
             mapsUrl: typeof data.mapsUrl === 'string' && data.mapsUrl.trim() ? data.mapsUrl.trim() : undefined,
+            homepageUrl: typeof data.homepageUrl === 'string' && data.homepageUrl.trim() ? data.homepageUrl.trim() : undefined,
             ausrichterDisziplinen: Array.isArray(data.ausrichterDisziplinen) ? data.ausrichterDisziplinen : [],
             keineEigenenStaende: !!data.keineEigenenStaende,
           };
@@ -187,8 +189,8 @@ export default function VereineUebersichtPage() {
                   )}
                 </div>
 
-                {/* Anfahrt (unten fixiert) */}
-                <div className="mt-auto pt-4 border-t">
+                {/* Links (unten fixiert) */}
+                <div className="mt-auto pt-4 border-t space-y-2">
                   {club.mapsUrl ? (
                     <Button asChild size="sm" className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
                       <a href={club.mapsUrl} target="_blank" rel="noopener noreferrer">
@@ -201,6 +203,14 @@ export default function VereineUebersichtPage() {
                       <MapPin className="h-4 w-4 shrink-0" />
                       Kein Anfahrt-Link hinterlegt
                     </div>
+                  )}
+                  {club.homepageUrl && (
+                    <Button asChild size="sm" variant="outline" className="w-full">
+                      <a href={club.homepageUrl} target="_blank" rel="noopener noreferrer">
+                        <Globe className="mr-2 h-4 w-4" />
+                        Zur Homepage
+                      </a>
+                    </Button>
                   )}
                 </div>
               </CardContent>
