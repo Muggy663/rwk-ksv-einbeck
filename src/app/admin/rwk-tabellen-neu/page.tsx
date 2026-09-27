@@ -71,7 +71,6 @@ import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names'
 import { BackButton } from '@/components/ui/back-button';
 import { RWKLegend } from '@/components/ui/rwk-legend';
 import { SmartTable } from '@/components/ui/smart-table';
-import { MobileTeamCards } from '@/components/ui/mobile-team-cards';
 import { MobileShooterCards } from '@/components/ui/mobile-shooter-cards';
 import { SubstitutionService } from '@/lib/services/substitution-service';
 import { TeamCalculationService } from '@/lib/services/team-calculation-service';
@@ -81,6 +80,7 @@ import { EXCLUDED_TEAM_NAME_PART, getRwkZone, determineLeagueCompleteRound } fro
 import { TeamShootersTable } from './_components/TeamShootersTable';
 import { ShooterDetailModalContent } from './_components/ShooterDetailModalContent';
 import { RwkTabellenPageLoadingSkeleton } from './_components/RwkTabellenPageLoadingSkeleton';
+import { MannschaftCards } from './_components/MannschaftCards';
 
 function RwkTabellenPageComponent() {
   const router = useRouter();
@@ -1625,7 +1625,7 @@ function RwkTabellenPageComponent() {
                     
 
                     
-                    <div className="flex justify-between items-center px-2 py-1">
+                    <div className="flex justify-between items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg mx-1 mt-1 mb-2">
                       <div className="flex items-center space-x-2">
                         <Checkbox 
                           id={`showOutOfCompetitionTeams-${league.id}`}
@@ -1636,22 +1636,22 @@ function RwkTabellenPageComponent() {
                             currentParams.set('showAK', (!!checked).toString());
                             router.replace(`/admin/rwk-tabellen-neu?${currentParams.toString()}`, { scroll: false });
                           }}
-                          className="h-5 w-5"
+                          className="h-4 w-4"
                         />
                         <Label 
                           htmlFor={`showOutOfCompetitionTeams-${league.id}`}
-                          className="text-xs cursor-pointer"
+                          className="text-xs cursor-pointer text-muted-foreground"
                         >
-                          AK-Teams anzeigen
+                          Teams außer Konkurrenz anzeigen
                         </Label>
                       </div>
                       
                       {/* PDF Buttons nur auf Desktop */}
-                      <div className="hidden lg:flex gap-1">
+                      <div className="hidden lg:flex gap-1.5">
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-xs px-2 py-1"
+                          className="text-xs px-2 py-1 text-primary dark:text-foreground border-primary/40 dark:border-foreground/30 hover:bg-primary/10 dark:hover:bg-foreground/10"
                           onClick={async () => {
                             try {
                               const { generateLeaguePDFFixed } = await import('@/lib/services/pdf-service-fixed');
@@ -1707,7 +1707,7 @@ function RwkTabellenPageComponent() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-xs px-2 py-1"
+                          className="text-xs px-2 py-1 text-primary dark:text-foreground border-primary/40 dark:border-foreground/30 hover:bg-primary/10 dark:hover:bg-foreground/10"
                           onClick={async () => {
                             try {
                               const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
@@ -1760,10 +1760,11 @@ function RwkTabellenPageComponent() {
                         (() => {
                           // Berechne liga-weit vollständigen Durchgang auch für Mobile
                           const leagueCompleteRound = determineLeagueCompleteRound(league.teams, currentNumRoundsState);
+                          const wertbareTeams = league.teams.filter(t => !t.outOfCompetition && !t.istEinzelwertung && t.rank).length;
                           
                           return (
                         <div>
-                          <MobileTeamCards
+                          <MannschaftCards
                           teams={league.teams.filter(team => showOutOfCompetitionTeams || !team.outOfCompetition)}
                           numRounds={currentNumRoundsState}
                           onShooterClick={handleShooterNameClick}
@@ -1773,6 +1774,7 @@ function RwkTabellenPageComponent() {
                           loadingTeams={loadingTeamShooters}
                           onLoadTeamShooters={loadTeamShooters}
                           leagueCompleteRound={leagueCompleteRound}
+                          wertbareTeams={wertbareTeams}
                         />
                         </div>
                           );
@@ -1964,15 +1966,15 @@ function RwkTabellenPageComponent() {
         <TabsContent value="einzelschützen">
           {!loadingData && !error && (
              <div className="mb-4 space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <h4 className="font-semibold text-blue-900 mb-2">🎯 Liga-Auswahl erforderlich</h4>
-                  <p className="text-sm text-blue-700 mb-3">
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🎯 Liga-Auswahl erforderlich</h4>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
                     Bitte wählen Sie eine Liga aus, um die Einzelrangliste anzuzeigen. 
                     Eine übergreifende Anzeige aller Disziplinen ist nicht möglich, 
                     da verschiedene Disziplinen (Pistole, Gewehr, Luftdruck) nicht vergleichbar sind.
                   </p>
                   <div>
-                    <Label htmlFor="individualLeagueFilter" className="text-sm font-medium text-blue-900">Liga auswählen:</Label>
+                    <Label htmlFor="individualLeagueFilter" className="text-sm font-medium text-blue-900 dark:text-blue-100">Liga auswählen:</Label>
                     <NativeSelect
                       id="individualLeagueFilter"
                       value={selectedIndividualLeagueFilter || ""}
@@ -2041,17 +2043,17 @@ function RwkTabellenPageComponent() {
           {!loadingData && !error && !selectedIndividualLeagueFilter && (
             <Card className="shadow-lg border-blue-200">
               <CardHeader>
-                <CardTitle className="text-blue-800 flex items-center">
+                <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center">
                   <User className="mr-2 h-5 w-5" />
                   Liga-Auswahl erforderlich
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-center py-12 p-6">
                 <div className="text-6xl mb-4">🎯</div>
-                <p className="text-lg text-blue-700 mb-4">
+                <p className="text-lg text-blue-700 dark:text-blue-300 mb-4">
                   Bitte wählen Sie oben eine Liga aus, um die Einzelrangliste anzuzeigen.
                 </p>
-                <p className="text-sm text-blue-600">
+                <p className="text-sm text-blue-600 dark:text-blue-400">
                   Dies verhindert die Vermischung verschiedener Disziplinen in der Rangliste.
                 </p>
               </CardContent>
@@ -2063,8 +2065,8 @@ function RwkTabellenPageComponent() {
           {!loadingData && !error && selectedIndividualLeagueFilter && filteredIndividualData.length > 0 && (
             <div className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
-                {topMaleShooter && (<Card className="shadow-lg"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium text-primary">Bester Schütze</CardTitle><Trophy className="h-5 w-5 text-amber-500" /></CardHeader><CardContent><p className="text-2xl font-bold">{topMaleShooter.shooterName}</p><p className="text-sm text-muted-foreground">{topMaleShooter.teamName}</p><p className="text-lg">Gesamt: <span className="font-semibold">{topMaleShooter.totalScore}</span> Ringe</p><p className="text-sm">Schnitt: {topMaleShooter.averageScore != null ? topMaleShooter.averageScore.toFixed(2) : '-'} ({topMaleShooter.roundsShot} DG)</p></CardContent></Card>)}
-                {topFemaleShooter && (<Card className="shadow-lg"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium text-primary">Beste Dame</CardTitle><Medal className="h-5 w-5 text-pink-500" /></CardHeader><CardContent><p className="text-2xl font-bold">{topFemaleShooter.shooterName}</p><p className="text-sm text-muted-foreground">{topFemaleShooter.teamName}</p><p className="text-lg">Gesamt: <span className="font-semibold">{topFemaleShooter.totalScore}</span> Ringe</p><p className="text-sm">Schnitt: {topFemaleShooter.averageScore != null ? topFemaleShooter.averageScore.toFixed(2) : '-'} ({topFemaleShooter.roundsShot} DG)</p></CardContent></Card>)}
+                {topMaleShooter && (<Card className="shadow-lg border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-transparent dark:from-amber-900/15"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium text-amber-700 dark:text-amber-300 flex items-center gap-2"><Trophy className="h-5 w-5 text-amber-500" />Bester Schütze</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-foreground">{topMaleShooter.shooterName}</p><p className="text-sm text-muted-foreground">{topMaleShooter.teamName}</p><p className="text-lg text-foreground">Gesamt: <span className="font-semibold">{topMaleShooter.totalScore}</span> Ringe</p><p className="text-sm text-muted-foreground">Schnitt: {topMaleShooter.averageScore != null ? topMaleShooter.averageScore.toFixed(2) : '-'} ({topMaleShooter.roundsShot} DG)</p></CardContent></Card>)}
+                {topFemaleShooter && (<Card className="shadow-lg border-pink-200 dark:border-pink-800 bg-gradient-to-br from-pink-50 to-transparent dark:from-pink-900/15"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-lg font-medium text-pink-700 dark:text-pink-300 flex items-center gap-2"><Medal className="h-5 w-5 text-pink-500" />Beste Dame</CardTitle></CardHeader><CardContent><p className="text-2xl font-bold text-foreground">{topFemaleShooter.shooterName}</p><p className="text-sm text-muted-foreground">{topFemaleShooter.teamName}</p><p className="text-lg text-foreground">Gesamt: <span className="font-semibold">{topFemaleShooter.totalScore}</span> Ringe</p><p className="text-sm text-muted-foreground">Schnitt: {topFemaleShooter.averageScore != null ? topFemaleShooter.averageScore.toFixed(2) : '-'} ({topFemaleShooter.roundsShot} DG)</p></CardContent></Card>)}
                 {(!topMaleShooter && !loadingData) && (<Card className="shadow-lg"><CardHeader><CardTitle className="text-accent">Kein Bester Schütze</CardTitle></CardHeader><CardContent><p className="text-muted-foreground">Für die aktuelle Auswahl konnte kein bester Schütze ermittelt werden.</p></CardContent></Card>)}
                 {!topFemaleShooter && !loadingData && (<Card className="shadow-lg"><CardHeader><CardTitle className="text-accent">Keine Beste Dame</CardTitle></CardHeader><CardContent><p className="text-muted-foreground">Für die aktuelle Auswahl konnte keine beste Dame ermittelt werden.</p></CardContent></Card>)}
               </div>
@@ -2080,7 +2082,7 @@ function RwkTabellenPageComponent() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="text-xs px-3 py-2"
+                        className="text-xs px-3 py-2 text-primary dark:text-foreground border-primary/40 dark:border-foreground/30 hover:bg-primary/10 dark:hover:bg-foreground/10"
                         onClick={async () => {
                           try {
                             const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
