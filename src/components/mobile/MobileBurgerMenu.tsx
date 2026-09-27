@@ -23,6 +23,7 @@ const mainNavItems: NavItem[] = [
   { href: '/statistik', icon: BarChart3, label: 'Statistiken' },
   { href: '/termine', icon: Calendar, label: 'Termine' },
   { href: '/ligalisten', icon: FileText, label: 'Ligalisten' },
+  { href: '/vereine', icon: Users, label: 'Vereine' },
   { href: '/dokumente', icon: FileText, label: 'Dokumente' },
 ]
 

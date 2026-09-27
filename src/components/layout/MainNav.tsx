@@ -22,7 +22,8 @@ import {
   TrendingUp,
   AlertTriangle,
   Newspaper,
-  Target
+  Target,
+  Building2
 } from 'lucide-react';
 
 interface RouteItem {
@@ -74,6 +75,12 @@ export function MainNav() {
       label: 'Termine',
       icon: <CalendarDays className="h-4 w-4 mr-2" />,
       active: pathname === '/termine',
+    },
+    {
+      href: '/vereine',
+      label: 'Vereine',
+      icon: <Building2 className="h-4 w-4 mr-2" />,
+      active: pathname === '/vereine',
     },
     {
       href: '/dokumente',

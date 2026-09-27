@@ -16,7 +16,8 @@ import {
   Settings,
   AlertTriangle,
   Newspaper,
-  Target
+  Target,
+  Building2
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -31,6 +32,7 @@ export function Sidebar() {
     { href: '/statistik', label: 'Statistiken', icon: TrendingUp },
     { href: '/termine', label: 'Termine', icon: CalendarDays },
     { href: '/ligalisten', label: 'Ligalisten', icon: FileText },
+    { href: '/vereine', label: 'Vereine', icon: Building2 },
     { href: '/dokumente', label: 'Dokumente', icon: FileText },
   ];
 
