@@ -81,6 +81,7 @@ import { TeamShootersTable } from './_components/TeamShootersTable';
 import { ShooterDetailModalContent } from './_components/ShooterDetailModalContent';
 import { RwkTabellenPageLoadingSkeleton } from './_components/RwkTabellenPageLoadingSkeleton';
 import { MannschaftCards } from './_components/MannschaftCards';
+import { downloadLeagueTeamsPDF, downloadLeagueShootersPDF, downloadGesamtlistePDF } from './_lib/pdf-downloads';
 
 function RwkTabellenPageComponent() {
   const router = useRouter();
@@ -1535,55 +1536,7 @@ function RwkTabellenPageComponent() {
                           variant="outline" 
                           size="sm" 
                           className="text-xs px-2 py-1 bg-background !text-foreground hover:!text-foreground border-primary/40 hover:bg-muted"
-                          onClick={async () => {
-                            try {
-                              const { generateLeaguePDFFixed } = await import('@/lib/services/pdf-service-fixed');
-                              
-                              // Lade Schützendaten für diese Liga
-                              const shooterData = await fetchIndividualShooterData(
-                                selectedCompetition, 
-                                currentNumRoundsState, 
-                                league.id
-                              );
-                              
-                              // Erstelle temporäre Liga mit Schützendaten
-                              const tempLeague = {
-                                ...league,
-                                individualLeagueShooters: shooterData
-                              };
-                              
-                              // Generiere PDF
-                              const pdfBlob = await generateLeaguePDFFixed(
-                                tempLeague, 
-                                currentNumRoundsState, 
-                                selectedCompetition.year
-                              );
-                              
-                              // Download PDF
-                              const url = URL.createObjectURL(pdfBlob);
-                              const a = document.createElement('a');
-                              a.href = url;
-                              const sanitizedLeagueName = String(league.name || '').replace(/[<>"'&\/\\]/g, '');
-                              const sanitizedYear = String(selectedCompetition.year || '').replace(/[<>"'&\/\\]/g, '');
-                              a.download = `${sanitizedLeagueName}_Mannschaften_${sanitizedYear}.pdf`;
-                              document.body.appendChild(a);
-                              a.click();
-                              document.body.removeChild(a);
-                              URL.revokeObjectURL(url);
-                              
-                              toast({
-                                title: 'PDF erstellt',
-                                description: 'Die PDF-Datei wurde erfolgreich erstellt.',
-                              });
-                            } catch (error) {
-                              logError('Fehler beim Erstellen der PDF:', error);
-                              toast({
-                                title: 'Fehler',
-                                description: 'Die PDF-Datei konnte nicht erstellt werden.',
-                                variant: 'destructive'
-                              });
-                            }
-                          }}
+                          onClick={() => downloadLeagueTeamsPDF(league, selectedCompetition, currentNumRoundsState, fetchIndividualShooterData, toast)}
                         >
                           Mannschaften als PDF
                         </Button>
@@ -1591,43 +1544,7 @@ function RwkTabellenPageComponent() {
                           variant="outline" 
                           size="sm" 
                           className="text-xs px-2 py-1 bg-background !text-foreground hover:!text-foreground border-primary/40 hover:bg-muted"
-                          onClick={async () => {
-                            try {
-                              const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
-                              
-                              // Lade Schützendaten für diese Liga
-                              const shooterData = await fetchIndividualShooterData(
-                                selectedCompetition, 
-                                currentNumRoundsState, 
-                                league.id
-                              );
-                              
-                              // Erstelle temporäre Liga mit Schützendaten
-                              const tempLeague = {
-                                ...league,
-                                individualLeagueShooters: shooterData
-                              };
-                              
-                              // Generiere und lade PDF herunter (Funktion macht beides)
-                              await generateShootersPDFFixed(
-                                tempLeague, 
-                                currentNumRoundsState, 
-                                selectedCompetition.year
-                              );
-                              
-                              toast({
-                                title: 'PDF erstellt',
-                                description: 'Die PDF-Datei wurde erfolgreich erstellt.',
-                              });
-                            } catch (error) {
-                              logError('Fehler beim Erstellen der PDF:', error);
-                              toast({
-                                title: 'Fehler',
-                                description: 'Die PDF-Datei konnte nicht erstellt werden.',
-                                variant: 'destructive'
-                              });
-                            }
-                          }}
+                          onClick={() => downloadLeagueShootersPDF(league, selectedCompetition, currentNumRoundsState, fetchIndividualShooterData, toast)}
                         >
                           Einzelschützen PDF
                         </Button>
@@ -1966,39 +1883,18 @@ function RwkTabellenPageComponent() {
                         variant="outline" 
                         size="sm" 
                         className="text-xs px-3 py-2 bg-background !text-foreground hover:!text-foreground border-primary/40 hover:bg-muted"
-                        onClick={async () => {
-                          try {
-                            const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
-                            
-                            // Erstelle temporäre Liga mit allen Schützendaten
-                            const tempLeague = {
-                              id: selectedIndividualLeagueFilter,
-                              name: selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? 'Alle Luftdruck Auflage' : 'Alle KK Gewehr Auflage',
-                              type: selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? 'LGA' : 'KKG',
-                              competitionYear: selectedCompetition.year,
-                              individualLeagueShooters: filteredIndividualData.filter(shooter => showOutOfCompetitionShooters || !shooter.teamOutOfCompetition)
-                            } as unknown as LeagueDisplay;
-                            
-                            // Generiere und lade PDF herunter
-                            await generateShootersPDFFixed(
-                              tempLeague, 
-                              currentNumRoundsState, 
-                              selectedCompetition.year
-                            );
-                            
-                            toast({
-                              title: 'PDF erstellt',
-                              description: 'Die PDF-Datei wurde erfolgreich erstellt.',
-                            });
-                          } catch (error) {
-                            logError('Fehler beim Erstellen der PDF:', error);
-                            toast({
-                              title: 'Fehler',
-                              description: 'Die PDF-Datei konnte nicht erstellt werden.',
-                              variant: 'destructive'
-                            });
-                          }
-                        }}
+                        onClick={() => downloadGesamtlistePDF(
+                          {
+                            id: selectedIndividualLeagueFilter,
+                            name: selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? 'Alle Luftdruck Auflage' : 'Alle KK Gewehr Auflage',
+                            type: selectedIndividualLeagueFilter === 'LGA_GESAMTLISTE' ? 'LGA' : 'KKG',
+                            competitionYear: selectedCompetition.year,
+                            individualLeagueShooters: filteredIndividualData.filter(shooter => showOutOfCompetitionShooters || !shooter.teamOutOfCompetition)
+                          } as unknown as LeagueDisplay,
+                          selectedCompetition,
+                          currentNumRoundsState,
+                          toast
+                        )}
                       >
                         <FileDown className="mr-2 h-4 w-4" />
                         Gesamtliste als PDF
