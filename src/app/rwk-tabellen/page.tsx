@@ -1890,8 +1890,8 @@ function RwkTabellenPageComponent() {
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="flex items-center space-x-3">
           <BackButton className="mr-2" fallbackHref="/" />
-          <TableIconLucide className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold text-primary">{pageTitle}</h1>
+          <TableIconLucide className="h-8 w-8 text-primary dark:text-foreground" />
+          <h1 className="text-3xl font-bold text-primary dark:text-foreground">{pageTitle}</h1>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -1902,7 +1902,7 @@ function RwkTabellenPageComponent() {
           </Button>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <Button asChild variant="outline" className="w-full sm:w-auto border-primary/40 text-primary hover:bg-primary/10">
+          <Button asChild variant="outline" className="w-full sm:w-auto border-primary/40 text-foreground hover:text-foreground hover:bg-primary/10">
             <Link href="/statistik" className="flex items-center justify-center">
               <LineChartIcon className="mr-2 h-4 w-4" />
               Statistiken
@@ -2008,7 +2008,7 @@ function RwkTabellenPageComponent() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-xs px-2 py-1"
+                          className="text-xs px-2 py-1 text-foreground hover:text-foreground border-primary/40 hover:bg-primary/10"
                           onClick={async () => {
                             try {
                               const { generateLeaguePDFFixed } = await import('@/lib/services/pdf-service-fixed');
@@ -2064,7 +2064,7 @@ function RwkTabellenPageComponent() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-xs px-2 py-1"
+                          className="text-xs px-2 py-1 text-foreground hover:text-foreground border-primary/40 hover:bg-primary/10"
                           onClick={async () => {
                             try {
                               const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
@@ -2402,7 +2402,7 @@ function RwkTabellenPageComponent() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="text-xs px-3 py-2"
+                        className="text-xs px-3 py-2 text-foreground hover:text-foreground border-primary/40 hover:bg-primary/10"
                         onClick={async () => {
                           try {
                             const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');

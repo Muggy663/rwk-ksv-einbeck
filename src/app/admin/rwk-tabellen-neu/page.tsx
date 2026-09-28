@@ -1555,7 +1555,7 @@ function RwkTabellenPageComponent() {
                 label: comp.displayName
               }))}
             />
-            <Button asChild variant="outline" className="w-full sm:w-auto border-primary/40 text-primary hover:bg-primary/10">
+            <Button asChild variant="outline" className="w-full sm:w-auto border-primary/40 text-foreground hover:text-foreground hover:bg-primary/10">
               <Link href="/statistik" className="flex items-center justify-center">
                 <LineChartIcon className="mr-2 h-4 w-4" />
                 Statistiken
@@ -1651,7 +1651,7 @@ function RwkTabellenPageComponent() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-xs px-2 py-1 text-primary dark:text-foreground border-primary/40 dark:border-foreground/30 hover:bg-primary/10 dark:hover:bg-foreground/10"
+                          className="text-xs px-2 py-1 text-foreground hover:text-foreground border-primary/40 dark:border-foreground/30 hover:bg-primary/10 dark:hover:bg-foreground/10"
                           onClick={async () => {
                             try {
                               const { generateLeaguePDFFixed } = await import('@/lib/services/pdf-service-fixed');
@@ -1707,7 +1707,7 @@ function RwkTabellenPageComponent() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-xs px-2 py-1 text-primary dark:text-foreground border-primary/40 dark:border-foreground/30 hover:bg-primary/10 dark:hover:bg-foreground/10"
+                          className="text-xs px-2 py-1 text-foreground hover:text-foreground border-primary/40 dark:border-foreground/30 hover:bg-primary/10 dark:hover:bg-foreground/10"
                           onClick={async () => {
                             try {
                               const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
@@ -2082,7 +2082,7 @@ function RwkTabellenPageComponent() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="text-xs px-3 py-2 text-primary dark:text-foreground border-primary/40 dark:border-foreground/30 hover:bg-primary/10 dark:hover:bg-foreground/10"
+                        className="text-xs px-3 py-2 text-foreground hover:text-foreground border-primary/40 dark:border-foreground/30 hover:bg-primary/10 dark:hover:bg-foreground/10"
                         onClick={async () => {
                           try {
                             const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
