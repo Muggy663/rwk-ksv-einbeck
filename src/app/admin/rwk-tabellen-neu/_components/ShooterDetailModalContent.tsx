@@ -1,6 +1,9 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Users, TrendingUp } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import {
@@ -19,10 +22,17 @@ import type { IndividualShooterDisplayData, FirestoreLeagueSpecificDiscipline } 
 interface ShooterDetailModalContentProps {
   shooterData: IndividualShooterDisplayData | null;
   numRounds: number;
+  seasonId?: string; // fuer Deeplink zur Mannschafts-Statistik
 }
 
-export const ShooterDetailModalContent: React.FC<ShooterDetailModalContentProps> = ({ shooterData, numRounds }) => {
+export const ShooterDetailModalContent: React.FC<ShooterDetailModalContentProps> = ({ shooterData, numRounds, seasonId }) => {
   if (!shooterData) return null;
+
+  // Deeplinks in die Statistik-Seiten (mit Vorauswahl)
+  const teamStatsHref = seasonId && shooterData.leagueId
+    ? `/statistik/mannschaft?season=${encodeURIComponent(seasonId)}&league=${encodeURIComponent(shooterData.leagueId)}&team=${encodeURIComponent(shooterData.teamName || '')}`
+    : null;
+  const crossSeasonHref = `/statistik/erweitert?shooter=${encodeURIComponent(shooterData.shooterName || '')}`;
 
   const chartData = [];
   const validResults: number[] = [];
@@ -75,6 +85,23 @@ export const ShooterDetailModalContent: React.FC<ShooterDetailModalContentProps>
           )}
         </DialogDescription>
       </DialogHeader>
+      {/* Verknuepfungen in die Statistik-Auswertungen (mit Vorauswahl) */}
+      <div className="mt-3 flex flex-col sm:flex-row gap-2">
+        {teamStatsHref && (
+          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto border-primary/40 !text-foreground hover:!text-foreground hover:bg-primary/10">
+            <Link href={teamStatsHref} className="flex items-center justify-center">
+              <Users className="mr-2 h-4 w-4" />
+              Mannschafts-Statistik
+            </Link>
+          </Button>
+        )}
+        <Button asChild variant="outline" size="sm" className="w-full sm:w-auto border-primary/40 !text-foreground hover:!text-foreground hover:bg-primary/10">
+          <Link href={crossSeasonHref} className="flex items-center justify-center">
+            <TrendingUp className="mr-2 h-4 w-4" />
+            Verlauf über Jahre
+          </Link>
+        </Button>
+      </div>
       <div className="mt-4 grid gap-6">
         <div>
           <h3 className="text-lg font-semibold mb-2 text-accent">Ergebnisübersicht</h3>

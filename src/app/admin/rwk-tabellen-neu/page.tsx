@@ -121,7 +121,15 @@ function RwkTabellenPageComponent() {
 
       <Dialog open={isShooterDetailModalOpen} onOpenChange={setIsShooterDetailModalOpen}>
         <DialogContent className="sm:max-w-2xl"> {/* Increased width for better chart display */}
-          {selectedShooterForDetail && <ShooterDetailModalContent shooterData={selectedShooterForDetail} numRounds={currentNumRoundsState} />}
+          {selectedShooterForDetail && (
+            <ShooterDetailModalContent
+              shooterData={selectedShooterForDetail}
+              numRounds={currentNumRoundsState}
+              seasonId={
+                (data.teamData?.leagues.find(l => l.id === selectedShooterForDetail.leagueId) as any)?.seasonId
+              }
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

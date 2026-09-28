@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Users } from 'lucide-react';
 import Link from 'next/link';
@@ -31,7 +32,9 @@ export default function TeamStatisticsPage() {
         </div>
       </div>
 
-      <TeamStats />
+      <Suspense fallback={<div className="py-12 text-center text-muted-foreground">Lädt…</div>}>
+        <TeamStats />
+      </Suspense>
     </div>
   );
 }

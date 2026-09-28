@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -87,8 +88,9 @@ export function CrossSeasonStats() {
     loadClubs();
   }, []);
 
-  const handleSearch = async () => {
-    if (searchTerm.trim().length < 3) {
+  const handleSearch = async (term?: string) => {
+    const suchbegriff = (term ?? searchTerm).trim();
+    if (suchbegriff.length < 3) {
       toast({
         title: "Zu kurzer Suchbegriff",
         description: "Bitte geben Sie mindestens 3 Zeichen ein.",
@@ -106,7 +108,7 @@ export function CrossSeasonStats() {
       const shootersRef = collection(db, 'shooters');
       const querySnapshot = await getDocs(query(shootersRef, orderBy('name')));
 
-      const begriffe = searchTerm.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      const begriffe = suchbegriff.toLowerCase().split(/\s+/).filter(Boolean);
 
       const results = querySnapshot.docs
         .map(doc => {
@@ -291,6 +293,33 @@ export function CrossSeasonStats() {
     }
   }, [selectedShooter, selectedDiscipline]);
 
+  // Optionale Vorauswahl per URL-Parameter (?shooter=Name), z.B. aus den RWK-Tabellen
+  // verlinkt: Suchfeld vorbefuellen und automatisch suchen.
+  const searchParams = useSearchParams();
+  const deeplinkPending = useRef(false);
+  useEffect(() => {
+    const name = searchParams.get('shooter');
+    if (name && name.trim().length >= 3) {
+      setSearchTerm(name);
+      deeplinkPending.current = true;
+      handleSearch(name);
+    }
+    // Nur beim Mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Wenn der Deeplink genau einen Treffer liefert, direkt auswaehlen.
+  useEffect(() => {
+    if (deeplinkPending.current && searchResults.length === 1) {
+      deeplinkPending.current = false;
+      handleShooterSelect(searchResults[0].id);
+    } else if (deeplinkPending.current && searchResults.length > 1) {
+      // Mehrere Treffer: Auswahl dem Nutzer ueberlassen, Deeplink-Automatik beenden.
+      deeplinkPending.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchResults]);
+
   const handleShooterSelect = (shooterId: string) => {
     setSelectedShooter(shooterId);
     // Leere die Suchergebnisse, um die Auswahl zu verstecken
@@ -455,7 +484,7 @@ export function CrossSeasonStats() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="flex-grow"
                 />
-                <Button onClick={handleSearch} disabled={isLoading || searchTerm.trim().length < 3}>
+                <Button onClick={() => handleSearch()} disabled={isLoading || searchTerm.trim().length < 3}>
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
                   Suchen
                 </Button>

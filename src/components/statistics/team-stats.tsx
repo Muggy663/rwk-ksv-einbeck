@@ -5,7 +5,8 @@
 // Ergebnis, Anzahl Durchgänge) und je Schütze einem kleinen Verlaufsdiagramm über
 // die Durchgänge. Nutzt die vorhandene fetchShooterPerformanceData-Logik.
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -42,6 +43,7 @@ function durchgaenge(results: { [key: string]: number | null }): { dg: number; r
 
 export function TeamStats() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [seasons, setSeasons] = useState<SeasonOpt[]>([]);
   const [leagues, setLeagues] = useState<LeagueOpt[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>('');
@@ -50,6 +52,23 @@ export function TeamStats() {
   const [shooters, setShooters] = useState<ShooterPerformanceData[]>([]);
   const [isLoadingLeagues, setIsLoadingLeagues] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Optionale Vorauswahl per URL-Parameter (?season=&league=&team=), z.B. aus den
+  // RWK-Tabellen verlinkt. Wird kaskadierend abgearbeitet: erst Saison, dann Liga
+  // (sobald Ligen geladen), dann Mannschaft (sobald Schuetzen geladen).
+  const pendingLeague = useRef<string | null>(null);
+  const pendingTeam = useRef<string | null>(null);
+
+  useEffect(() => {
+    const s = searchParams.get('season');
+    const l = searchParams.get('league');
+    const t = searchParams.get('team');
+    if (s) setSelectedSeason(s);
+    if (l) pendingLeague.current = l;
+    if (t) pendingTeam.current = t;
+    // Nur beim Mount aus der URL lesen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Saisons laden
   useEffect(() => {
@@ -73,7 +92,13 @@ export function TeamStats() {
     (async () => {
       try {
         const data = await fetchLeagues(selectedSeason);
-        setLeagues(data.map((l: any) => ({ id: l.id, name: l.name })));
+        const opts = data.map((l: any) => ({ id: l.id, name: l.name }));
+        setLeagues(opts);
+        // Vorauswahl aus URL anwenden, falls die gewuenschte Liga existiert.
+        if (pendingLeague.current && opts.some(o => o.id === pendingLeague.current)) {
+          setSelectedLeague(pendingLeague.current);
+          pendingLeague.current = null;
+        }
       } catch (e) {
         logError('Ligen laden fehlgeschlagen:', e);
       } finally {
@@ -91,6 +116,11 @@ export function TeamStats() {
       try {
         const data = await fetchShooterPerformanceData(selectedSeason, selectedLeague);
         setShooters(data);
+        // Vorauswahl der Mannschaft aus URL anwenden, falls vorhanden.
+        if (pendingTeam.current && data.some(s => s.teamName === pendingTeam.current)) {
+          setSelectedTeam(pendingTeam.current);
+          pendingTeam.current = null;
+        }
       } catch (e) {
         logError('Schützendaten laden fehlgeschlagen:', e);
         toast({ title: 'Fehler', description: 'Daten konnten nicht geladen werden.', variant: 'destructive' });

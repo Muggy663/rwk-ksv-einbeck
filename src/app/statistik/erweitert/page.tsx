@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
@@ -31,7 +32,9 @@ export default function ExtendedStatisticsPage() {
         </div>
       </div>
 
-      <CrossSeasonStats />
+      <Suspense fallback={<div className="py-12 text-center text-muted-foreground">Lädt…</div>}>
+        <CrossSeasonStats />
+      </Suspense>
     </div>
   );
 }
