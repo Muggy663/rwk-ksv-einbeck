@@ -76,7 +76,7 @@ import { SubstitutionService } from '@/lib/services/substitution-service';
 import { TeamCalculationService } from '@/lib/services/team-calculation-service';
 
 
-import { EXCLUDED_TEAM_NAME_PART, getRwkZone, determineLeagueCompleteRound } from './_lib/rwk-zones';
+import { EXCLUDED_TEAM_NAME_PART, getRwkZone, determineLeagueCompleteRound, buildDisplayName } from './_lib/rwk-zones';
 import { TeamShootersTable } from './_components/TeamShootersTable';
 import { ShooterDetailModalContent } from './_components/ShooterDetailModalContent';
 import { RwkTabellenPageLoadingSkeleton } from './_components/RwkTabellenPageLoadingSkeleton';
@@ -683,42 +683,6 @@ function RwkTabellenPageComponent() {
       
 
       
-      // Debug: Zeige Statistiken zur Diagnose
-      if (process.env.NODE_ENV === 'development') {
-        const leagueTypes = [...new Set(allScores.map(s => s.leagueType))];
-        logDebug('Debug - LeagueTypes count:', leagueTypes?.length || 0);
-        logDebug('Debug - Scores count:', allScores?.length || 0);
-        logDebug('Debug - Filter type:', typeof filterByLeagueId);
-      }
-      
-      // Wenn keine Scores gefunden, prüfe alle Scores für dieses Jahr
-      if (allScores.length === 0) {
-        try {
-          // Versuche zuerst saison-spezifische Collection
-          const seasonSpecificCollection = getSeasonSpecificScoresCollection(config.year, config.discipline as FirestoreLeagueSpecificDiscipline);
-          const seasonSpecificQuery = query(
-            collection(db, seasonSpecificCollection),
-            where("competitionYear", "==", config.year)
-          );
-          const seasonSpecificSnapshot = await getDocs(seasonSpecificQuery);
-          const seasonSpecificLeagueTypes = [...new Set(seasonSpecificSnapshot.docs.map(doc => doc.data().leagueType))];
-          if (process.env.NODE_ENV === 'development') {
-            logDebug('Debug - Saison-spezifische leagueTypes count:', seasonSpecificLeagueTypes?.length || 0);
-          }
-        } catch (error) {
-          // Fallback auf rwk_scores
-          const allScoresQuery = query(
-            collection(db, "rwk_scores"),
-            where("competitionYear", "==", config.year)
-          );
-          const allScoresSnapshot = await getDocs(allScoresQuery);
-          const allYearLeagueTypes = [...new Set(allScoresSnapshot.docs.map(doc => doc.data().leagueType))];
-          if (process.env.NODE_ENV === 'development') {
-            logDebug('Debug - Alle leagueTypes count:', allYearLeagueTypes?.length || 0);
-          }
-        }
-      }
-
       const shootersMap = new Map<string, IndividualShooterDisplayData>();
       // Kombiniere Schützen aus Teams und Scores
       const allShooterIds = [...new Set([
@@ -738,17 +702,9 @@ function RwkTabellenPageComponent() {
             const shootersSnapshot = await getDocs(shootersQuery);
             shootersSnapshot.docs.forEach(doc => {
               const shooterData = doc.data() as Shooter;
-              let displayName = shooterData.name || '';
-              if (shooterData.firstName || shooterData.lastName) {
-                const nameParts = [];
-                if (shooterData.firstName) nameParts.push(shooterData.firstName);
-                if (shooterData.lastName) nameParts.push(shooterData.lastName);
-                if (shooterData.title) nameParts.push(shooterData.title);
-                displayName = nameParts.join(' ');
-              }
               // Speichere sowohl Namen als auch Geschlecht
               shooterNamesMap.set(doc.id, {
-                name: displayName,
+                name: buildDisplayName(shooterData),
                 gender: shooterData.gender || 'unknown'
               });
             });
@@ -989,14 +945,6 @@ function RwkTabellenPageComponent() {
       return;
     }
     
-    // Cache nur für Team-Daten, nicht für Einzelschützen
-    const cacheKey = `rwk-teams-${selectedCompetition.year}-${selectedCompetition.discipline}`;
-    
-    // Cache für Einzelschützen deaktivieren um Probleme zu vermeiden
-    if (activeTab === 'einzelschützen') {
-      sessionStorage.removeItem(cacheKey);
-    }
-    
     setLoadingData(true); 
     setError(null); 
     
@@ -1045,15 +993,6 @@ function RwkTabellenPageComponent() {
         setTopFemaleShooter(null);
       }
       
-      // Cache nur für Team-Daten speichern
-      if (activeTab === 'mannschaften' && fetchedTeamData) {
-        const cacheData = {
-          timestamp: Date.now(),
-          teamData: fetchedTeamData
-        };
-        sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
-      }
-
     } catch (err: any) {
       logError('RWK DEBUG: Failed to load RWK data in loadData:', err);
       toast({ title: "Fehler Datenladen", description: `Fehler beim Laden der Wettkampfdaten: ${err.message}`, variant: "destructive" });
@@ -1274,15 +1213,7 @@ function RwkTabellenPageComponent() {
           const shootersSnap = await getDocs(query(collection(db, "shooters"), where(documentId(), "in", batch)));
           shootersSnap.docs.forEach(docSnap => {
             const shooterData = docSnap.data();
-            let displayName = shooterData.name || '';
-            if (shooterData.firstName || shooterData.lastName) {
-              const nameParts = [];
-              if (shooterData.firstName) nameParts.push(shooterData.firstName);
-              if (shooterData.lastName) nameParts.push(shooterData.lastName);
-              if (shooterData.title) nameParts.push(shooterData.title);
-              displayName = nameParts.join(' ');
-            }
-            shooterInfos.set(docSnap.id, { ...shooterData, displayName });
+            shooterInfos.set(docSnap.id, { ...shooterData, displayName: buildDisplayName(shooterData) });
             foundShooterIds.add(docSnap.id);
           });
         }

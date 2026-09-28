@@ -57,3 +57,24 @@ export const determineLeagueCompleteRound = (teams: TeamDisplay[], numRounds: nu
 
   return leagueCompleteRound;
 };
+
+/**
+ * Baut den Anzeigenamen eines Schützen aus firstName/lastName/title zusammen.
+ * Fallback auf das `name`-Feld, wenn keine Einzelteile vorhanden sind.
+ */
+export const buildDisplayName = (shooterData: {
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  title?: string;
+}): string => {
+  let displayName = shooterData.name || '';
+  if (shooterData.firstName || shooterData.lastName) {
+    const nameParts: string[] = [];
+    if (shooterData.firstName) nameParts.push(shooterData.firstName);
+    if (shooterData.lastName) nameParts.push(shooterData.lastName);
+    if (shooterData.title) nameParts.push(shooterData.title);
+    displayName = nameParts.join(' ');
+  }
+  return displayName;
+};
