@@ -74,15 +74,6 @@ export function MannschaftenTab({ data }: { data: RwkData }) {
           )}
           {!loadingData && !error && teamData && teamData.leagues.length > 0 && (
             <>
-            {/* Zonen-Legende fuer Auf-/Abstieg */}
-            <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground px-1">
-              <span className="font-medium text-foreground">Platzierung:</span>
-              <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-amber-200 dark:bg-amber-500/30 border border-amber-400" /> Platz 1 (Meister)</span>
-              <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-500/40 border border-slate-400" /> Platz 2 (Aufstieg)</span>
-              <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-orange-200 dark:bg-orange-500/30 border border-orange-400" /> Abstiegskampf</span>
-              <span className="inline-flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-200 dark:bg-red-500/30 border border-red-400" /> Abstieg</span>
-              <span className="italic">Zonen richten sich nach der Ligagröße.</span>
-            </div>
             <ManualAccordion 
               value={openAccordionItems}
               onValueChange={handleAccordionValueChange}
