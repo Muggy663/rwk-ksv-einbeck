@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import { logError, logWarn, logInfo, logDebug } from '@/lib/utils/secure-logger';
+import { logError, logWarn, logDebug } from '@/lib/utils/secure-logger';
 import 'jspdf-autotable';
 import { LeagueDisplay } from '@/types/rwk';
 import { format } from 'date-fns';
@@ -120,8 +120,10 @@ export async function generateLeaguePDFFixed(
         unit: 'mm',
         format: 'a4'
       });
-      
-      // Logo als Base64 laden und hinzufügen
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const leagueNameSafe = league?.name || 'Liga';
+
+      // Dezenter Kopf mit Logo, Titel und feiner Trennlinie
       try {
         const response = await fetch('/images/logo2.png');
         const blob = await response.blob();
@@ -130,100 +132,96 @@ export async function generateLeaguePDFFixed(
           reader.onload = () => resolve(reader.result as string);
           reader.readAsDataURL(blob);
         });
-        doc.addImage(logoBase64, 'PNG', 250, 10, 25, 25);
+        doc.addImage(logoBase64, 'PNG', 14, 10, 16, 16);
       } catch (e) {
         logWarn('Logo konnte nicht geladen werden');
       }
-      
-      // Schriftart setzen
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(40, 40, 40);
+      doc.text(sanitize(`${leagueNameSafe} ${competitionYear}`), 34, 17);
       doc.setFont('helvetica', 'normal');
-      
-      // Titel
-      doc.setFontSize(18);
-      const leagueNameSafe = league?.name || 'Liga';
-      doc.text(sanitize(`${leagueNameSafe} ${competitionYear}`), 14, 20);
-      
-      // Untertitel
-      doc.setFontSize(12);
-      doc.text(`Stand: ${format(new Date(), 'dd.MM.yyyy', { locale: de })}`, 14, 28);
-      
-      // Mannschaftstabelle
+      doc.setFontSize(9);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`Mannschaftsergebnisse · Stand: ${format(new Date(), 'dd.MM.yyyy', { locale: de })}`, 34, 23);
+      doc.setDrawColor(210, 210, 210);
+      doc.setLineWidth(0.3);
+      doc.line(14, 29, pageWidth - 14, 29);
+      doc.setTextColor(0, 0, 0);
+
+      // Spalten
       const headers = [
         { title: 'Platz', dataKey: 'rank' },
         { title: 'Mannschaft', dataKey: 'name' },
       ];
-      
-      // Durchgänge hinzufügen
-      for (let i = 1; i <= numRounds; i++) {
-        headers.push({ title: `DG ${i}`, dataKey: `dg${i}` });
-      }
-      
-      // Gesamt und Schnitt hinzufügen
-      headers.push(
-        { title: 'Gesamt', dataKey: 'totalScore' },
-        { title: 'Schnitt', dataKey: 'averageScore' }
-      );
-      
-      // Debug: Prüfe verfügbare Daten
-      logInfo('League individualLeagueShooters:', { data: league?.individualLeagueShooters?.length || 0 });
-      if (league?.individualLeagueShooters?.length > 0) {
-        logInfo('Sample shooter:', { data: league.individualLeagueShooters[0] });
-      }
-      
-      let currentY = 35;
+      for (let i = 1; i <= numRounds; i++) headers.push({ title: `DG ${i}`, dataKey: `dg${i}` });
+      headers.push({ title: 'Gesamt', dataKey: 'totalScore' }, { title: 'Schnitt', dataKey: 'averageScore' });
+
+      // Gemeinsamer, ruhiger Tabellenstil (duenne graue Linien)
+      const gridLine: [number, number, number] = [210, 210, 210];
+
+      let currentY = 34;
       for (const team of (league?.teams || [])) {
         const teamNameSafe = team.name || '';
         const teamRowData: Record<string, string | number | null | undefined> = {
-          rank: team.outOfCompetition ? "AK" : team.rank,
+          rank: team.outOfCompetition ? 'AK' : team.rank,
           name: team.outOfCompetition ? sanitize(`${teamNameSafe} (Außer Konkurrenz)`) : sanitize(teamNameSafe),
           totalScore: team.totalScore || '-',
           averageScore: team.averageScore ? team.averageScore.toFixed(2) : '-'
         };
-        
         for (let i = 1; i <= numRounds; i++) {
           const key = `dg${i}`;
           teamRowData[key] = team.roundResults?.[key] !== null && team.roundResults?.[key] !== undefined ? team.roundResults[key] : '-';
         }
-        
-        // Team-Tabelle
+
+        // Mannschafts-Zeile: hervorgehoben (dezentes Grau, fett)
         doc.autoTable({
-          head: [headers.map(header => header.title)],
-          body: [headers.map(header => teamRowData[header.dataKey])],
+          head: [headers.map(h => h.title)],
+          body: [headers.map(h => teamRowData[h.dataKey])],
           startY: currentY,
-          headStyles: {
-            fillColor: [41, 128, 185],
-            textColor: 255,
-            fontStyle: 'bold'
-          },
+          theme: 'grid',
+          headStyles: { fillColor: [235, 235, 235], textColor: [60, 60, 60], fontStyle: 'bold', lineWidth: 0.1, lineColor: gridLine, fontSize: 8 },
           bodyStyles: {
-            fillColor: team.outOfCompetition ? [255, 248, 220] : [255, 255, 255],
-            textColor: team.outOfCompetition ? [194, 124, 14] : [0, 0, 0],
-            fontStyle: 'bold'
-          },
-          styles: {
+            fillColor: team.outOfCompetition ? [255, 250, 235] : [245, 247, 250],
+            textColor: team.outOfCompetition ? [180, 120, 20] : [20, 20, 20],
+            fontStyle: 'bold',
+            lineWidth: 0.1,
+            lineColor: gridLine,
             fontSize: 8,
-            cellPadding: 2
+            cellPadding: 1.8
           },
-          columnStyles: {
-            0: { cellWidth: 15 },
-            1: { cellWidth: 50 }
-          }
+          columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 1: { cellWidth: 55 } },
+          margin: { left: 14, right: 14 }
         });
-        
-        currentY = (doc.lastAutoTable?.finalY ?? currentY) + 1;
-        
-        // Schützen des Teams
-        const teamShooters = team.shootersResults || [];
+        currentY = (doc.lastAutoTable?.finalY ?? currentY) + 0.5;
+
+        // Schützen des Teams: bevorzugt aus individualLeagueShooters (frisch geladen, immer
+        // vorhanden), Fallback auf shootersResults (nur nach Aufklappen befuellt).
+        const normalizeTeamName = (n: string | undefined) => n?.replace(/\s+/g, ' ').trim();
+        const fromIndividual = (league.individualLeagueShooters || [])
+          .filter(s => normalizeTeamName(s.teamName) === normalizeTeamName(team.name))
+          .map(s => ({
+            shooterName: s.shooterName,
+            results: s.results,
+            total: s.totalScore,
+            average: s.averageScore,
+            substitutionInfo: undefined as any,
+          }));
+        const teamShooters = fromIndividual.length > 0
+          ? fromIndividual
+          : (team.shootersResults || []);
         if (teamShooters.length > 0) {
           const shooterHeaders = ['', 'Schütze'];
-          for (let i = 1; i <= numRounds; i++) {
-            shooterHeaders.push(`DG ${i}`);
-          }
+          for (let i = 1; i <= numRounds; i++) shooterHeaders.push(`DG ${i}`);
           shooterHeaders.push('Gesamt', 'Schnitt');
-          
-          const shooterRows = teamShooters.map(shooter => {
-            const shooterNameSafe = shooter.shooterName || 'Unbekannt';
-            const row = ['', sanitize(shooterNameSafe)];
+
+          const shooterRows = teamShooters.map((shooter: any) => {
+            let name = sanitize(shooter.shooterName || 'Unbekannt');
+            if (shooter.substitutionInfo) {
+              name += ` (Ersatz ab DG${shooter.substitutionInfo.fromRound})`;
+            }
+            const row = ['', name];
             for (let i = 1; i <= numRounds; i++) {
               const key = `dg${i}`;
               row.push(shooter.results?.[key] !== null && shooter.results?.[key] !== undefined ? shooter.results[key].toString() : '-');
@@ -232,55 +230,44 @@ export async function generateLeaguePDFFixed(
             row.push(shooter.average ? shooter.average.toFixed(2) : '-');
             return row;
           });
-          
+
           doc.autoTable({
             head: [shooterHeaders],
             body: shooterRows,
             startY: currentY,
-            headStyles: {
-              fillColor: [34, 139, 34],
-              textColor: 255,
-              fontSize: 7
-            },
-            bodyStyles: {
-              fillColor: [248, 255, 248],
-              fontSize: 7
-            },
-            styles: {
-              cellPadding: 1
-            },
-            columnStyles: {
-              0: { cellWidth: 15 },
-              1: { cellWidth: 50 }
-            }
+            theme: 'grid',
+            headStyles: { fillColor: [248, 248, 248], textColor: [120, 120, 120], fontSize: 6.5, lineWidth: 0.1, lineColor: gridLine, fontStyle: 'normal' },
+            bodyStyles: { fillColor: [255, 255, 255], textColor: [50, 50, 50], fontSize: 7, lineWidth: 0.1, lineColor: gridLine, cellPadding: 1.2 },
+            alternateRowStyles: { fillColor: [250, 250, 250] },
+            columnStyles: { 0: { cellWidth: 15 }, 1: { cellWidth: 55 } },
+            margin: { left: 14, right: 14 }
           });
-          
-          currentY = (doc.lastAutoTable?.finalY ?? currentY) + 2;
+          currentY = (doc.lastAutoTable?.finalY ?? currentY) + 3;
         } else {
-          currentY += 2;
+          currentY += 3;
         }
-        
-        // Neue Seite wenn nötig
-        if (currentY > 200) {
+
+        if (currentY > 190) {
           doc.addPage();
-          currentY = 30;
+          currentY = 20;
         }
       }
-      
-      // Fußzeile
+
+      // Dezenter Footer mit Trennlinie
       const pageCount = doc.getNumberOfPages();
-      doc.setFontSize(8);
+      const pageHeight = doc.internal.pageSize.getHeight();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
-        doc.text(
-          `Seite ${i} von ${pageCount} - Erstellt mit RWK App Einbeck`,
-          doc.internal.pageSize.getWidth() / 2,
-          doc.internal.pageSize.getHeight() - 10,
-          { align: 'center' }
-        );
+        doc.setDrawColor(210, 210, 210);
+        doc.setLineWidth(0.2);
+        doc.line(14, pageHeight - 12, pageWidth - 14, pageHeight - 12);
+        doc.setFontSize(7.5);
+        doc.setTextColor(130, 130, 130);
+        doc.text(`Erstellt am ${format(new Date(), 'dd.MM.yyyy', { locale: de })} · RWK Einbeck`, 14, pageHeight - 8);
+        doc.text(`Seite ${i} von ${pageCount}`, pageWidth - 14, pageHeight - 8, { align: 'right' });
+        doc.setTextColor(0, 0, 0);
       }
-      
-      // PDF als Blob zurückgeben
+
       return doc.output('blob');
     },
     fileName
@@ -308,8 +295,11 @@ export async function generateShootersPDFFixed(
         unit: 'mm',
         format: 'a4'
       });
-      
-      // Logo als Base64 laden und hinzufügen
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const leagueNameSafe = league?.name || 'Liga';
+
+      // Dezenter Kopf mit Logo, Titel und feiner Trennlinie
       try {
         const response = await fetch('/images/logo2.png');
         const blob = await response.blob();
@@ -318,41 +308,33 @@ export async function generateShootersPDFFixed(
           reader.onload = () => resolve(reader.result as string);
           reader.readAsDataURL(blob);
         });
-        doc.addImage(logoBase64, 'PNG', 250, 10, 25, 25);
+        doc.addImage(logoBase64, 'PNG', 14, 10, 16, 16);
       } catch (e) {
         logWarn('Logo konnte nicht geladen werden');
       }
-      
-      // Schriftart setzen
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(40, 40, 40);
+      doc.text(sanitize(`${leagueNameSafe} ${competitionYear}`), 34, 17);
       doc.setFont('helvetica', 'normal');
-      
-      // Titel
-      doc.setFontSize(18);
-      const leagueNameSafe = league?.name || 'Liga';
-      doc.text(`Einzelschützen ${sanitize(leagueNameSafe)} ${competitionYear}`, 14, 20);
-      
-      // Untertitel
-      doc.setFontSize(12);
-      doc.text(`Stand: ${format(new Date(), 'dd.MM.yyyy', { locale: de })}`, 14, 28);
-      
+      doc.setFontSize(9);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`Einzelschützen · Stand: ${format(new Date(), 'dd.MM.yyyy', { locale: de })}`, 34, 23);
+      doc.setDrawColor(210, 210, 210);
+      doc.setLineWidth(0.3);
+      doc.line(14, 29, pageWidth - 14, 29);
+      doc.setTextColor(0, 0, 0);
+
       // Schützentabelle
       const headers = [
         { title: 'Platz', dataKey: 'rank' },
         { title: 'Name', dataKey: 'name' },
         { title: 'Mannschaft', dataKey: 'team' },
       ];
-      
-      // Durchgänge hinzufügen
-      for (let i = 1; i <= numRounds; i++) {
-        headers.push({ title: `DG ${i}`, dataKey: `dg${i}` });
-      }
-      
-      // Gesamt und Schnitt hinzufügen
-      headers.push(
-        { title: 'Gesamt', dataKey: 'totalScore' },
-        { title: 'Schnitt', dataKey: 'averageScore' }
-      );
-      
+      for (let i = 1; i <= numRounds; i++) headers.push({ title: `DG ${i}`, dataKey: `dg${i}` });
+      headers.push({ title: 'Gesamt', dataKey: 'totalScore' }, { title: 'Schnitt', dataKey: 'averageScore' });
+
       interface ShooterRowData {
         rank: string | number;
         name: string;
@@ -362,65 +344,63 @@ export async function generateShootersPDFFixed(
         isOutOfCompetition: boolean;
         [key: string]: string | number | boolean;
       }
-      
+
       const tableData: ShooterRowData[] = (league?.individualLeagueShooters || []).map(shooter => {
         const teamNameSafe = shooter.teamName || '';
         const shooterNameSafe = shooter.shooterName || '';
         const rowData: ShooterRowData = {
-          rank: shooter.teamOutOfCompetition ? "AK" : (shooter.rank ?? '-'),
+          rank: shooter.teamOutOfCompetition ? 'AK' : (shooter.rank ?? '-'),
           name: sanitize(shooterNameSafe),
           team: shooter.teamOutOfCompetition ? sanitize(`${teamNameSafe} (AK)`) : sanitize(teamNameSafe),
           totalScore: shooter.totalScore || '-',
           averageScore: shooter.averageScore ? shooter.averageScore.toFixed(2) : '-',
           isOutOfCompetition: shooter.teamOutOfCompetition ?? false
         };
-        
         for (let i = 1; i <= numRounds; i++) {
           const key = `dg${i}`;
           rowData[key] = shooter.results?.[key] !== null && shooter.results?.[key] !== undefined ? shooter.results[key] : '-';
         }
-        
         return rowData;
       });
-      
-      // Tabelle erstellen
+
+      const gridLine: [number, number, number] = [210, 210, 210];
+
       doc.autoTable({
-        head: [headers.map(header => header.title)],
-        body: tableData.map(row => headers.map(header => row[header.dataKey])),
-        startY: 35,
-        headStyles: {
-          fillColor: [41, 128, 185],
-          textColor: 255,
-          fontStyle: 'bold'
-        },
-        alternateRowStyles: {
-          fillColor: [240, 240, 240]
-        },
-        styles: {
-          fontSize: 10,
-          cellPadding: 3
+        head: [headers.map(h => h.title)],
+        body: tableData.map(row => headers.map(h => row[h.dataKey])),
+        startY: 34,
+        theme: 'grid',
+        headStyles: { fillColor: [235, 235, 235], textColor: [60, 60, 60], fontStyle: 'bold', lineWidth: 0.1, lineColor: gridLine, fontSize: 9 },
+        bodyStyles: { textColor: [30, 30, 30], fontSize: 9, lineWidth: 0.1, lineColor: gridLine, cellPadding: 2 },
+        alternateRowStyles: { fillColor: [248, 248, 248] },
+        // AK-Schützen dezent amber hervorheben
+        didParseCell: (data: any) => {
+          if (data.section === 'body' && tableData[data.row.index]?.isOutOfCompetition) {
+            data.cell.styles.textColor = [180, 120, 20];
+          }
         },
         columnStyles: {
-          0: { cellWidth: 15 },
-          1: { cellWidth: 40 },
-          2: { cellWidth: 40 },
-        }
+          0: { cellWidth: 15, halign: 'center' },
+          1: { cellWidth: 45 },
+          2: { cellWidth: 45 },
+        },
+        margin: { left: 14, right: 14 }
       });
-      
-      // Fußzeile
+
+      // Dezenter Footer mit Trennlinie
       const pageCount = doc.getNumberOfPages();
-      doc.setFontSize(8);
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
-        doc.text(
-          `Seite ${i} von ${pageCount} - Erstellt mit RWK App Einbeck`,
-          doc.internal.pageSize.getWidth() / 2,
-          doc.internal.pageSize.getHeight() - 10,
-          { align: 'center' }
-        );
+        doc.setDrawColor(210, 210, 210);
+        doc.setLineWidth(0.2);
+        doc.line(14, pageHeight - 12, pageWidth - 14, pageHeight - 12);
+        doc.setFontSize(7.5);
+        doc.setTextColor(130, 130, 130);
+        doc.text(`Erstellt am ${format(new Date(), 'dd.MM.yyyy', { locale: de })} · RWK Einbeck`, 14, pageHeight - 8);
+        doc.text(`Seite ${i} von ${pageCount}`, pageWidth - 14, pageHeight - 8, { align: 'right' });
+        doc.setTextColor(0, 0, 0);
       }
-      
-      // PDF als Blob zurückgeben
+
       return doc.output('blob');
     },
     fileName
