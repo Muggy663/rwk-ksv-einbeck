@@ -12,7 +12,7 @@ import { TeamStatusBadge } from '@/components/ui/team-status-badge';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronDown, ChevronRight, Loader2, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getRwkZone, determineLeagueCompleteRound } from '../_lib/rwk-zones';
+import { getRwkZone, determineLeagueCompleteRound, berechnePrognose, istOffeneKlasse, type Prognose } from '../_lib/rwk-zones';
 import { downloadLeagueTeamsPDF, downloadLeagueShootersPDF } from '../_lib/pdf-downloads';
 import { TeamShootersTable } from './TeamShootersTable';
 import { MannschaftCards } from './MannschaftCards';
@@ -33,6 +33,29 @@ export function MannschaftenTab({ data }: { data: RwkData }) {
     pageTitle, toast,
   } = data;
   if (!selectedCompetition) return null;
+
+  // Ligen nach Hierarchie (order) sortiert -> fuer Nachbarligen-Vergleich der Prognose.
+  const sortedLeagues = teamData
+    ? [...teamData.leagues].sort((a, b) => ((a as any).order || 0) - ((b as any).order || 0))
+    : [];
+
+  // Liefert eine Funktion, die fuer ein Team der gegebenen Liga die Auf-/Abstiegs-Prognose berechnet.
+  const prognoseFnFuerLiga = (leagueId: string) => {
+    const idx = sortedLeagues.findIndex(l => l.id === leagueId);
+    const eigene = sortedLeagues[idx];
+    // Offene Klassen (Freihand/Pistole) haben keine Auf-/Abstiege -> keine Prognose.
+    if (!eigene || istOffeneKlasse(eigene as any)) {
+      const leer: Prognose = { typ: null, text: '' };
+      return (_team: any): Prognose => leer;
+    }
+    // Obere Liga (order-1) nur, wenn sie NICHT offen ist; sonst kein Aufstiegsvergleich.
+    const obere = idx > 0 ? sortedLeagues[idx - 1] : null;
+    const untere = idx < sortedLeagues.length - 1 ? sortedLeagues[idx + 1] : null;
+    const obereTeams = obere && !istOffeneKlasse(obere as any) ? obere.teams : null;
+    const untereTeams = untere && !istOffeneKlasse(untere as any) ? untere.teams : null;
+    return (team: any) => berechnePrognose(team, eigene.teams, obereTeams, untereTeams, currentNumRoundsState);
+  };
+
   return (
     <>
 
@@ -124,6 +147,7 @@ export function MannschaftenTab({ data }: { data: RwkData }) {
                           // Berechne liga-weit vollständigen Durchgang auch für Mobile
                           const leagueCompleteRound = determineLeagueCompleteRound(league.teams, currentNumRoundsState);
                           const wertbareTeams = league.teams.filter(t => !t.outOfCompetition && !t.istEinzelwertung && t.rank).length;
+                          const getPrognose = prognoseFnFuerLiga(league.id);
                           
                           return (
                         <div>
@@ -138,6 +162,7 @@ export function MannschaftenTab({ data }: { data: RwkData }) {
                           onLoadTeamShooters={loadTeamShooters}
                           leagueCompleteRound={leagueCompleteRound}
                           wertbareTeams={wertbareTeams}
+                          getPrognose={getPrognose}
                         />
                         </div>
                           );
@@ -148,6 +173,7 @@ export function MannschaftenTab({ data }: { data: RwkData }) {
                           const leagueCompleteRound = determineLeagueCompleteRound(league.teams, currentNumRoundsState);
                           // Anzahl wertbarer Teams (mit echtem Rang, ohne AK/Einzel) für die Auf-/Abstiegs-Zonen
                           const wertbareTeams = league.teams.filter(t => !t.outOfCompetition && !t.istEinzelwertung && t.rank).length;
+                          const getPrognose = prognoseFnFuerLiga(league.id);
                           
                           return (
                         <div className={needsSpecialTouch ? "overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200" : "overflow-x-auto"} style={needsSpecialTouch ? { 
@@ -235,6 +261,24 @@ export function MannschaftenTab({ data }: { data: RwkData }) {
                                         Einzel
                                       </span>
                                     )}
+                                    {(() => {
+                                      const p = getPrognose(team);
+                                      if (!p.typ) return null;
+                                      const cls =
+                                        p.typ === 'aufstieg_moeglich' ? 'text-green-700 dark:text-green-400' :
+                                        p.typ === 'klassenerhalt' ? 'text-green-700 dark:text-green-400' :
+                                        p.typ === 'abstieg_droht' ? 'text-red-600 dark:text-red-400' :
+                                        'text-orange-600 dark:text-orange-400';
+                                      const icon =
+                                        p.typ === 'aufstieg_moeglich' ? '⬆️' :
+                                        p.typ === 'aufstieg_fraglich' ? '↗️' :
+                                        p.typ === 'abstieg_droht' ? '⬇️' : '🛟';
+                                      return (
+                                        <div className={cn("text-[11px] mt-0.5 font-medium", cls)} title={p.text}>
+                                          {icon} {p.text}
+                                        </div>
+                                      );
+                                    })()}
                                   </TableCell>
                                   {[...Array(currentNumRoundsState)].map((_, i) => (
                                     <TableCell key={`dg-val-${i + 1}-${team.id}`} className="text-center px-1 py-2">{(team.roundResults as any)?.[`dg${i + 1}`] ?? '-'}</TableCell>

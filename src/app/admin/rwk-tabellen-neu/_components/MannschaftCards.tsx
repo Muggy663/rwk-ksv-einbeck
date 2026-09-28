@@ -6,7 +6,7 @@ import { ChevronDown, ChevronRight, LineChart as LineChartIcon } from 'lucide-re
 import { cn } from '@/lib/utils';
 import { TeamStatusBadge } from '@/components/ui/team-status-badge';
 import { SubstitutionBadge } from '@/components/ui/substitution-badge';
-import { getRwkZone } from '../_lib/rwk-zones';
+import { getRwkZone, type Prognose } from '../_lib/rwk-zones';
 
 interface MannschaftCardsProps {
   teams: any[];
@@ -19,6 +19,7 @@ interface MannschaftCardsProps {
   onLoadTeamShooters: (teamId: string, teamData: any, numRounds: number) => void;
   leagueCompleteRound?: number;
   wertbareTeams: number;
+  getPrognose?: (team: any) => Prognose;
 }
 
 /**
@@ -36,6 +37,7 @@ export const MannschaftCards: React.FC<MannschaftCardsProps> = ({
   onLoadTeamShooters,
   leagueCompleteRound = 0,
   wertbareTeams,
+  getPrognose,
 }) => {
   return (
     <div className="space-y-3">
@@ -99,6 +101,19 @@ export const MannschaftCards: React.FC<MannschaftCardsProps> = ({
                     </span>
                   )}
                 </div>
+                {(() => {
+                  const p = getPrognose?.(team);
+                  if (!p || !p.typ) return null;
+                  const cls =
+                    p.typ === 'aufstieg_moeglich' || p.typ === 'klassenerhalt' ? 'text-green-700 dark:text-green-400' :
+                    p.typ === 'abstieg_droht' ? 'text-red-600 dark:text-red-400' :
+                    'text-orange-600 dark:text-orange-400';
+                  const icon =
+                    p.typ === 'aufstieg_moeglich' ? '⬆️' :
+                    p.typ === 'aufstieg_fraglich' ? '↗️' :
+                    p.typ === 'abstieg_droht' ? '⬇️' : '🛟';
+                  return <div className={cn("text-[11px] mt-1 font-medium", cls)}>{icon} {p.text}</div>;
+                })()}
               </div>
 
               {/* Gesamt-Score */}
