@@ -165,10 +165,16 @@ export const berechnePrognose = (
       const vorletzterOben = obere[obere.length - 2]; // Vorletzter der oberen Liga
       const eigenePunkte = summeBisDurchgang(team, basis);
       const vergleichPunkte = summeBisDurchgang(vorletzterOben, basis);
+      // Final = beide Ligen haben den letzten Durchgang komplett -> Ergebnis steht fest.
+      const final = basis >= numRounds;
 
       if (eigenePunkte > vergleichPunkte) {
-        return { typ: 'aufstieg_moeglich', text: `Aufstieg möglich (${eigenePunkte} > ${vergleichPunkte} Ringe vs. ${vorletzterOben.name}, Stand DG ${basis})` };
+        return final
+          ? { typ: 'aufstieg_moeglich', text: `Aufstieg geschafft (${eigenePunkte} > ${vergleichPunkte} Ringe vs. ${vorletzterOben.name})` }
+          : { typ: 'aufstieg_moeglich', text: `Aufstieg möglich (${eigenePunkte} > ${vergleichPunkte} Ringe vs. ${vorletzterOben.name}, Stand DG ${basis})` };
       }
+      // Nach dem letzten DG steht fest: kein Aufstieg -> neutral (kein negativer Hinweis).
+      if (final) return leer;
       return { typ: 'aufstieg_fraglich', text: `Aufstieg fraglich (${eigenePunkte} ≤ ${vergleichPunkte} Ringe vs. ${vorletzterOben.name}, Stand DG ${basis})` };
     }
   }
@@ -185,11 +191,17 @@ export const berechnePrognose = (
       const zweiterUnten = untere[1]; // Zweiter der unteren Liga
       const eigenePunkte = summeBisDurchgang(team, basis);
       const vergleichPunkte = summeBisDurchgang(zweiterUnten, basis);
+      // Final = beide Ligen haben den letzten Durchgang komplett -> Ergebnis steht fest.
+      const final = basis >= numRounds;
 
       if (eigenePunkte > vergleichPunkte) {
-        return { typ: 'klassenerhalt', text: `Klassenerhalt (${eigenePunkte} > ${vergleichPunkte} Ringe vs. ${zweiterUnten.name}, Stand DG ${basis})` };
+        return final
+          ? { typ: 'klassenerhalt', text: `Klassenerhalt geschafft (${eigenePunkte} > ${vergleichPunkte} Ringe vs. ${zweiterUnten.name})` }
+          : { typ: 'klassenerhalt', text: `Klassenerhalt (${eigenePunkte} > ${vergleichPunkte} Ringe vs. ${zweiterUnten.name}, Stand DG ${basis})` };
       }
-      return { typ: 'abstieg_droht', text: `Abstieg droht (${eigenePunkte} ≤ ${vergleichPunkte} Ringe vs. ${zweiterUnten.name}, Stand DG ${basis})` };
+      return final
+        ? { typ: 'abstieg_droht', text: `Abstieg (${eigenePunkte} ≤ ${vergleichPunkte} Ringe vs. ${zweiterUnten.name})` }
+        : { typ: 'abstieg_droht', text: `Abstieg droht (${eigenePunkte} ≤ ${vergleichPunkte} Ringe vs. ${zweiterUnten.name}, Stand DG ${basis})` };
     }
   }
 

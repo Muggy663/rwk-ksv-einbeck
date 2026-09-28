@@ -76,6 +76,41 @@ export const RWKLegend: React.FC = () => {
               </div>
             </div>
 
+            {/* Platzierung & Auf-/Abstieg */}
+            <div className="mt-6">
+              <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-100 font-semibold mb-4">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                <span>Platzierung & Auf-/Abstieg</span>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3 pl-6">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-200 text-amber-800 dark:bg-amber-500/30 dark:text-amber-200 font-bold text-xs">1</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Platz 1 – Meister / Aufstieg</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-300 text-slate-800 dark:bg-slate-500/40 dark:text-slate-100 font-bold text-xs">2</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Platz 2 – Aufstieg / Vergleich</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-200 text-orange-800 dark:bg-orange-500/30 dark:text-orange-200 font-bold text-xs">N-1</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Vorletzter – Abstiegskampf</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-200 text-red-800 dark:bg-red-500/30 dark:text-red-200 font-bold text-xs">N</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Letzter – Abstieg</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-3 pl-6 leading-relaxed">
+                Die farbigen Zonen richten sich nach der Ligagröße. Zusätzlich vergleicht die App den
+                Zweiten mit dem Vorletzten der höheren Liga (Aufstieg) und den Vorletzten mit dem Zweiten
+                der niedrigeren Liga (Abstieg) und zeigt einen Hinweis wie „Aufstieg möglich", „Abstieg
+                droht" oder „Klassenerhalt". Nach dem letzten Durchgang steht das Ergebnis fest
+                („Aufstieg geschafft", „Klassenerhalt geschafft", „Abstieg"). Das ist eine Prognose für
+                die nächste Saison unter der Annahme, dass alle Mannschaften erneut melden – keine
+                amtliche Auf-/Abstiegsentscheidung.
+              </p>
+            </div>
+
             {/* Mobile Hinweis */}
             <div className="mt-6 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800 md:hidden">
               <div className="flex items-center gap-2 text-purple-900 dark:text-purple-100 font-medium mb-2">
@@ -83,13 +118,7 @@ export const RWKLegend: React.FC = () => {
                 <span>Mobile Ansicht</span>
               </div>
               <div className="space-y-2 text-sm text-purple-800 dark:text-purple-200">
-                <p><strong>Hochkant:</strong> Teams als Karten, aufklappbar für Schützen-Details</p>
-                <p><strong>Querformat:</strong> Normale Tabelle mit horizontalem Scrollen</p>
-                <div className="mt-3 p-2 bg-blue-100 dark:bg-blue-900/30 rounded border border-blue-300 dark:border-blue-700">
-                  <p className="text-blue-800 dark:text-blue-200 font-medium">
-                    💻 <strong>Tipp:</strong> Für die beste Übersicht nutzen Sie die Desktop-Version oder drehen Sie Ihr Gerät ins Querformat!
-                  </p>
-                </div>
+                <p>Mannschaften werden als übersichtliche Karten angezeigt – zum Aufklappen der Schützen-Details einfach antippen.</p>
               </div>
             </div>
           </CardContent>

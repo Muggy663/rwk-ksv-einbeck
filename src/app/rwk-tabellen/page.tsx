@@ -54,7 +54,7 @@ function RwkTabellenPageComponent() {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="ml-auto text-muted-foreground hover:text-primary p-2 shrink-0"
+              className="ml-auto text-muted-foreground hover:text-foreground hover:bg-muted p-2 shrink-0"
               onClick={() => document.getElementById('rwk-legend')?.scrollIntoView({ behavior: 'smooth' })}
               aria-label="Legende anzeigen"
             >
