@@ -64,7 +64,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { db } from '@/lib/firebase/config';
-import { collection, doc, getDoc, getDocs, query, where, orderBy, limit, documentId, setDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, query, where, orderBy, limit, documentId, setDoc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
@@ -502,20 +502,15 @@ function RwkTabellenPageComponent() {
         // Vergebe Rangplätze (leer vorerst, wird nach Nachladen gesetzt)
         fetchedLeaguesData.push(leagueDisplay);
       }
-      // Lade Substitutions-Daten (zentral für alle Teams)
-      const substitutionsMap = await SubstitutionService.loadSubstitutions(config.year);
-      setTeamSubstitutions(substitutionsMap);
+      // Substitutions sind bereits oben (fuer die Berechnung) geladen -> wiederverwenden,
+      // statt sie ein zweites Mal zu laden (spart eine team_substitutions-Query).
+      setTeamSubstitutions(substitutions);
 
-      // Lade Einzelranglisten für alle Ligen parallel via fetchIndividualShooterData
-      // Das stellt sicher dass alle Schützen korrekt erfasst werden, unabhängig vom Aufklappen
-      await Promise.all(fetchedLeaguesData.map(async (league) => {
-        try {
-          const shooters = await fetchIndividualShooterData(config, numRoundsForCompetition, league.id);
-          league.individualLeagueShooters = shooters;
-        } catch {
-          league.individualLeagueShooters = [];
-        }
-      }));
+      // Einzelranglisten werden NICHT mehr vorab fuer alle Ligen geladen.
+      // Sie werden lazy in loadData nachgeladen, sobald im Einzel-Tab eine Liga
+      // gewaehlt wird. individualLeagueShooters wird beim Rendern nicht gelesen;
+      // die PDF-Buttons laden ihre Daten selbst nach. Das eliminiert L x (teams+scores+subs+shooters)
+      // Reads pro Wettkampf-Oeffnen.
 
       return { id: `${config.year}-${config.discipline}`, config, leagues: fetchedLeaguesData };
     } catch (err: any) {
@@ -1129,37 +1124,9 @@ function RwkTabellenPageComponent() {
     return undefined;
   }, [selectedCompetition, activeTab, selectedIndividualLeagueFilter, isLoadingInitialCompetitions]);
   
-  // Load substitutions when teamData is available
-  useEffect(() => {
-    if (teamData && selectedCompetition && teamSubstitutions.size === 0) {
-      const loadSubstitutions = async () => {
-        try {
-          const substitutionsQuery = query(
-            collection(db, 'team_substitutions'),
-            where('competitionYear', '==', selectedCompetition.year)
-          );
-          const substitutionsSnapshot = await getDocs(substitutionsQuery);
-          const substitutionsMap = new Map();
-          substitutionsSnapshot.docs.forEach(doc => {
-            const data = doc.data();
-            const key = `${data.teamId}-${data.replacementShooterId}`;
-            substitutionsMap.set(key, {
-              originalShooterName: data.originalShooterName,
-              fromRound: data.fromRound,
-              reason: data.reason,
-              type: data.type
-            });
-          });
-          setTeamSubstitutions(substitutionsMap);
-  
-        } catch (error) {
-          logError('Error loading substitutions:', error);
-        }
-      };
-      loadSubstitutions();
-    }
-  }, [teamData, selectedCompetition, teamSubstitutions.size]);
-  
+  // Substitutions werden zentral in fetchCompetitionTeamData geladen und gesetzt
+  // (vollstaendiges Key-Format ueber SubstitutionService) - kein separater Nachlade-Effekt noetig.
+
   // Speichern der Filtereinstellungen im localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1297,16 +1264,16 @@ function RwkTabellenPageComponent() {
 
       // Lade Schützen-Infos einzeln für bessere Fehlerbehandlung
       const shooterInfos = new Map<string, any>();
-      
-      for (const shooterId of validShooterIds) {
-        try {
-          const shooterDocRef = doc(db, "shooters", shooterId);
-          const shooterSnap = await getDoc(shooterDocRef);
-          
-          if (shooterSnap.exists()) {
-            const shooterData = shooterSnap.data();
-            
-            // Erstelle vollständigen Namen aus firstName, lastName, title
+
+      // Batch-Laden statt N+1: alle vorhandenen Schuetzen in 30er-Bloecken per documentId() in [...]
+      const foundShooterIds = new Set<string>();
+      try {
+        const batchSize = 30;
+        for (let i = 0; i < validShooterIds.length; i += batchSize) {
+          const batch = validShooterIds.slice(i, i + batchSize);
+          const shootersSnap = await getDocs(query(collection(db, "shooters"), where(documentId(), "in", batch)));
+          shootersSnap.docs.forEach(docSnap => {
+            const shooterData = docSnap.data();
             let displayName = shooterData.name || '';
             if (shooterData.firstName || shooterData.lastName) {
               const nameParts = [];
@@ -1315,85 +1282,70 @@ function RwkTabellenPageComponent() {
               if (shooterData.title) nameParts.push(shooterData.title);
               displayName = nameParts.join(' ');
             }
-            
+            shooterInfos.set(docSnap.id, { ...shooterData, displayName });
+            foundShooterIds.add(docSnap.id);
+          });
+        }
+      } catch (error) {
+        logError('Fehler beim Batch-Laden der Schuetzen:', error);
+      }
 
-            
+      // Fallback nur fuer NICHT gefundene Schuetzen: Namen aus Scores holen, ggf. Schuetzen-Doc anlegen
+      const missingShooterIds = validShooterIds.filter(id => !foundShooterIds.has(id));
+      for (const shooterId of missingShooterIds) {
+        logWarn(`❌ Schütze ${shooterId} nicht in shooters gefunden - suche in Scores...`);
+        try {
+          let scoresSnapshot;
+          try {
+            const seasonSpecificCollection = getSeasonSpecificScoresCollection(teamData.competitionYear, teamData.leagueType as FirestoreLeagueSpecificDiscipline);
+            scoresSnapshot = await getDocs(query(
+              collection(db, seasonSpecificCollection),
+              where("shooterId", "==", shooterId),
+              limit(1)
+            ));
+          } catch (error) {
+            scoresSnapshot = await getDocs(query(
+              collection(db, "rwk_scores"),
+              where("shooterId", "==", shooterId),
+              limit(1)
+            ));
+          }
+
+          if (!scoresSnapshot.empty) {
+            const scoreData = scoresSnapshot.docs[0].data();
+            const nameFromScore = scoreData.shooterName;
+
+            // Erstelle shooters Eintrag NUR wenn nicht vorhanden - gender niemals überschreiben!
+            try {
+              const nameParts = nameFromScore.split(' ');
+              await setDoc(doc(db, "shooters", shooterId), {
+                name: nameFromScore,
+                firstName: nameParts[0] || '',
+                lastName: nameParts.slice(1).join(' ') || '',
+                gender: scoreData.shooterGender || 'unknown',
+                createdAt: new Date(),
+                createdBy: 'auto-from-scores'
+              });
+            } catch (createError) {
+              logError(`Fehler beim Erstellen von Schütze ${shooterId}:`, createError);
+            }
+
             shooterInfos.set(shooterId, {
-              ...shooterData,
-              displayName // Speichere den zusammengesetzten Namen separat
+              name: nameFromScore,
+              displayName: nameFromScore,
+              gender: scoreData.shooterGender || 'unknown',
+              isTemporary: false
             });
           } else {
-            logWarn(`❌ Schütze ${shooterId} nicht in shooters gefunden - suche in Scores...`);
-            
-            // TEST-MODUS: Suche Namen in bestehenden Scores
-            try {
-              // Versuche zuerst saison-spezifische Collection
-              let scoresSnapshot;
-              try {
-                const seasonSpecificCollection = getSeasonSpecificScoresCollection(teamData.competitionYear, teamData.leagueType as FirestoreLeagueSpecificDiscipline);
-                const seasonSpecificQuery = query(
-                  collection(db, seasonSpecificCollection),
-                  where("shooterId", "==", shooterId),
-                  limit(1)
-                );
-                scoresSnapshot = await getDocs(seasonSpecificQuery);
-              } catch (error) {
-                // Fallback auf rwk_scores
-                const scoresQuery = query(
-                  collection(db, "rwk_scores"),
-                  where("shooterId", "==", shooterId),
-                  limit(1)
-                );
-                scoresSnapshot = await getDocs(scoresQuery);
-              }
-              
-              if (!scoresSnapshot.empty) {
-                const scoreData = scoresSnapshot.docs[0].data();
-                const nameFromScore = scoreData.shooterName;
-
-                
-                // Erstelle shooters Eintrag NUR wenn nicht vorhanden - gender niemals überschreiben!
-                try {
-                  const shooterDocRef = doc(db, "shooters", shooterId);
-                  const existingSnap = await getDoc(shooterDocRef);
-                  if (!existingSnap.exists()) {
-                    const nameParts = nameFromScore.split(' ');
-                    const shooterData = {
-                      name: nameFromScore,
-                      firstName: nameParts[0] || '',
-                      lastName: nameParts.slice(1).join(' ') || '',
-                      gender: scoreData.shooterGender || 'unknown',
-                      createdAt: new Date(),
-                      createdBy: 'auto-from-scores'
-                    };
-                    await setDoc(shooterDocRef, shooterData);
-                  }
-
-                } catch (createError) {
-                  logError(`Fehler beim Erstellen von Schütze ${shooterId}:`, createError);
-                }
-                
-                shooterInfos.set(shooterId, {
-                  name: nameFromScore,
-                  displayName: nameFromScore,
-                  gender: scoreData.shooterGender || 'unknown',
-                  isTemporary: false
-                });
-              } else {
-
-                shooterInfos.set(shooterId, {
-                  name: `Schütze ${shooterId.substring(0,8)}`,
-                  displayName: `Schütze ${shooterId.substring(0,8)}`,
-                  gender: 'unknown',
-                  isTemporary: true
-                });
-              }
-            } catch (scoreError) {
-              logError(`Fehler beim Suchen in Scores für ${shooterId}:`, scoreError);
-            }
+            shooterInfos.set(shooterId, {
+              name: `Schütze ${shooterId.substring(0,8)}`,
+              displayName: `Schütze ${shooterId.substring(0,8)}`,
+              gender: 'unknown',
+              isTemporary: true
+            });
           }
-        } catch (error) {
-          logError(`Fehler beim Laden von Schütze ${shooterId}:`, error);
+        } catch (scoreError) {
+          logError(`Fehler beim Suchen in Scores für ${shooterId}:`, scoreError);
         }
       }
 
@@ -1525,11 +1477,11 @@ function RwkTabellenPageComponent() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <BackButton fallbackHref="/admin" />
-            <div className="flex items-center justify-center h-11 w-11 rounded-xl bg-primary/15 text-primary dark:text-foreground shrink-0">
+            <div className="flex items-center justify-center h-11 w-11 rounded-xl bg-primary text-primary-foreground shrink-0">
               <TableIconLucide className="h-6 w-6" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold text-primary dark:text-foreground truncate">{pageTitle}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground truncate">{pageTitle}</h1>
               <p className="text-sm text-muted-foreground">Rundenwettkampf-Tabellen</p>
             </div>
             <Button 
@@ -1555,8 +1507,8 @@ function RwkTabellenPageComponent() {
                 label: comp.displayName
               }))}
             />
-            <Button asChild variant="outline" className="w-full sm:w-auto border-primary/40 text-foreground hover:text-foreground hover:bg-primary/10">
-              <Link href="/statistik" className="flex items-center justify-center">
+            <Button asChild variant="outline" className="w-full sm:w-auto border-primary/40 bg-background !text-foreground hover:!text-foreground hover:bg-muted">
+              <Link href="/statistik" className="flex items-center justify-center !text-foreground">
                 <LineChartIcon className="mr-2 h-4 w-4" />
                 Statistiken
               </Link>
@@ -1651,7 +1603,7 @@ function RwkTabellenPageComponent() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-xs px-2 py-1 text-foreground hover:text-foreground border-primary/40 dark:border-foreground/30 hover:bg-primary/10 dark:hover:bg-foreground/10"
+                          className="text-xs px-2 py-1 bg-background !text-foreground hover:!text-foreground border-primary/40 hover:bg-muted"
                           onClick={async () => {
                             try {
                               const { generateLeaguePDFFixed } = await import('@/lib/services/pdf-service-fixed');
@@ -1707,7 +1659,7 @@ function RwkTabellenPageComponent() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="text-xs px-2 py-1 text-foreground hover:text-foreground border-primary/40 dark:border-foreground/30 hover:bg-primary/10 dark:hover:bg-foreground/10"
+                          className="text-xs px-2 py-1 bg-background !text-foreground hover:!text-foreground border-primary/40 hover:bg-muted"
                           onClick={async () => {
                             try {
                               const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');
@@ -2082,7 +2034,7 @@ function RwkTabellenPageComponent() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="text-xs px-3 py-2 text-foreground hover:text-foreground border-primary/40 dark:border-foreground/30 hover:bg-primary/10 dark:hover:bg-foreground/10"
+                        className="text-xs px-3 py-2 bg-background !text-foreground hover:!text-foreground border-primary/40 hover:bg-muted"
                         onClick={async () => {
                           try {
                             const { generateShootersPDFFixed } = await import('@/lib/utils/pdf-generator.fix');

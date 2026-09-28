@@ -2,6 +2,13 @@
 
 Stand: 20.09.2026 (App-Version 3.0.14)
 
+## ✅ ERLEDIGT (in /admin/rwk-tabellen-neu umgesetzt, lokal)
+- Hebel A: Vorab-Laden aller Einzelranglisten (Promise.all pro Liga) entfernt.
+- Hebel B: Substitutions nur noch 1× geladen (doppelter Service-Load + Nachlade-useEffect entfernt).
+- Hebel C: loadTeamShooters lädt Schützen jetzt per documentId()-Batch statt N+1 getDoc.
+- Offen: Bonus (sessionStorage-Cache lesen) + großer Wurf (Aggregat-Dokumente).
+- Noch gegen Live-Zahlen gegenprüfen, bevor Vorschau die öffentliche Seite ersetzt.
+
 ## Firestore-Abfragen der RWK-Tabellen reduzieren (Kosten + Ladezeit)
 
 Analyse-Ergebnis: Beim Öffnen eines Wettkampfs entstehen sehr viele redundante Reads.
