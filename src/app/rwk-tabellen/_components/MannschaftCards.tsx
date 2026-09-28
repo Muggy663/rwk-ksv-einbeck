@@ -23,7 +23,7 @@ interface MannschaftCardsProps {
 }
 
 /**
- * Moderne, aufgewertete Mannschafts-Karten für schmale Bildschirme (Vorschau).
+ * Moderne, aufgewertete Mannschafts-Karten für schmale Bildschirme.
  * Nutzt die Auf-/Abstiegs-Zonen-Farben, ein Rang-Badge und ein aufgeräumtes Layout.
  */
 export const MannschaftCards: React.FC<MannschaftCardsProps> = ({

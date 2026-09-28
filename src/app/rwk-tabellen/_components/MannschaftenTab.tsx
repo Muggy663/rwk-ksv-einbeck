@@ -104,7 +104,7 @@ export function MannschaftenTab({ data }: { data: RwkData }) {
                             setShowOutOfCompetitionTeams(!!checked);
                             const currentParams = new URLSearchParams(window.location.search);
                             currentParams.set('showAK', (!!checked).toString());
-                            router.replace(`/admin/rwk-tabellen-neu?${currentParams.toString()}`, { scroll: false });
+                            router.replace(`/rwk-tabellen?${currentParams.toString()}`, { scroll: false });
                           }}
                           className="h-4 w-4"
                         />

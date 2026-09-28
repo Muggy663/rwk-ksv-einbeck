@@ -1,5 +1,5 @@
 "use client";
-// Data-Layer-Hook fuer die RWK-Tabellen-Vorschau. Enthaelt State, Firestore-Ladefunktionen
+// Data-Layer-Hook fuer die RWK-Tabellen. Enthaelt State, Firestore-Ladefunktionen
 // und Handler. Aus page.tsx ausgelagert; Verhalten unveraendert.
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -1055,7 +1055,7 @@ export function useRwkTabellenData() {
     setSelectedIndividualLeagueFilter("");
     
     // Update URL
-    router.replace(`/admin/rwk-tabellen-neu?year=${competition.year}&discipline=${competition.discipline}`, { scroll: false });
+    router.replace(`/rwk-tabellen?year=${competition.year}&discipline=${competition.discipline}`, { scroll: false });
   }, [availableCompetitions, router, loadingData]);
 
 

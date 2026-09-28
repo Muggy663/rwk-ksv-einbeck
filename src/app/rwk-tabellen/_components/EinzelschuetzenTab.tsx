@@ -80,7 +80,7 @@ export function EinzelschuetzenTab({ data }: { data: RwkData }) {
                         setShowOutOfCompetitionShooters(!!checked);
                         const currentParams = new URLSearchParams(window.location.search);
                         currentParams.set('showAKShooters', (!!checked).toString());
-                        router.replace(`/admin/rwk-tabellen-neu?${currentParams.toString()}`, { scroll: false });
+                        router.replace(`/rwk-tabellen?${currentParams.toString()}`, { scroll: false });
                       }}
                       className="h-5 w-5"
                     />
