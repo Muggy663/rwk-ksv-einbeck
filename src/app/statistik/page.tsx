@@ -9,7 +9,7 @@ const cards = [
     href: '/statistik/dashboard',
     icon: BarChart3,
     title: 'Standard-Statistiken',
-    text: 'Leistungsentwicklung, Mannschaftsvergleich und Geschlechterverteilung – interaktiv gefiltert nach Saison, Liga und Verein.',
+    text: 'Leistungsentwicklung, Mannschaftsvergleich und Geschlechterverteilung – gefiltert nach Saison, Liga und Verein.',
     gradient: 'from-blue-500 to-indigo-600',
     glow: 'group-hover:shadow-blue-500/30',
   },
@@ -17,7 +17,7 @@ const cards = [
     href: '/statistik/vergleich',
     icon: Users,
     title: 'Schützenvergleich',
-    text: 'Bis zu 6 Schützen direkt gegenüberstellen und ihre Entwicklung über die Durchgänge einer Saison analysieren.',
+    text: 'Bis zu 6 Schützen einer Saison nebeneinanderstellen und ihren Verlauf über die Durchgänge vergleichen.',
     gradient: 'from-emerald-500 to-teal-600',
     glow: 'group-hover:shadow-emerald-500/30',
   },
@@ -25,16 +25,16 @@ const cards = [
     href: '/statistik/erweitert',
     icon: TrendingUp,
     title: 'Saisonübergreifend',
-    text: 'Leistungstrends eines Schützen über mehrere Jahre – vereins- und disziplinübergreifend zusammengeführt.',
+    text: 'Die Entwicklung eines Schützen über mehrere Jahre – Vereine und Disziplinen zu einem Trend zusammengeführt.',
     gradient: 'from-amber-500 to-orange-600',
     glow: 'group-hover:shadow-amber-500/30',
-    badge: 'Neu in 3.0',
+    badge: 'Neu',
   },
   {
     href: '/statistik/mannschaft',
     icon: Users,
     title: 'Mannschafts-Übersicht',
-    text: 'Alle Schützen einer Mannschaft auf einer Seite – mit Kennzahlen (Summe, Schnitt, Spanne, bestes/schlechtestes Ergebnis) und Verlaufsdiagramm je Schütze.',
+    text: 'Alle Schützen einer Mannschaft auf einen Blick – Summe, Schnitt und Spanne je Schütze plus Verlaufsdiagramm.',
     gradient: 'from-rose-500 to-pink-600',
     glow: 'group-hover:shadow-rose-500/30',
     badge: 'Neu',
@@ -57,7 +57,7 @@ export default function StatistikPage() {
               Statistik-Center
             </h1>
             <p className="mt-1 text-muted-foreground">
-              Auswertungen für Rundenwettkampf und Kreismeisterschaft – von der einzelnen Saison bis zum Mehrjahres-Trend
+              Auswertungen für Rundenwettkampf und Kreismeisterschaft – von der einzelnen Saison bis zum Mehrjahres-Trend.
             </p>
           </div>
         </div>
