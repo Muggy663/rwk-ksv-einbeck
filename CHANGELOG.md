@@ -4,15 +4,19 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.1.1 (29.09.2026)
+- **🔫 Luftpistole/Luftdruck in der Statistik gefixt**: In der saisonübergreifenden Statistik wurden für Luftdruck-Schützen (Luftgewehr/Luftpistole) fälschlich keine Ergebnisse gefunden. Das ist behoben – die Ergebnisse erscheinen jetzt korrekt. Zusätzlich sucht die Statistik nun in allen tatsächlich angelegten Saisons statt in einem festen Zeitfenster
+- **🎯 Statistik-Ablauf verbessert**: In der saisonübergreifenden Statistik erscheint die Disziplin-Auswahl erst, nachdem ein Schütze gewählt wurde – der Ablauf ist dadurch klarer (erst suchen, dann Disziplin). Die Kurztexte im Statistik-Center wurden gestrafft
+- **🔄 „Aktualisieren" in der App repariert**: Beim Tippen auf „Aktualisieren" blieben Tabellen und Daten leer, bis die App komplett neu gestartet wurde. Ursache war ein zu aggressives Leeren des lokalen Speichers, das die Datenverbindung (Firestore) beschädigte. Jetzt wird nur noch sauber neu geladen – die Daten erscheinen sofort, ohne die App zu beenden
+- **🎯 Luftgewehr Freihand vorbereitet**: Für die neue Freihand-Runde werden die Ergebnisse jetzt korrekt in die Luftdruck-Auswertung einsortiert (vorher wären Freihand-Ergebnisse in einem „unbekannten" Bereich gelandet und nicht in Tabellen/Statistik aufgetaucht)
+
+---
+
 ## Version 3.1.0
 - **🎨 RWK-Tabellen rundum erneuert**: Die RWK-Tabellen-Seite wurde komplett überarbeitet – modernes, aufgeräumtes Layout, auf dem Handy übersichtliche Karten statt gequetschter Tabellen, ein mitscrollender Kopf und abwechselnd eingefärbte Zeilen für bessere Lesbarkeit
 - **🥇 Farbzonen für Auf- und Abstieg**: Die Tabellen zeigen jetzt auf einen Blick, wer im Aufstiegs-, Sicherheits- oder Abstiegsbereich steht (farbige Zonen, abhängig von der Ligagröße). Eine Legende erklärt die Farben
 - **📈 Auf-/Abstiegs-Prognose**: Während der Saison wird abgeschätzt, wer voraussichtlich auf- oder absteigt. Nach dem letzten Durchgang steht es klar da: „Aufstieg geschafft", „Klassenerhalt geschafft" oder „Abstieg"
 - **📊 Direkt zur Statistik**: Aus den RWK-Tabellen führt jetzt ein Weg direkt zur passenden Statistik – vom Schützen zur saisonübergreifenden Vereins-Analyse und von der Mannschaft zur Mannschafts-Übersicht
-- **🔫 Luftpistole/Luftdruck in der Statistik gefixt**: In der saisonübergreifenden Statistik wurden für Luftdruck-Schützen (Luftgewehr/Luftpistole) fälschlich keine Ergebnisse gefunden. Das ist behoben – die Ergebnisse erscheinen jetzt korrekt. Zusätzlich sucht die Statistik nun in allen tatsächlich angelegten Saisons statt in einem festen Zeitfenster
-- **🎯 Statistik-Ablauf verbessert**: In der saisonübergreifenden Statistik erscheint die Disziplin-Auswahl erst, nachdem ein Schütze gewählt wurde – der Ablauf ist dadurch klarer (erst suchen, dann Disziplin). Die Kurztexte im Statistik-Center wurden gestrafft
-- **🔄 „Aktualisieren" in der App repariert**: Beim Tippen auf „Aktualisieren" blieben Tabellen und Daten leer, bis die App komplett neu gestartet wurde. Ursache war ein zu aggressives Leeren des lokalen Speichers, das die Datenverbindung (Firestore) beschädigte. Jetzt wird nur noch sauber neu geladen – die Daten erscheinen sofort, ohne die App zu beenden
-- **🎯 Luftgewehr Freihand vorbereitet**: Für die neue Freihand-Runde werden die Ergebnisse jetzt korrekt in die Luftdruck-Auswertung einsortiert (vorher wären Freihand-Ergebnisse in einem „unbekannten" Bereich gelandet und nicht in Tabellen/Statistik aufgetaucht)
 - **📄 PDF-Listen modernisiert**: Die PDF-Ausgaben der RWK-Tabellen (Liga- und Mannschaftslisten) wurden schicker gestaltet – mit Vereinslogo, klarer Kopfzeile, dezenten Trennlinien und Fußzeile
 - **🧹 Aufräumen im Hintergrund**: Nicht mehr genutzter Code und alte Dateien wurden entfernt; die RWK-Tabellen laden Daten effizienter (weniger Datenbank-Abfragen)
 
