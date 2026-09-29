@@ -27,6 +27,21 @@ export function VersionCheck() {
   }, []);
 
   useEffect(() => {
+    // In der nativen App (Capacitor) NICHT gegen /api/version prüfen und
+    // erst recht keinen Hard-Reload anbieten: Die App wird aus lokal
+    // gebündelten Assets ausgeliefert, ihre Version weicht praktisch immer
+    // von der Web-Version ab. Ein erzwungenes Neuladen mit abgemeldetem
+    // Service Worker baut Firebase/Auth/Datenschicht in der WebView nicht
+    // sauber wieder auf – die Tabellen bleiben dann leer, bis die App
+    // komplett beendet und neu gestartet wird. Updates kommen hier über
+    // den Play Store, nicht über einen In-App-Reload.
+    const isNativeApp =
+      typeof window !== 'undefined' &&
+      !!window.Capacitor &&
+      typeof window.Capacitor.isNativePlatform === 'function' &&
+      window.Capacitor.isNativePlatform();
+    if (isNativeApp) return;
+
     const check = async () => {
       try {
         const res = await fetch('/api/version', { cache: 'no-store' });
