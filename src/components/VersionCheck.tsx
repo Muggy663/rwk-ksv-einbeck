@@ -27,21 +27,12 @@ export function VersionCheck() {
   }, []);
 
   useEffect(() => {
-    // In der nativen App (Capacitor) NICHT gegen /api/version prüfen und
-    // erst recht keinen Hard-Reload anbieten: Die App wird aus lokal
-    // gebündelten Assets ausgeliefert, ihre Version weicht praktisch immer
-    // von der Web-Version ab. Ein erzwungenes Neuladen mit abgemeldetem
-    // Service Worker baut Firebase/Auth/Datenschicht in der WebView nicht
-    // sauber wieder auf – die Tabellen bleiben dann leer, bis die App
-    // komplett beendet und neu gestartet wird. Updates kommen hier über
-    // den Play Store, nicht über einen In-App-Reload.
-    const isNativeApp =
-      typeof window !== 'undefined' &&
-      !!window.Capacitor &&
-      typeof window.Capacitor.isNativePlatform === 'function' &&
-      window.Capacitor.isNativePlatform();
-    if (isNativeApp) return;
-
+    // Hinweis: Die native App (Capacitor) lädt live von https://rwk-einbeck.de
+    // (server.url in capacitor.config), ist also eine WebView auf dieselbe
+    // Website. Deshalb IST der Versions-Hinweis auch in der App sinnvoll –
+    // ein Vercel-Deploy ist für die App eine echte neue Version, und ein
+    // Neuladen holt sie. Der Reload selbst muss nur schonend sein (siehe
+    // hardReload), damit Firestore in der WebView nicht abstürzt.
     const check = async () => {
       try {
         const res = await fetch('/api/version', { cache: 'no-store' });
@@ -63,34 +54,22 @@ export function VersionCheck() {
     return () => clearInterval(interval);
   }, []);
 
-  // Erzwingt ein echtes Neuladen ohne Cache (F5 allein reicht nicht,
-  // da der Browser die Seite aus dem Cache lädt).
-  const hardReload = async () => {
-    try {
-      // Browser-Caches leeren (PWA / Service Worker)
-      if (typeof caches !== 'undefined') {
-        const keys = await caches.keys();
-        await Promise.all(keys.map((key) => caches.delete(key)));
-      }
-      // Service Worker abmelden, damit alte Assets nicht erneut ausgeliefert werden
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map((r) => r.unregister()));
-        // Kurz warten, damit die Abmeldung wirklich abgeschlossen ist, bevor
-        // wir neu laden. Ohne diese Pause startet die neue Seite, während der
-        // Service Worker gerade erst entfernt wird – die Firestore-Listener
-        // initialisieren dann nicht sauber und die Tabellen bleiben leer,
-        // bis die App komplett neu gestartet wird.
-        await new Promise((resolve) => setTimeout(resolve, 300));
-      }
-    } catch {
-      // Fehler beim Cache-Leeren ignorieren – Reload trotzdem versuchen
-    }
-    // Vollständige Neu-Navigation mit Cache-Buster statt reload().
-    // reload() rendert in der PWA/App teils noch aus dem gerade geleerten
-    // Zustand; eine frische Navigation baut Dokument und alle Kontexte
-    // (Firebase, Auth, Datenschicht) komplett neu auf – entspricht einem
-    // echten App-Neustart, ohne dass die App beendet werden muss.
+  // Lädt die Seite frisch mit Cache-Buster neu.
+  //
+  // WICHTIG – bewusst SCHONEND: Früher wurden hier Caches geleert, der
+  // Service Worker abgemeldet und (an anderer Stelle) sogar die IndexedDB
+  // gelöscht. In der nativen App (WebView auf https://rwk-einbeck.de) hat
+  // genau das Firestore zerschossen: Firestore legt seinen Zustand in der
+  // IndexedDB ab; wird die weggeräumt, während die neue Seite hochfährt,
+  // laden keine Daten mehr, bis die App komplett beendet und neu gestartet
+  // wird. Ein Service Worker existiert in diesem Projekt ohnehin nicht
+  // (kein next-pwa/sw.js), also gibt es hier auch nichts abzumelden.
+  //
+  // Für einen frischen Stand reicht eine vollständige Neu-Navigation mit
+  // Cache-Buster: Sie baut Dokument und alle Kontexte (Firebase, Auth,
+  // Datenschicht) neu auf und holt beim Server-Request das neue Deploy –
+  // ohne Firestores lokale Daten zu beschädigen.
+  const hardReload = () => {
     const url = new URL(window.location.href);
     url.searchParams.set('_v', Date.now().toString());
     window.location.replace(url.toString());
