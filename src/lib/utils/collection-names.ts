@@ -16,7 +16,10 @@ export function getSeasonSpecificScoresCollection(
   
   if (['KK', 'KKG'].includes(leagueType)) {
     normalizedDiscipline = 'KK';
-  } else if (['LG', 'LGA', 'LP', 'LPA'].includes(leagueType)) {
+  } else if (['LG', 'LGA', 'LGS', 'LP', 'LPA'].includes(leagueType)) {
+    // LGS (Luftgewehr Freihand) gehört zur Luftdruck-Kategorie und MUSS hier
+    // gelistet sein – sonst landet ein LGS-Ergebnis in rwk_scores_JAHR_UNKNOWN
+    // statt _LD und wäre für Tabellen und Statistik unauffindbar.
     normalizedDiscipline = 'LD';
   } else if (leagueType === 'KKP') {
     normalizedDiscipline = 'KKP';
