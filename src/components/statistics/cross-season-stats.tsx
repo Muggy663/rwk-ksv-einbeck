@@ -165,9 +165,30 @@ export function CrossSeasonStats() {
         shooterIds = Array.from(new Set([shooterId, ...sameName])).slice(0, 10);
       }
 
-      // Da wir saisonübergreifend suchen, müssen wir alle Collections durchsuchen
+      // Zu durchsuchende Jahre bestimmen. Das 'competitionYear' einer Saison ist
+      // ein manuell vergebener Wert (z.B. wird eine Luftdruck-Saison "2025/26"
+      // oft als 2026 angelegt). Ein festes Fenster wie [currentYear-3 ...
+      // currentYear+1] verfehlt solche Saisons – dann bleibt z.B. Luftpistole
+      // leer, obwohl Ergebnisse existieren. Deshalb laden wir die tatsächlich
+      // angelegten Saison-Jahre aus der 'seasons'-Collection und fragen genau
+      // diese ab. Nur wenn das fehlschlägt, greift ein breites Fallback-Fenster.
       const currentYear = new Date().getFullYear();
-      const years = [currentYear - 3, currentYear - 2, currentYear - 1, currentYear, currentYear + 1];
+      let years: number[] = [];
+      try {
+        const seasonsSnap = await getDocs(collection(db, 'seasons'));
+        const yearSet = new Set<number>();
+        seasonsSnap.forEach(d => {
+          const cy = (d.data() as any).competitionYear;
+          if (typeof cy === 'number' && !Number.isNaN(cy)) yearSet.add(cy);
+        });
+        years = Array.from(yearSet);
+      } catch (error) {
+        logWarn('Saison-Jahre konnten nicht geladen werden, nutze Fallback-Fenster:', error instanceof Error ? error.message : String(error));
+      }
+      if (years.length === 0) {
+        // Fallback: breites Fenster, damit auch ohne Saison-Liste etwas gefunden wird.
+        years = [currentYear - 4, currentYear - 3, currentYear - 2, currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
+      }
       // Normalisierte Disziplin-Codes (entsprechen den Collection-Suffixen rwk_scores_JAHR_XX)
       const disciplines = discipline === 'all' ? ['KK', 'KKP', 'LD'] : [discipline];
       
