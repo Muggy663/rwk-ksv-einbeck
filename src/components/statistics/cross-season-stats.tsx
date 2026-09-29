@@ -100,6 +100,13 @@ export function CrossSeasonStats() {
       return;
     }
 
+    // Neue Suche: vorherige Auswahl und Ergebnisse zurücksetzen, damit der
+    // Ablauf konsistent bleibt (erst Schütze auswählen, dann Disziplin) und
+    // keine veraltete Statistik stehen bleibt.
+    setSelectedShooter(null);
+    setShooterStats(null);
+    setSelectedDiscipline('all');
+
     setIsLoading(true);
     try {
       // Alle Schützen laden und client-seitig als Teilstring filtern.
@@ -512,30 +519,31 @@ export function CrossSeasonStats() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-grow space-y-2">
-              <Label htmlFor="shooterSearch">Schütze suchen</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="shooterSearch"
-                  placeholder="Name des Schützen eingeben"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-grow"
-                />
-                <Button onClick={() => handleSearch()} disabled={isLoading || searchTerm.trim().length < 3}>
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
-                  Suchen
-                </Button>
-              </div>
+          {/* Schritt 1: Schütze suchen – nimmt die volle Breite ein. */}
+          <div className="space-y-2">
+            <Label htmlFor="shooterSearch">Schütze suchen</Label>
+            <div className="flex gap-2">
+              <Input
+                id="shooterSearch"
+                placeholder="Name des Schützen eingeben"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-grow"
+              />
+              <Button onClick={() => handleSearch()} disabled={isLoading || searchTerm.trim().length < 3}>
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Search className="h-4 w-4 mr-2" />}
+                Suchen
+              </Button>
             </div>
-            
-            <div className="w-full md:w-1/3 space-y-2">
+          </div>
+
+          {/* Schritt 2: Disziplin – erst NACH Auswahl eines Schützen sichtbar. */}
+          {selectedShooter && (
+            <div className="w-full md:w-1/2 space-y-2">
               <Label htmlFor="disciplineSelect">Disziplin</Label>
               <Select
                 value={selectedDiscipline}
                 onValueChange={handleDisciplineChange}
-                disabled={!selectedShooter}
               >
                 <SelectTrigger id="disciplineSelect">
                   <SelectValue placeholder="Disziplin auswählen" />
@@ -548,8 +556,8 @@ export function CrossSeasonStats() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          
+          )}
+
           {searchResults.length > 0 && (
             <div className="border rounded-md p-2 max-h-40 overflow-y-auto">
               <p className="text-sm text-muted-foreground mb-2">Suchergebnisse:</p>
