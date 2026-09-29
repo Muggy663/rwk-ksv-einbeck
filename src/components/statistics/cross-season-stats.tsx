@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Search, TrendingUp, Medal, LineChart as LineChartIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
-import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 import { useToast } from '@/hooks/use-toast';
 import {
   ResponsiveContainer,
@@ -69,6 +68,8 @@ export function CrossSeasonStats() {
   const [clubMap, setClubMap] = useState<Record<string, string>>({});
   // Welche Saison-Zeile in den Details ist aufgeklappt (zeigt die Einzeldurchgänge).
   const [expandedYear, setExpandedYear] = useState<number | null>(null);
+  // Name des zuletzt ausgewählten Schützen – überlebt das Leeren von searchResults.
+  const selectedShooterNameRef = useRef<string>('');
 
   // Vereine einmalig laden (id → Name), um sie in der Trefferliste anzuzeigen.
   useEffect(() => {
@@ -154,15 +155,22 @@ export function CrossSeasonStats() {
       // Ein Schütze kann als mehrere shooter-Dokumente existieren (z.B. RWK- und
       // KM-Anlage, oder Dubletten). Wir sammeln daher ALLE IDs mit gleichem Namen
       // wie der ausgewählte Schütze und fragen die Scores über alle IDs ab.
+      //
+      // WICHTIG: handleShooterSelect leert searchResults, BEVOR dieser Effekt
+      // läuft. Deshalb den Namen aus dem ausgewählten Ref-Snapshot holen, nicht
+      // aus dem (evtl. schon geleerten) State. Die ausgewählte ID ist in jedem
+      // Fall dabei – daran darf die Abfrage nie scheitern.
       const selectedName =
-        searchResults.find(r => r.id === shooterId)?.name || '';
+        searchResults.find(r => r.id === shooterId)?.name ||
+        selectedShooterNameRef.current ||
+        '';
       let shooterIds: string[] = [shooterId];
       if (selectedName) {
         const sameName = searchResults
           .filter(r => r.name === selectedName)
           .map(r => r.id);
-        // 'in'-Query erlaubt max. 10 Werte
-        shooterIds = Array.from(new Set([shooterId, ...sameName])).slice(0, 10);
+        // 'in'-Query erlaubt max. 30 Werte
+        shooterIds = Array.from(new Set([shooterId, ...sameName])).slice(0, 30);
       }
 
       // Zu durchsuchende Jahre bestimmen. Das 'competitionYear' einer Saison ist
@@ -198,7 +206,13 @@ export function CrossSeasonStats() {
       for (const year of years) {
         for (const disc of disciplines) {
           try {
-            const collectionName = getSeasonSpecificScoresCollection(year, disc as any);
+            // disc ist bereits der normalisierte Collection-Suffix ('KK' | 'KKP' | 'LD').
+            // NICHT über getSeasonSpecificScoresCollection normalisieren: die Funktion
+            // erwartet einen leagueType (z.B. 'LP','LG') und kennt 'LD' selbst NICHT –
+            // sie würde daraus faelschlich 'rwk_scores_JAHR_UNKNOWN' bauen. Genau das
+            // liess Luftdruck/Luftpistole (LD) bisher leer. Der Name wird daher direkt
+            // aus dem bereits korrekten Suffix gebildet.
+            const collectionName = `rwk_scores_${year}_${disc}`;
             const scoresRef = collection(db, collectionName);
             
             // Bewusst OHNE orderBy: die Kombination where('shooterId') + orderBy
@@ -342,6 +356,10 @@ export function CrossSeasonStats() {
   }, [searchResults]);
 
   const handleShooterSelect = (shooterId: string) => {
+    // Namen des Ausgewählten festhalten, BEVOR searchResults geleert wird –
+    // fetchShooterStats braucht ihn, um Namensdubletten mitzuerfassen.
+    selectedShooterNameRef.current =
+      searchResults.find(r => r.id === shooterId)?.name || '';
     setSelectedShooter(shooterId);
     // Leere die Suchergebnisse, um die Auswahl zu verstecken
     setSearchResults([]);
