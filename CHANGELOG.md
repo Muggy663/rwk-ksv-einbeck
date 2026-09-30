@@ -4,6 +4,15 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.1.2 (29.09.2026)
+- **📅 Terminkalender überarbeitet**: Die Termine-Seite wurde optisch und in der Bedienung erneuert – ein größerer, gleichmäßig über die Breite verteilter Monatskalender mit runden Tages-Feldern, farbige Termin-Chips je Art (Durchgang, Kreismeisterschaft, Sitzung, Kreisverband) und übersichtlichere Termin-Karten mit farbigem Akzent, Uhrzeit und Anfahrt-Link
+- **🗓️ Termin mit einem Klick in den eigenen Kalender**: Neuer Button „Zum Kalender" an jedem Termin – direkt in **Google Kalender** öffnen oder als **Apple/iOS-Datei (.ics)** speichern (funktioniert auch mit Outlook und Thunderbird)
+- **⏰ „Nächste Termine" klarer**: Die kommenden Termine zeigen jetzt „Heute / Morgen / In X Tagen" plus Uhrzeit an und springen per Klick direkt zum Tag im Kalender
+- **🐛 Kalender-Export korrigiert**: Beim Speichern eines Abendtermins (z. B. 22:30 Uhr) wurde das Ende fälschlich auf 23:59 gesetzt. Jetzt wird die Endzeit korrekt berechnet (Start + 2 Stunden, auch über Mitternacht)
+- **🧹 Aufräumen im Hintergrund**: Die Termine-Seite lädt schlanker (ungenutzte Saison-/Liga-Abfragen entfernt) und nutzt sauberen React-Zustand statt eines globalen Zwischenspeichers
+
+---
+
 ## Version 3.1.1 (29.09.2026)
 - **🔫 Luftpistole/Luftdruck in der Statistik gefixt**: In der saisonübergreifenden Statistik wurden für Luftdruck-Schützen (Luftgewehr/Luftpistole) fälschlich keine Ergebnisse gefunden. Das ist behoben – die Ergebnisse erscheinen jetzt korrekt. Zusätzlich sucht die Statistik nun in allen tatsächlich angelegten Saisons statt in einem festen Zeitfenster
 - **🎯 Statistik-Ablauf verbessert**: In der saisonübergreifenden Statistik erscheint die Disziplin-Auswahl erst, nachdem ein Schütze gewählt wurde – der Ablauf ist dadurch klarer (erst suchen, dann Disziplin). Die Kurztexte im Statistik-Center wurden gestrafft

@@ -123,48 +123,47 @@ export async function deleteEvent(id: string): Promise<boolean> {
   }
 }
 
+// iCal-Textfelder escapen (Backslash, Semikolon, Komma, Zeilenumbruch).
+function escapeICalText(text: string): string {
+  return (text || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\n/g, '\\n');
+}
+
+// Baut EINEN VEVENT-Block. Start = event.time, Ende = Start + 2 Stunden.
+// Der Übertrag über Mitternacht wird über ein echtes Date sauber berechnet
+// (früher wurde fälschlich auf 23:59 gekappt, sodass z.B. 22:30 → 23:59 wurde,
+// statt korrekt auf den Folgetag zu übertragen).
+function buildVEvent(event: Event): string {
+  const [h, m] = (event.time || '00:00').split(':').map((n) => {
+    const parsed = Number(n);
+    return Number.isFinite(parsed) ? parsed : 0;
+  });
+
+  const startLocal = new Date(event.date);
+  startLocal.setHours(h, m, 0, 0);
+  const endLocal = new Date(startLocal.getTime() + 2 * 60 * 60 * 1000);
+
+  // Floating local time (ohne Z / TZID) – wird vom Kalender als lokale Zeit gelesen.
+  const dtStart = format(startLocal, "yyyyMMdd'T'HHmmss");
+  const dtEnd = format(endLocal, "yyyyMMdd'T'HHmmss");
+  const now = format(new Date(), "yyyyMMdd'T'HHmmss'Z'");
+
+  const title = escapeICalText(event.title || 'Unbenannter Termin');
+  const location = escapeICalText(event.location || '');
+  const description = escapeICalText(event.description || '');
+
+  return `BEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${dtStart}\nDTEND:${dtEnd}\nLOCATION:${location}\nDESCRIPTION:${description}\nSTATUS:CONFIRMED\nSEQUENCE:0\nDTSTAMP:${now}\nCREATED:${now}\nEND:VEVENT`;
+}
+
 export function generateICalEvent(event: Event): string {
   try {
     if (!event.date) {
       throw new Error('Ungültiges Datum für iCal-Export');
     }
-
-    const dateStart = format(event.date, 'yyyyMMdd');
-    const timeStart = (event.time || '00:00').replace(':', '') + '00';
-
-    let endHours = 0;
-    let minutes = 0;
-
-    try {
-      const [hours, mins] = (event.time || '00:00').split(':').map(Number);
-      endHours = hours + 2;
-      minutes = mins;
-    } catch (error) {
-      endHours = 2;
-      minutes = 0;
-    }
-
-    if (endHours > 23) {
-      endHours = 23;
-      minutes = 59;
-    }
-
-    const timeEnd = `${endHours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}00`;
-    const now = format(new Date(), "yyyyMMdd'T'HHmmss'Z'");
-
-    const escapeText = (text: string) => {
-      return (text || '')
-        .replace(/\\/g, '\\\\')
-        .replace(/;/g, '\\;')
-        .replace(/,/g, '\\,')
-        .replace(/\n/g, '\\n');
-    };
-
-    const title = escapeText(event.title || 'Unbenannter Termin');
-    const location = escapeText(event.location || '');
-    const description = escapeText(event.description || '');
-
-    return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//RWK Einbeck App//DE\nCALSCALE:GREGORIAN\nBEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${dateStart}T${timeStart}\nDTEND:${dateStart}T${timeEnd}\nLOCATION:${location}\nDESCRIPTION:${description}\nSTATUS:CONFIRMED\nSEQUENCE:0\nDTSTAMP:${now}\nCREATED:${now}\nEND:VEVENT\nEND:VCALENDAR`;
+    return `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//RWK Einbeck App//DE\nCALSCALE:GREGORIAN\n${buildVEvent(event)}\nEND:VCALENDAR`;
   } catch (error) {
     logError('Fehler beim Generieren des iCal-Events:', error);
     throw error;
@@ -175,46 +174,11 @@ export function generateICalFile(events: Event[]): string {
   try {
     let icalContent = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//RWK Einbeck App//DE\nCALSCALE:GREGORIAN\n`;
 
-    const escapeText = (text: string) => {
-      return (text || '')
-        .replace(/\\/g, '\\\\')
-        .replace(/;/g, '\\;')
-        .replace(/,/g, '\\,')
-        .replace(/\n/g, '\\n');
-    };
-
     const validEvents = events.filter(event => event && event.date);
 
     for (const event of validEvents) {
       try {
-        const dateStart = format(event.date, 'yyyyMMdd');
-        const timeStart = (event.time || '00:00').replace(':', '') + '00';
-
-        let endHours = 0;
-        let minutes = 0;
-
-        try {
-          const [hours, mins] = (event.time || '00:00').split(':').map(Number);
-          endHours = hours + 2;
-          minutes = mins;
-        } catch (error) {
-          endHours = 2;
-          minutes = 0;
-        }
-
-        if (endHours > 23) {
-          endHours = 23;
-          minutes = 59;
-        }
-
-        const timeEnd = `${endHours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}00`;
-        const now = format(new Date(), "yyyyMMdd'T'HHmmss'Z'");
-
-        const title = escapeText(event.title || 'Unbenannter Termin');
-        const location = escapeText(event.location || '');
-        const description = escapeText(event.description || '');
-
-        icalContent += `BEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${dateStart}T${timeStart}\nDTEND:${dateStart}T${timeEnd}\nLOCATION:${location}\nDESCRIPTION:${description}\nSTATUS:CONFIRMED\nSEQUENCE:0\nDTSTAMP:${now}\nCREATED:${now}\nEND:VEVENT\n`;
+        icalContent += buildVEvent(event) + '\n';
       } catch (error) {
         logError('Fehler beim Verarbeiten eines Events für iCal:', error);
         continue;
@@ -227,4 +191,31 @@ export function generateICalFile(events: Event[]): string {
     logError('Fehler beim Generieren der iCal-Datei:', error);
     throw error;
   }
+}
+
+// Erzeugt eine „Zu Google Kalender hinzufügen"-URL. Öffnet den Termin
+// vorausgefüllt im Browser/der Google-App – ein Klick, der Nutzer muss nur
+// noch speichern. Start = event.time, Ende = Start + 2 Stunden.
+export function generateGoogleCalendarUrl(event: Event): string {
+  const [h, m] = (event.time || '00:00').split(':').map((n) => {
+    const parsed = Number(n);
+    return Number.isFinite(parsed) ? parsed : 0;
+  });
+
+  const start = new Date(event.date);
+  start.setHours(h, m, 0, 0);
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+
+  // Google erwartet lokale Zeit im Format yyyyMMddTHHmmss (ohne Z).
+  const fmt = (d: Date) => format(d, "yyyyMMdd'T'HHmmss");
+
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.title || 'Termin',
+    dates: `${fmt(start)}/${fmt(end)}`,
+    details: event.description || '',
+    location: event.location || '',
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }

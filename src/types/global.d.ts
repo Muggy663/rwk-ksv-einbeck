@@ -1,9 +1,7 @@
 // Globale Typdefinitionen für die Anwendung
 
-import { Event } from '@/lib/services/calendar-service';
+// Hinweis: Die frühere window.nextEvents-Deklaration wurde entfernt, nachdem
+// die Termine-Seite von globalem window-Zustand auf React-State umgestellt
+// wurde. Neue globale Deklarationen bei Bedarf hier ergänzen.
 
-declare global {
-  interface Window {
-    nextEvents?: Event[];
-  }
-}
+export {};
