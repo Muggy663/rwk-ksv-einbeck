@@ -3,7 +3,7 @@
 
 import { db } from '@/lib/firebase/config';
 import { logError, logDebug } from '@/lib/utils/secure-logger';
-import { collection, addDoc, updateDoc, doc, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, getDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
 
 export interface KMErgebnis {
   id?: string;
@@ -112,24 +112,26 @@ export class KMErgebnisseService {
         schuetzenMap.set(data.name.toLowerCase(), doc.id);
       });
       
-      // Lade Ergebnisse und verknüpfe
-      for (const ergebnisId of ergebnisIds) {
-        const ergebnisDoc = await getDocs(
-          query(collection(db, 'km_ergebnisse'), where('__name__', '==', ergebnisId))
-        );
-        
-        if (!ergebnisDoc.empty) {
-          const ergebnis = ergebnisDoc.docs[0].data();
-          const schuetzeId = schuetzenMap.get(ergebnis.schuetzeName.toLowerCase());
-          
-          if (schuetzeId) {
-            await updateDoc(doc(db, 'km_ergebnisse', ergebnisId), {
-              schuetzeId,
-              status: 'verifiziert'
-            });
-          }
-        }
-      }
+      // Ergebnisse direkt per Dokument-Lookup laden (kein N+1 über Collection-Queries)
+      // und parallel verarbeiten.
+      await Promise.all(
+        ergebnisIds.map(async (ergebnisId) => {
+          const ergebnisSnap = await getDoc(doc(db, 'km_ergebnisse', ergebnisId));
+          if (!ergebnisSnap.exists()) return;
+
+          const ergebnis = ergebnisSnap.data();
+          const name = ergebnis.schuetzeName;
+          if (!name) return;
+
+          const schuetzeId = schuetzenMap.get(String(name).toLowerCase());
+          if (!schuetzeId) return;
+
+          await updateDoc(doc(db, 'km_ergebnisse', ergebnisId), {
+            schuetzeId,
+            status: 'verifiziert',
+          });
+        })
+      );
       
     } catch (error) {
       logError('Fehler beim Verknüpfen:', error);
