@@ -1,6 +1,6 @@
 # 🎯 RWK Einbeck App
 
-**Version: 3.2.0** | **Android: 1.0.0** | **29.09.2026**
+**Version: 3.2.0** | **Android: 1.0.0** | **01.10.2026**
 
 > **Digitale Plattform für den deutschen Schießsport**
 
@@ -96,7 +96,7 @@ Eine vollständig digitale Lösung für Rundenwettkämpfe (RWK), Kreismeistersch
 
 Den vollständigen Changelog findest du in der [CHANGELOG.md](./CHANGELOG.md).
 
-**Aktuell: Version 3.2.0 (29.09.2026)** – Großes Verbesserungs-Release: Terminkalender erneuert (Google/Apple-Kalender-Export, „Heute" deutlich markiert, aufklappbare Termine), PDF-/Excel-/CSV-Export funktioniert jetzt auch in der Android-App, Schießnachweis für Behörden mobil nutzbar und zuverlässiger gespeichert, Ligalisten mit eigenem Zugang und korrektem Saison-Jahresfilter, Support & Feedback zusammengeführt, App-Seite auf GitHub-Download korrigiert, Startseite und Handbuch aktualisiert. Baut auf 3.1.x auf (RWK-Tabellen-Überarbeitung, Statistik-Fixes).
+**Aktuell: Version 3.2.0 (01.10.2026)** – Großes Verbesserungs-Release: Terminkalender erneuert (Google/Apple-Kalender-Export, „Heute" deutlich markiert, aufklappbare Termine), PDF-/Excel-/CSV-Export funktioniert jetzt auch in der Android-App, Schießnachweis für Behörden mobil nutzbar und zuverlässiger gespeichert, Ligalisten mit eigenem Zugang und korrektem Saison-Jahresfilter, Support & Feedback zusammengeführt, App-Seite auf GitHub-Download korrigiert, Startseite und Handbuch aktualisiert. Baut auf 3.1.x auf (RWK-Tabellen-Überarbeitung, Statistik-Fixes).
 
 ## 📸 Screenshots
 

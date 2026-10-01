@@ -4,7 +4,7 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
-## Version 3.2.0 (29.09.2026)
+## Version 3.2.0 (01.10.2026)
 - **📅 Terminkalender rundum erneuert**: Größerer, übersichtlicher Monatskalender, der heutige Tag ist deutlich (gelb) markiert. Termine lassen sich mit einem Klick in den eigenen Kalender übernehmen – **Google Kalender** oder **Apple/iOS (.ics)**. Die „Nächsten Termine" zeigen „Heute / Morgen / In X Tagen" und klappen für die Details direkt auf
 - **📄 Export funktioniert jetzt auch in der App**: PDF- und Excel-/CSV-Exporte (Ligalisten-Gesamtlisten, Meldebögen, Schießnachweis für Behörden) lassen sich jetzt auch in der Android-App nutzen – über das Teilen-Menü. Zuvor waren diese Funktionen auf dem Handy gesperrt
 - **🔫 Schießnachweis für Behörden mobil nutzbar**: Der PDF-Nachweis und der CSV-Export sind nicht mehr auf den Desktop beschränkt. Zusätzlich werden Einträge jetzt absolut zuverlässig gespeichert, auch wenn mehrere Geräte gleichzeitig genutzt werden
