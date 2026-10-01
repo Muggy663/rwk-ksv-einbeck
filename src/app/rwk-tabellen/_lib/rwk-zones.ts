@@ -44,7 +44,9 @@ export const determineLeagueCompleteRound = (teams: TeamDisplay[], numRounds: nu
     // Finde letzten lückenlosen Durchgang für dieses Team
     let teamCompleteRound = 0;
     for (let r = 1; r <= numRounds; r++) {
-      if (team.roundResults?.[`dg${r}`] !== null) {
+      const score = team.roundResults?.[`dg${r}`];
+      // Sowohl null (bewusst leer) als auch undefined (Feld fehlt) gelten als Lücke.
+      if (score !== null && score !== undefined) {
         teamCompleteRound = r;
       } else {
         break; // Lücke gefunden
