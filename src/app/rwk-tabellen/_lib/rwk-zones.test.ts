@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import type { TeamDisplay } from '@/types/rwk';
+import type { TeamDisplay, IndividualShooterDisplayData } from '@/types/rwk';
 import {
   getRwkZone,
   determineLeagueCompleteRound,
   istOffeneKlasse,
   berechnePrognose,
+  sortTeamsAndAssignRanks,
+  sortShootersAndAssignRanks,
 } from './rwk-zones';
 
 /**
@@ -229,5 +231,124 @@ describe('berechnePrognose', () => {
       makeTeam({ name: 'Oben II', rank: 2, roundResults: rounds(500) }),
     ];
     expect(berechnePrognose(zweiter, eigene, obere, null, numRounds).typ).toBeNull();
+  });
+});
+
+// Minimaler Schütze für die Sortier-Tests.
+function makeShooter(
+  partial: Partial<IndividualShooterDisplayData> & { shooterName: string }
+): IndividualShooterDisplayData {
+  return {
+    shooterId: partial.shooterName,
+    shooterGender: 'unknown',
+    teamName: '',
+    results: {},
+    totalScore: 0,
+    averageScore: null,
+    roundsShot: 0,
+    ...partial,
+  } as IndividualShooterDisplayData;
+}
+
+describe('sortTeamsAndAssignRanks', () => {
+  it('sortiert nach Sortier-Score absteigend und vergibt fortlaufende Ränge', () => {
+    const teams = [
+      makeTeam({ name: 'B', clubName: 'CB', roundResults: rounds(280, 285) }),
+      makeTeam({ name: 'A', clubName: 'CA', roundResults: rounds(290, 288) }),
+      makeTeam({ name: 'C', clubName: 'CC', roundResults: rounds(270, 275) }),
+    ];
+    const result = sortTeamsAndAssignRanks(teams, 2);
+    expect(result.map((t) => t.name)).toEqual(['A', 'B', 'C']);
+    expect(result.map((t) => t.rank)).toEqual([1, 2, 3]);
+  });
+
+  it('rechnet den Sortier-Score nur bis zum liga-vollständigen Durchgang', () => {
+    // Team X hat in DG3 ein hohes Ergebnis, das aber nicht zählen darf (completeRound=2).
+    const teams = [
+      makeTeam({ name: 'X', clubName: 'CX', roundResults: rounds(280, 280, 999) }),
+      makeTeam({ name: 'Y', clubName: 'CY', roundResults: rounds(285, 285, 0) }),
+    ];
+    const result = sortTeamsAndAssignRanks(teams, 2);
+    // Nur DG1+DG2: Y (570) vor X (560)
+    expect(result.map((t) => t.name)).toEqual(['Y', 'X']);
+  });
+
+  it('stellt Teams außer Wertung ans Ende und vergibt ihnen keinen Rang', () => {
+    const teams = [
+      makeTeam({ name: 'AK', clubName: 'CA', roundResults: rounds(300, 300), outOfCompetition: true }),
+      makeTeam({ name: 'Normal', clubName: 'CB', roundResults: rounds(250, 250) }),
+      makeTeam({ name: 'Einzel', clubName: 'CC', roundResults: rounds(295, 295), istEinzelwertung: true }),
+    ];
+    const result = sortTeamsAndAssignRanks(teams, 2);
+    expect(result[0].name).toBe('Normal');
+    expect(result[0].rank).toBe(1);
+    // AK und Einzel ohne Rang, egal wie hoch ihr Score ist
+    const ak = result.find((t) => t.name === 'AK');
+    const einzel = result.find((t) => t.name === 'Einzel');
+    expect(ak?.rank).toBeNull();
+    expect(einzel?.rank).toBeNull();
+  });
+
+  it('nutzt bei Score-Gleichstand den Vereins- dann Teamnamen', () => {
+    const teams = [
+      makeTeam({ name: 'Zeta', clubName: 'SV Zeta', roundResults: rounds(280, 280) }),
+      makeTeam({ name: 'Alpha', clubName: 'SV Alpha', roundResults: rounds(280, 280) }),
+    ];
+    const result = sortTeamsAndAssignRanks(teams, 2);
+    expect(result.map((t) => t.clubName)).toEqual(['SV Alpha', 'SV Zeta']);
+  });
+});
+
+describe('sortShootersAndAssignRanks', () => {
+  it('sortiert nach Durchschnitt absteigend und vergibt Ränge', () => {
+    const shooters = [
+      makeShooter({ shooterName: 'B', averageScore: 94, totalScore: 282 }),
+      makeShooter({ shooterName: 'A', averageScore: 96, totalScore: 288 }),
+      makeShooter({ shooterName: 'C', averageScore: 90, totalScore: 270 }),
+    ];
+    const result = sortShootersAndAssignRanks(shooters, 3);
+    expect(result.map((s) => s.shooterName)).toEqual(['A', 'B', 'C']);
+    expect(result.map((s) => s.rank)).toEqual([1, 2, 3]);
+  });
+
+  it('nutzt bei gleichem Schnitt die Gesamtpunkte als Tiebreaker', () => {
+    const shooters = [
+      makeShooter({ shooterName: 'Wenig', averageScore: 95, totalScore: 190 }),
+      makeShooter({ shooterName: 'Viel', averageScore: 95, totalScore: 285 }),
+    ];
+    const result = sortShootersAndAssignRanks(shooters, 3);
+    expect(result.map((s) => s.shooterName)).toEqual(['Viel', 'Wenig']);
+  });
+
+  it('entscheidet bei Gleichstand per Stichentscheid vom letzten zum ersten Durchgang', () => {
+    const shooters = [
+      makeShooter({ shooterName: 'Früh', averageScore: 95, totalScore: 285, results: rounds(100, 95, 90) }),
+      makeShooter({ shooterName: 'Spät', averageScore: 95, totalScore: 285, results: rounds(90, 95, 100) }),
+    ];
+    const result = sortShootersAndAssignRanks(shooters, 3);
+    // Letzter DG höher -> "Spät" vorne
+    expect(result.map((s) => s.shooterName)).toEqual(['Spät', 'Früh']);
+  });
+
+  it('stellt ersetzte Schützen ans Ende', () => {
+    const shooters = [
+      makeShooter({ shooterName: 'Ersetzt', averageScore: 99, totalScore: 297, isReplacedShooter: true }),
+      makeShooter({ shooterName: 'Normal', averageScore: 80, totalScore: 240 }),
+    ];
+    const result = sortShootersAndAssignRanks(shooters, 3);
+    expect(result[0].shooterName).toBe('Normal');
+    expect(result[1].shooterName).toBe('Ersetzt');
+  });
+
+  it('vergibt keinen Rang für außer-Konkurrenz-Schützen', () => {
+    const shooters = [
+      makeShooter({ shooterName: 'AK', averageScore: 98, totalScore: 294, teamOutOfCompetition: true }),
+      makeShooter({ shooterName: 'Normal', averageScore: 90, totalScore: 270 }),
+    ];
+    const result = sortShootersAndAssignRanks(shooters, 3);
+    const normal = result.find((s) => s.shooterName === 'Normal');
+    const ak = result.find((s) => s.shooterName === 'AK');
+    expect(normal?.rank).toBe(1);
+    expect(ak?.rank).toBeNull();
   });
 });

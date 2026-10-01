@@ -17,7 +17,7 @@ import type {
   FirestoreLeagueSpecificDiscipline, UIDisciplineSelection, AggregatedCompetitionData,
   IndividualShooterDisplayData, ShooterDisplayResults, TeamDisplay, LeagueDisplay,
 } from '@/types/rwk';
-import { EXCLUDED_TEAM_NAME_PART, determineLeagueCompleteRound, buildDisplayName } from '../_lib/rwk-zones';
+import { EXCLUDED_TEAM_NAME_PART, determineLeagueCompleteRound, buildDisplayName, sortTeamsAndAssignRanks, sortShootersAndAssignRanks } from '../_lib/rwk-zones';
 
 export function useRwkTabellenData() {
   const router = useRouter();
@@ -403,34 +403,8 @@ export function useRwkTabellenData() {
         const leagueCompleteRoundForSort = determineLeagueCompleteRound(teamDisplays, numRoundsForCompetition);
         
         // "Außer Wertung" = außer Konkurrenz ODER Einzelmeldung (<3 Schützen)
-        const ausserWertung = (t: TeamDisplay) => !!t.outOfCompetition || !!t.istEinzelwertung;
-        teamDisplays.sort((a, b) => {
-          // Teams außer Wertung (AK + Einzel) immer nach Teams in Wertung
-          if (ausserWertung(a) && !ausserWertung(b)) return 1;
-          if (!ausserWertung(a) && ausserWertung(b)) return -1;
-          
-          // Sortier-Score nur bis zum liga-weit vollständigen Durchgang berechnen
-          const scoreA = Array.from({length: leagueCompleteRoundForSort}, (_, i) => 
-            a.roundResults?.[`dg${i+1}`] ?? 0).reduce((s, v) => s + v, 0);
-          const scoreB = Array.from({length: leagueCompleteRoundForSort}, (_, i) => 
-            b.roundResults?.[`dg${i+1}`] ?? 0).reduce((s, v) => s + v, 0);
-          const avgA = leagueCompleteRoundForSort > 0 ? scoreA / leagueCompleteRoundForSort : 0;
-          const avgB = leagueCompleteRoundForSort > 0 ? scoreB / leagueCompleteRoundForSort : 0;
-          
-          return (scoreB - scoreA) || (avgB - avgA) ||
-                 a.clubName.localeCompare(b.clubName) || 
-                 a.name.localeCompare(b.name);
-        });
-        
-        // Vergebe Rangplätze nur für Teams in Wertung (AK + Einzel bekommen keinen Rang)
-        let rankCounter = 1;
-        teamDisplays.forEach(team => {
-          if (!ausserWertung(team)) {
-            team.rank = rankCounter++;
-          } else {
-            team.rank = null; // Kein Rang für AK- und Einzel-Meldungen
-          }
-        });
+        // Sortierung + Rangvergabe über das zentrale, getestete Util.
+        sortTeamsAndAssignRanks(teamDisplays, leagueCompleteRoundForSort);
         leagueDisplay.teams = teamDisplays;
         
         // Populate individualLeagueShooters — wird nach dem Return asynchron via fetchIndividualShooterData befüllt
@@ -823,44 +797,9 @@ export function useRwkTabellenData() {
             }
           }
           return true;
-        })
-        .sort((a, b) => {
-          // Ersetzte Schützen immer nach normalen Schützen
-          if (a.isReplacedShooter && !b.isReplacedShooter) return 1;
-          if (!a.isReplacedShooter && b.isReplacedShooter) return -1;
-          
-          // Beide ersetzt: nach Gesamtpunkten
-          if (a.isReplacedShooter && b.isReplacedShooter) {
-            return (b.totalScore ?? 0) - (a.totalScore ?? 0);
-          }
-          
-          // Beide normal: nach Durchschnitt
-          const avgDiff = (b.averageScore ?? 0) - (a.averageScore ?? 0);
-          if (avgDiff !== 0) return avgDiff;
-          
-          // Bei Gleichstand: Nach Gesamtpunkten
-          const totalDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
-          if (totalDiff !== 0) return totalDiff;
-          
-          // Bei Gleichstand: Stichentscheid vom letzten zum ersten Durchgang
-          for (let round = numRoundsForCompetition; round >= 1; round--) {
-            const aScore = a.results[`dg${round}`] ?? 0;
-            const bScore = b.results[`dg${round}`] ?? 0;
-            if (bScore !== aScore) return bScore - aScore;
-          }
-          
-          // Falls immer noch gleich: Alphabetisch nach Namen
-          return a.shooterName.localeCompare(b.shooterName);
         });
-      // Vergebe Rangplätze nur für Schützen in Wertung
-      let shooterRankCounter = 1;
-      rankedShooters.forEach(shooter => {
-        if (!shooter.teamOutOfCompetition) {
-          shooter.rank = shooterRankCounter++;
-        } else {
-          shooter.rank = null; // Kein Rang für Schützen "außer Konkurrenz"
-        }
-      });
+      // Sortierung + Rangvergabe über das zentrale, getestete Util.
+      sortShootersAndAssignRanks(rankedShooters, numRoundsForCompetition);
 
       return rankedShooters;
     } catch (err: any) {

@@ -1,4 +1,4 @@
-import type { TeamDisplay } from '@/types/rwk';
+import type { TeamDisplay, IndividualShooterDisplayData } from '@/types/rwk';
 
 /** Case-insensitive: Teams mit "einzel" im Namen werden aus der Mannschaftsliste gefiltert. */
 export const EXCLUDED_TEAM_NAME_PART = 'einzel';
@@ -209,3 +209,105 @@ export const berechnePrognose = (
 
   return leer;
 };
+
+// ============================================================================
+// Tabellen-Sortierung & Rangvergabe (pur, aus useRwkTabellenData extrahiert)
+// ============================================================================
+
+/** Team gilt als "außer Wertung", wenn außer Konkurrenz ODER Einzelwertung. */
+const teamAusserWertung = (t: TeamDisplay): boolean =>
+  !!t.outOfCompetition || !!t.istEinzelwertung;
+
+/**
+ * Sortiert die Mannschaftstabelle und vergibt Rangplätze (mutiert und gibt das
+ * Array zurück, verhaltensgleich zur bisherigen Inline-Logik).
+ *
+ * Reihenfolge:
+ *   1. Teams in Wertung vor Teams außer Wertung (AK + Einzel).
+ *   2. Sortier-Score = Summe der Ringe bis zum liga-weit vollständigen Durchgang
+ *      (`leagueCompleteRound`), absteigend.
+ *   3. Schnitt (Score / leagueCompleteRound), absteigend.
+ *   4. Vereinsname, dann Teamname (alphabetisch).
+ *
+ * Rang: fortlaufend nur für Teams in Wertung; AK-/Einzel-Teams erhalten rank = null.
+ */
+export function sortTeamsAndAssignRanks(
+  teams: TeamDisplay[],
+  leagueCompleteRound: number
+): TeamDisplay[] {
+  teams.sort((a, b) => {
+    if (teamAusserWertung(a) && !teamAusserWertung(b)) return 1;
+    if (!teamAusserWertung(a) && teamAusserWertung(b)) return -1;
+
+    const scoreA = Array.from({ length: leagueCompleteRound }, (_, i) =>
+      a.roundResults?.[`dg${i + 1}`] ?? 0
+    ).reduce((s, v) => s + v, 0);
+    const scoreB = Array.from({ length: leagueCompleteRound }, (_, i) =>
+      b.roundResults?.[`dg${i + 1}`] ?? 0
+    ).reduce((s, v) => s + v, 0);
+    const avgA = leagueCompleteRound > 0 ? scoreA / leagueCompleteRound : 0;
+    const avgB = leagueCompleteRound > 0 ? scoreB / leagueCompleteRound : 0;
+
+    return (
+      scoreB - scoreA ||
+      avgB - avgA ||
+      a.clubName.localeCompare(b.clubName) ||
+      a.name.localeCompare(b.name)
+    );
+  });
+
+  let rankCounter = 1;
+  teams.forEach((team) => {
+    team.rank = teamAusserWertung(team) ? null : rankCounter++;
+  });
+
+  return teams;
+}
+
+/**
+ * Sortiert die Einzel-/Schützentabelle und vergibt Rangplätze (mutiert und gibt
+ * das Array zurück, verhaltensgleich zur bisherigen Inline-Logik).
+ *
+ * Reihenfolge:
+ *   1. Normale Schützen vor ersetzten Schützen.
+ *   2. Beide ersetzt -> nach Gesamtpunkten.
+ *   3. Beide normal -> Schnitt, dann Gesamtpunkte, dann Stichentscheid vom
+ *      letzten zum ersten Durchgang, zuletzt alphabetisch nach Name.
+ *
+ * Rang: fortlaufend nur für Schützen in Wertung; außer-Konkurrenz-Schützen
+ * (teamOutOfCompetition) erhalten rank = null.
+ */
+export function sortShootersAndAssignRanks<T extends IndividualShooterDisplayData>(
+  shooters: T[],
+  numRounds: number
+): T[] {
+  shooters.sort((a, b) => {
+    if (a.isReplacedShooter && !b.isReplacedShooter) return 1;
+    if (!a.isReplacedShooter && b.isReplacedShooter) return -1;
+
+    if (a.isReplacedShooter && b.isReplacedShooter) {
+      return (b.totalScore ?? 0) - (a.totalScore ?? 0);
+    }
+
+    const avgDiff = (b.averageScore ?? 0) - (a.averageScore ?? 0);
+    if (avgDiff !== 0) return avgDiff;
+
+    const totalDiff = (b.totalScore ?? 0) - (a.totalScore ?? 0);
+    if (totalDiff !== 0) return totalDiff;
+
+    for (let round = numRounds; round >= 1; round--) {
+      const aScore = a.results[`dg${round}`] ?? 0;
+      const bScore = b.results[`dg${round}`] ?? 0;
+      if (bScore !== aScore) return bScore - aScore;
+    }
+
+    return a.shooterName.localeCompare(b.shooterName);
+  });
+
+  let rankCounter = 1;
+  shooters.forEach((shooter) => {
+    shooter.rank = shooter.teamOutOfCompetition ? null : rankCounter++;
+  });
+
+  return shooters;
+}
