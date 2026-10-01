@@ -114,42 +114,12 @@ export function StartlistenToolV2Content() {
             
             if (!schuetze || !disziplinName) return null;
             
-            // Berechne Altersklasse wie in KM-Orga
-            const berechneAltersklasse = (schuetze: any, disziplin: any, selectedSaison: any) => {
-              if (!schuetze?.birthYear) return 'Unbekannt';
-              
-              const currentSaison = saisons.find(s => s.id === selectedSaison);
-              const age = (currentSaison?.jahr || 2026) - schuetze.birthYear;
-              const isAuflage = disziplin?.name?.toLowerCase().includes('auflage');
-              const isMale = schuetze.gender === 'male';
-              
-              if (age <= 14) return 'Schüler';
-              if (age <= 16) return 'Jugend';
-              if (age <= 18) return `Junioren II ${isMale ? 'm' : 'w'}`;
-              if (age <= 20) return `Junioren I ${isMale ? 'm' : 'w'}`;
-              
-              if (isAuflage) {
-                if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
-                if (age <= 50) return isMale ? 'Senioren 0 m' : 'Seniorinnen 0';
-                if (age <= 60) return isMale ? 'Senioren I m' : 'Seniorinnen I';
-                if (age <= 65) return isMale ? 'Senioren II m' : 'Seniorinnen II';
-                if (age <= 70) return isMale ? 'Senioren III m' : 'Seniorinnen III';
-                if (age <= 75) return isMale ? 'Senioren IV m' : 'Seniorinnen IV';
-                if (age <= 80) return isMale ? 'Senioren V m' : 'Seniorinnen V';
-                return isMale ? 'Senioren VI m' : 'Seniorinnen VI';
-              } else {
-                if (age <= 40) return `${isMale ? 'Herren' : 'Damen'} I`;
-                if (age <= 50) return `${isMale ? 'Herren' : 'Damen'} II`;
-                if (age <= 60) return `${isMale ? 'Herren' : 'Damen'} III`;
-                if (age <= 70) return `${isMale ? 'Herren' : 'Damen'} IV`;
-                return `${isMale ? 'Herren' : 'Damen'} V`;
-              }
-            };
-            
             const disziplinData = disziplinenMap[data.disziplinId];
-            // Bevorzugt die bei der Meldung gespeicherte Altersklasse (Single Source
-            // of Truth). Nur als Fallback (Alt-Meldungen ohne Feld) lokal berechnen.
-            const berechnetAltersklasse = data.altersklasse || berechneAltersklasse(schuetze, disziplinData, selectedSaison);
+            // Die Altersklasse wird datengetrieben beim Melden ermittelt und mit der
+            // Meldung gespeichert (Single Source of Truth: ermittleEinzelklasse aus
+            // km_altersklassen). Alt-Meldungen ohne Feld werden als "Unbekannt"
+            // angezeigt statt lokal mit abweichender Logik neu berechnet.
+            const berechnetAltersklasse = data.altersklasse || 'Unbekannt';
             
             return {
               id: data.id,
