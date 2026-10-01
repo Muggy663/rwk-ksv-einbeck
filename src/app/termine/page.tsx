@@ -4,20 +4,12 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { logError } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarPlus, Download, Pencil, MapPin, Clock, CalendarDays, CalendarCheck, ChevronDown, Apple } from 'lucide-react';
+import { CalendarPlus, Download, Pencil, MapPin, Clock, CalendarDays, CalendarCheck, Apple } from 'lucide-react';
 import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { fetchEvents, generateICalEvent, generateICalFile, generateGoogleCalendarUrl, Event } from '@/lib/services/calendar-service';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
 import { format, isSameDay, startOfMonth, endOfMonth, differenceInCalendarDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -70,12 +62,16 @@ const relativeDay = (date: Date): string => {
 export default function TerminePage() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  // Bewusst KEINE Vorauswahl: so bleibt der heutige Tag sichtbar gelb markiert
+  // (ein vorausgewählter „heute" würde von der grünen primary-Füllung überdeckt).
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [events, setEvents] = useState<Event[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [clubsMaps, setClubsMaps] = useState<ClubMapsInfo[]>([]);
+  // Welcher „Nächste Termine"-Eintrag ist aufgeklappt (zeigt Details inline).
+  const [expandedUpcoming, setExpandedUpcoming] = useState<string | null>(null);
 
   // Vereine laden (für den Anfahrt-Link am Termin-Ort).
   useEffect(() => {
@@ -150,59 +146,110 @@ export default function TerminePage() {
     [eventDays]
   );
 
-  // Termin als .ics herunterladen (Apple/iOS, Outlook, Thunderbird …).
-  const exportEvent = (event: Event) => {
+  // Termin als .ics speichern. Im Browser: Datei-Download. In der nativen App
+  // (Capacitor) funktioniert der <a download>-Trick NICHT – dort schreiben wir
+  // die Datei und teilen sie über das Share-Sheet, von wo aus sie in den
+  // Kalender übernommen werden kann.
+  const exportEvent = async (event: Event) => {
     if (!event || !event.title || !event.date) {
       toast({ title: 'Fehler', description: 'Der Termin enthält ungültige Daten und kann nicht gespeichert werden.', variant: 'destructive' });
       return;
     }
     try {
       const icalContent = generateICalEvent(event);
-      downloadIcal(icalContent, `${(event.title || 'termin').replace(/[^a-z0-9]/gi, '_').toLowerCase()}.ics`);
-      toast({ title: 'Termin gespeichert', description: 'Die Kalender-Datei (.ics) wurde heruntergeladen – auf dem iPhone öffnet sie direkt den Kalender.' });
+      const safeTitle = (event.title || 'termin').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      const isNativeApp = typeof window !== 'undefined' && !!window.Capacitor?.isNativePlatform?.();
+
+      if (isNativeApp) {
+        await shareIcalNative(icalContent, `${safeTitle}.ics`);
+      } else {
+        downloadIcal(icalContent, `${safeTitle}.ics`);
+        toast({ title: 'Termin gespeichert', description: 'Die Kalender-Datei (.ics) wurde heruntergeladen – auf dem iPhone öffnet sie direkt den Kalender.' });
+      }
     } catch (error) {
       logError('Fehler beim Exportieren des Termins:', error);
       toast({ title: 'Fehler', description: 'Der Termin konnte nicht gespeichert werden.', variant: 'destructive' });
     }
   };
 
-  // Termin in einem neuen Tab in Google Kalender öffnen (vorausgefüllt).
-  const openInGoogleCalendar = (event: Event) => {
+  // Termin in Google Kalender öffnen (vorausgefüllt). In der nativen App über
+  // das Capacitor Browser-Plugin, sonst in einem neuen Browser-Tab.
+  const openInGoogleCalendar = async (event: Event) => {
     if (!event || !event.title || !event.date) {
       toast({ title: 'Fehler', description: 'Der Termin enthält ungültige Daten.', variant: 'destructive' });
       return;
     }
+    const url = generateGoogleCalendarUrl(event);
     try {
-      window.open(generateGoogleCalendarUrl(event), '_blank', 'noopener,noreferrer');
+      const isNativeApp = typeof window !== 'undefined' && !!window.Capacitor?.isNativePlatform?.();
+      if (isNativeApp) {
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.open({ url });
+      } else {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
     } catch (error) {
       logError('Fehler beim Öffnen in Google Kalender:', error);
-      toast({ title: 'Fehler', description: 'Google Kalender konnte nicht geöffnet werden.', variant: 'destructive' });
+      // Fallback: direkte Navigation
+      try {
+        window.location.href = url;
+      } catch {
+        toast({ title: 'Fehler', description: 'Google Kalender konnte nicht geöffnet werden.', variant: 'destructive' });
+      }
     }
   };
 
-  // Wiederverwendbares „Zum Kalender hinzufügen"-Menü (Google / Apple-iOS).
-  const AddToCalendar = ({ event, size = 'sm' }: { event: Event; size?: 'sm' | 'default' }) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={size} className="text-primary">
-          <CalendarCheck className="h-4 w-4 mr-1" />
-          Zum Kalender
-          <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-70" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuLabel>Termin speichern</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => openInGoogleCalendar(event)}>
-          <CalendarDays className="h-4 w-4 mr-2 text-blue-600" />
-          Google Kalender
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportEvent(event)}>
-          <Apple className="h-4 w-4 mr-2" />
-          Apple / iOS (.ics)
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+  // .ics in der nativen App bereitstellen. Wir nutzen das vorhandene
+  // Capacitor Share-Plugin und übergeben die Datei als data:-URL – so öffnet
+  // sich das Teilen-Menü, über das der Termin in den Kalender übernommen oder
+  // gespeichert werden kann. (Bewusst OHNE @capacitor/filesystem, das im
+  // Projekt nicht als Abhängigkeit vorhanden ist.)
+  const shareIcalNative = async (icalContent: string, filename: string) => {
+    try {
+      const { Share } = await import('@capacitor/share');
+      const dataUrl = `data:text/calendar;charset=utf-8,${encodeURIComponent(icalContent)}`;
+      await Share.share({
+        title: 'Termin zum Kalender hinzufügen',
+        url: dataUrl,
+        dialogTitle: filename,
+      });
+    } catch (error) {
+      logError('Fehler beim Teilen der iCal-Datei (App):', error);
+      toast({ title: 'Hinweis', description: 'Das Speichern per Datei hat nicht geklappt. Nutze bitte „Google".', variant: 'destructive' });
+    }
+  };
+
+  // „Zum Kalender hinzufügen": zwei direkte Buttons statt eines Dropdown-Menüs.
+  // Das frühere Radix-DropdownMenu öffnete sich in der App-WebView nicht
+  // zuverlässig (Klick sichtbar, aber kein Panel). Zwei schlichte Buttons sind
+  // robuster und auf dem Handy ohnehin leichter zu treffen.
+  const AddToCalendar = ({ event }: { event: Event }) => (
+    <div className="flex flex-col gap-2">
+      <span className="inline-flex items-center text-xs text-muted-foreground">
+        <CalendarCheck className="h-3.5 w-3.5 mr-1" />
+        Zum Kalender hinzufügen:
+      </span>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-8 w-full justify-start"
+        onClick={() => openInGoogleCalendar(event)}
+      >
+        <CalendarDays className="h-4 w-4 mr-1.5 text-blue-600" />
+        Google
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="h-8 w-full justify-start"
+        onClick={() => exportEvent(event)}
+      >
+        <Apple className="h-4 w-4 mr-1.5" />
+        Apple / iOS
+      </Button>
+    </div>
   );
 
   // iCal-Export aller Termine des angezeigten Monats.
@@ -304,7 +351,7 @@ export default function TerminePage() {
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle>Kalender</CardTitle>
-              <CardDescription>Tage mit Terminen sind farblich markiert – tippe einen Tag an für die Details</CardDescription>
+              <CardDescription>Heute ist gelb markiert, Tage mit Terminen tragen einen Punkt – tippe einen Tag an für die Details</CardDescription>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -329,15 +376,26 @@ export default function TerminePage() {
                     head_cell: "text-muted-foreground font-medium text-xs uppercase tracking-wide pb-2 text-center",
                     row: "grid grid-cols-7 gap-y-1",
                     cell: "relative p-0 text-center focus-within:relative focus-within:z-20",
-                    day: "mx-auto h-11 w-11 rounded-full p-0 font-normal text-sm inline-flex items-center justify-center hover:bg-muted transition-colors aria-selected:opacity-100",
+                    day: "mx-auto h-9 w-9 sm:h-11 sm:w-11 rounded-full p-0 font-normal text-sm inline-flex items-center justify-center hover:bg-muted transition-colors aria-selected:opacity-100",
                     day_selected: "bg-primary text-primary-foreground font-semibold hover:bg-primary hover:text-primary-foreground focus:bg-primary shadow-sm",
-                    day_today: "ring-2 ring-primary/40 ring-inset font-semibold",
+                    // day_today bewusst NEUTRAL überschreiben: die eingebaute Basis-Klasse
+                    // ist "bg-accent" (im Dark Mode grünlich) – ohne dieses Überschreiben
+                    // sah der heutige Tag grün aus. Die eigentliche Heute-Hervorhebung
+                    // macht der Modifier „heute“ unten.
+                    day_today: "",
                     day_outside: "text-muted-foreground/40",
                     day_disabled: "text-muted-foreground/40",
                   }}
-                  modifiers={{ hasEvent: (date) => hasEvents(date) }}
+                  modifiers={{
+                    hasEvent: (date) => hasEvents(date),
+                    heute: (date) => isSameDay(date, new Date()),
+                  }}
                   modifiersClassNames={{
                     hasEvent: "relative font-semibold after:absolute after:bottom-1.5 after:left-1/2 after:-translate-x-1/2 after:h-1.5 after:w-1.5 after:rounded-full after:bg-primary aria-selected:after:bg-primary-foreground",
+                    // Kräftige, eindeutige Heute-Markierung – hell wie dunkel gelb.
+                    // Greift nicht, wenn der Tag ausgewählt ist (dann gewinnt day_selected),
+                    // aber da wir beim Laden nichts vorauswählen, ist heute standardmäßig gelb.
+                    heute: "!bg-amber-400 !text-amber-950 font-bold ring-2 ring-amber-500 hover:!bg-amber-400 hover:!text-amber-950 dark:!bg-amber-400 dark:!text-amber-950 dark:ring-amber-500",
                   }}
                   locale={de}
                 />
@@ -348,15 +406,18 @@ export default function TerminePage() {
 
         {/* Rechte Spalte: Tagesdetails + nächste Termine */}
         <div className="lg:col-span-1 space-y-6">
+          {/* Tagesdetail-Karte erst zeigen, wenn ein Tag angetippt wurde –
+              sonst stünde hier beim Laden eine leere „Kein Tag gewählt"-Box. */}
+          {selectedDate && (
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg">
-                {selectedDate ? format(selectedDate, "EEEE, dd. MMMM yyyy", { locale: de }) : 'Kein Tag gewählt'}
+                {format(selectedDate, "EEEE, dd. MMMM yyyy", { locale: de })}
               </CardTitle>
               <CardDescription>
                 {selectedEvents.length > 0
                   ? `${selectedEvents.length} Termin${selectedEvents.length === 1 ? '' : 'e'} an diesem Tag`
-                  : 'Details zum ausgewählten Tag'}
+                  : 'Keine Termine an diesem Tag'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -401,6 +462,7 @@ export default function TerminePage() {
               )}
             </CardContent>
           </Card>
+          )}
 
           <Card className="shadow-sm">
             <CardHeader>
@@ -418,28 +480,48 @@ export default function TerminePage() {
                 <div className="space-y-1">
                   {upcomingEvents.map((event, index) => {
                     const meta = typeMeta(event.type, event.isKreisverband);
+                    const key = event.id || String(index);
+                    const isOpen = expandedUpcoming === key;
                     return (
-                      <button
-                        key={event.id || index}
-                        onClick={() => { setSelectedDate(event.date); setCurrentMonth(event.date); }}
-                        className="w-full text-left py-3 border-b last:border-0 hover:bg-muted/30 rounded-md px-2 -mx-2 transition-colors"
-                      >
-                        <div className="flex justify-between items-start gap-3">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-semibold text-primary">{relativeDay(event.date)}</span>
-                              <span className="text-xs text-muted-foreground">· {sanitizeText(event.time)} Uhr</span>
+                      <div key={key} className="border-b last:border-0">
+                        {/* Kopfzeile: klappt die Details inline auf/zu – kein Springen der Ansicht. */}
+                        <button
+                          type="button"
+                          onClick={() => setExpandedUpcoming(isOpen ? null : key)}
+                          aria-expanded={isOpen}
+                          className="w-full text-left py-3 hover:bg-muted/30 rounded-md px-2 -mx-2 transition-colors"
+                        >
+                          <div className="flex justify-between items-start gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-primary">{relativeDay(event.date)}</span>
+                                <span className="text-xs text-muted-foreground">· {sanitizeText(event.time)} Uhr</span>
+                              </div>
+                              <p className="font-medium truncate mt-0.5">{sanitizeText(event.title)}</p>
                             </div>
-                            <p className="font-medium truncate mt-0.5">{sanitizeText(event.title)}</p>
-                            <div className="mt-0.5 text-xs">
+                            <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${meta.className}`}>
+                              {meta.label}
+                            </span>
+                          </div>
+                        </button>
+
+                        {/* Aufgeklappte Details */}
+                        {isOpen && (
+                          <div className={`mb-3 rounded-lg border border-l-4 ${meta.accent} bg-muted/20 p-3 space-y-2`}>
+                            <div className="text-sm">
                               <LocationLine location={event.location} />
                             </div>
+                            {event.description && (
+                              <p className="text-sm text-muted-foreground break-words">
+                                <LinkifiedText text={event.description} />
+                              </p>
+                            )}
+                            <div className="pt-1">
+                              <AddToCalendar event={event} />
+                            </div>
                           </div>
-                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${meta.className}`}>
-                            {meta.label}
-                          </span>
-                        </div>
-                      </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
