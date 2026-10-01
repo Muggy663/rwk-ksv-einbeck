@@ -4,6 +4,20 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.2.0 (29.09.2026)
+- **📅 Terminkalender rundum erneuert**: Größerer, übersichtlicher Monatskalender, der heutige Tag ist deutlich (gelb) markiert. Termine lassen sich mit einem Klick in den eigenen Kalender übernehmen – **Google Kalender** oder **Apple/iOS (.ics)**. Die „Nächsten Termine" zeigen „Heute / Morgen / In X Tagen" und klappen für die Details direkt auf
+- **📄 Export funktioniert jetzt auch in der App**: PDF- und Excel-/CSV-Exporte (Ligalisten-Gesamtlisten, Meldebögen, Schießnachweis für Behörden) lassen sich jetzt auch in der Android-App nutzen – über das Teilen-Menü. Zuvor waren diese Funktionen auf dem Handy gesperrt
+- **🔫 Schießnachweis für Behörden mobil nutzbar**: Der PDF-Nachweis und der CSV-Export sind nicht mehr auf den Desktop beschränkt. Zusätzlich werden Einträge jetzt absolut zuverlässig gespeichert, auch wenn mehrere Geräte gleichzeitig genutzt werden
+- **🗂️ Ligalisten & Handtabellen leichter erreichbar**: Eigener, klar sichtbarer Zugang (statt versteckt). Der Jahresfilter zeigt jetzt die tatsächlich angelegten Saisons (z. B. die laufende Saison) statt fester Jahre
+- **📝 Meldebögen & Gesamtlisten verbessert**: Meldebögen lassen sich als echtes PDF speichern/teilen (nicht nur drucken), vorhandene Ergebnisse werden in der Gesamtliste vorbefüllt, und die Vorschauen sind auf dem Handy besser lesbar
+- **🏠 Startseite aufgeräumt**: Der heutige Termin wird jetzt im hellen wie im dunklen Design sauber hervorgehoben, Termin-Kennzeichnungen sind einheitlich farbig, und die Seite wirkt insgesamt ruhiger
+- **💬 Support & Feedback zusammengeführt**: Feedback geben, Support-Anfragen und die öffentlichen Bewertungen sind jetzt an einer Stelle gebündelt
+- **📱 App-Seite korrigiert**: Die App wird als Download (APK über GitHub) bereitgestellt – die Seite erklärt jetzt den richtigen Weg zur Installation statt eines nicht verfügbaren Play-Store-Zugangs
+- **📖 Handbuch aktualisiert**: Versionsangabe immer aktuell, Android-App-Beschreibung korrigiert, Termin- und Dokumente-Kapitel an den neuen Stand angepasst
+- **🐛 Diverse Fixes**: Kalender-Export von Abendterminen korrigiert, einheitliche Darstellung im Dark Mode, aufgeräumter Code an mehreren Stellen
+
+---
+
 ## Version 3.1.2 (29.09.2026)
 - **📅 Terminkalender überarbeitet**: Die Termine-Seite wurde optisch und in der Bedienung erneuert – ein größerer, gleichmäßig über die Breite verteilter Monatskalender mit runden Tages-Feldern, farbige Termin-Chips je Art (Durchgang, Kreismeisterschaft, Sitzung, Kreisverband) und übersichtlichere Termin-Karten mit farbigem Akzent, Uhrzeit und Anfahrt-Link
 - **🗓️ Termin mit einem Klick in den eigenen Kalender**: Neuer Button „Zum Kalender" an jedem Termin – direkt in **Google Kalender** öffnen oder als **Apple/iOS-Datei (.ics)** speichern (funktioniert auch mit Outlook und Thunderbird)
