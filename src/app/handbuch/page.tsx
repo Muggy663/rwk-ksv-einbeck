@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { BookOpenCheck, Target, Trophy } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth'; 
+import packageJson from '../../../package.json';
 
 const ADMIN_EMAIL = "admin@rwk-einbeck.de";
+const APP_VERSION = packageJson.version;
 
 export default function HandbuchPage() {
   const { user, loading } = useAuth(); 
@@ -24,7 +26,7 @@ export default function HandbuchPage() {
             Funktionen und Bedienung der RWK, KM und Schießnachweis.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Stand: Version 3.0.11 - Next.js 16 + Glassmorphism Design
+            Stand: Version {APP_VERSION}
           </p>
         </div>
       </div>
@@ -87,7 +89,7 @@ export default function HandbuchPage() {
                     </ul>
                 </li>
                 {isSuperAdmin && ( 
-                  <li><a href="#fuer-super-administratoren" className="text-primary hover:underline">3. Für Rundenwettkampfleiter</a></li>
+                  <li><a href="#fuer-super-administratoren" className="text-primary hover:underline">Für Rundenwettkampfleiter</a></li>
                 )}
                 <li><a href="#fuer-vereinsvertreter-und-mannschaftsfuehrer" className="text-primary hover:underline">3. Für Vereinsvertreter und Mannschaftsführer</a>
                      <ul className="list-circle list-inside pl-6 text-xs">
@@ -193,7 +195,7 @@ export default function HandbuchPage() {
 
       {isSuperAdmin && ( 
         <section id="fuer-super-administratoren" className="space-y-4 scroll-mt-20">
-          <h2 className="text-3xl font-semibold text-primary border-b pb-2">3. Für Rundenwettkampfleiter</h2>
+          <h2 className="text-3xl font-semibold text-primary border-b pb-2">Für Rundenwettkampfleiter</h2>
           <p className="text-muted-foreground">(Dieser Abschnitt ist nur sichtbar, wenn der Rundenwettkampfleiter eingeloggt ist)</p>
           <p>Detaillierte Informationen zur Administration des Systems.</p>
         </section>
@@ -301,10 +303,10 @@ export default function HandbuchPage() {
             <CardContent>
               <p>Der Terminkalender bietet eine übersichtliche Darstellung aller anstehenden Wettkämpfe und Veranstaltungen.</p>
               <ul className="list-disc pl-5 space-y-1 mt-2">
-                <li><strong>Kalenderansicht:</strong> Termine werden im Monatskalender farblich markiert angezeigt.</li>
-                <li><strong>Filterung:</strong> Sie können nach Liga und Termintyp filtern.</li>
-                <li><strong>Termindetails:</strong> Durch Klick auf ein Datum sehen Sie alle Termine dieses Tages mit Details wie Ort, Uhrzeit und Beschreibung.</li>
-                <li><strong>Export:</strong> Termine können als iCal-Datei exportiert und in Ihren persönlichen Kalender importiert werden.</li>
+                <li><strong>Kalenderansicht:</strong> Termine sind im Monatskalender mit einem Punkt markiert, der heutige Tag ist gelb hervorgehoben. Ein Klick auf einen Tag zeigt dessen Termine mit Ort, Uhrzeit und Beschreibung.</li>
+                <li><strong>Nächste Termine:</strong> Die kommenden Termine werden mit „Heute / Morgen / In X Tagen" angezeigt und lassen sich für die Details direkt aufklappen.</li>
+                <li><strong>Termintypen:</strong> Durchgang, Kreismeisterschaft, Sitzung und Kreisverband sind farblich gekennzeichnet.</li>
+                <li><strong>In den eigenen Kalender übernehmen:</strong> Jeder Termin lässt sich mit einem Klick in den <strong>Google Kalender</strong> öffnen oder als <strong>Apple/iOS-Datei (.ics)</strong> speichern (funktioniert auch mit Outlook/Thunderbird).</li>
                 <li><strong>Terminverwaltung:</strong> Angemeldete Benutzer können neue Termine hinzufügen. Administratoren können Termine bearbeiten und löschen.</li>
               </ul>
             </CardContent>
@@ -328,12 +330,12 @@ export default function HandbuchPage() {
          <Card>
             <CardHeader><CardTitle id="dokumente" className="text-xl text-accent scroll-mt-24">Dokumente</CardTitle></CardHeader>
             <CardContent>
-              <p>Eine zentrale Seite für alle wichtigen Dokumente, Ausschreibungen, Formulare und Ligalisten.</p>
+              <p>Eine zentrale Seite für alle wichtigen Dokumente, Ausschreibungen, Formulare und Regelwerke.</p>
               <ul className="list-disc pl-5 space-y-1 mt-2">
-                <li><strong>Kategorien:</strong> Dokumente sind in Ausschreibungen, Formulare, Ligalisten & Handtabellen, Regelwerke und Archiv unterteilt.</li>
+                <li><strong>Kategorien:</strong> Dokumente sind in Ausschreibungen, Formulare und Regelwerke unterteilt.</li>
+                <li><strong>Ligalisten & Handtabellen:</strong> Erreichbar über einen eigenen Zugang „Ligalisten & Handtabellen" (in der Seitenleiste bzw. auf dem Handy als Schaltfläche). Dort finden Sie auch die Generatoren für Durchgangs-Meldebögen und Gesamtergebnislisten.</li>
                 <li><strong>Suchfunktion:</strong> Ermöglicht das schnelle Finden von Dokumenten nach Stichworten.</li>
                 <li><strong>Favoriten:</strong> Häufig benötigte Dokumente können als Favoriten markiert werden.</li>
-                <li><strong>Jahresfilter:</strong> Ligalisten können nach Jahr gefiltert werden.</li>
                 <li><strong>Vorschau:</strong> PDF-Dokumente können direkt im Browser angesehen werden, ohne sie herunterladen zu müssen.</li>
                 <li><strong>Eingeschränkte Dokumente:</strong> Bestimmte Dokumente sind nur für Vereinsvertreter und Mannschaftsführer sichtbar (z.B. Handtabellen mit Kontaktdaten).</li>
               </ul>
@@ -424,29 +426,20 @@ export default function HandbuchPage() {
         <Card>
             <CardHeader><CardTitle id="android-app" className="text-xl text-accent scroll-mt-24">Android-App</CardTitle></CardHeader>
             <CardContent>
-              <p>Die RWK Einbeck App ist jetzt auch als native Android-App verfügbar für bessere Performance und einfachere Nutzung.</p>
+              <p>Die RWK Einbeck App ist auch als native Android-App verfügbar – für eine komfortablere Nutzung auf dem Smartphone.</p>
               
               <div className="bg-green-50 dark:bg-green-950/50 p-3 rounded-md border border-green-200 dark:border-green-800 mb-4">
-                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">📱 Android-App - jetzt im Google Play Store!</h4>
-                <p className="text-green-700 dark:text-green-300">Die native Android-App bietet alle Funktionen der Web-App mit verbesserter Performance. Ab sofort im <strong>Google Play Store</strong> verfügbar.</p>
+                <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">📱 Android-App als Download (APK)</h4>
+                <p className="text-green-700 dark:text-green-300">Die Android-App wird als APK-Datei bereitgestellt (nicht über den Google Play Store). Den aktuellen Download finden Sie auf der App-Seite der Anwendung.</p>
               </div>
               
               <ul className="list-disc pl-5 space-y-1 mt-2">
-                <li><strong>Play Store:</strong> Suchen Sie nach "RWK Einbeck" im Google Play Store</li>
-                <li><strong>Alternativ:</strong> APK-Datei über die App-Seite oder Dokumente-Bereich herunterladen</li>
-                <li><strong>Kompatibilität:</strong> Android 5.0+ (unterstützt 95% aller Android-Geräte)</li>
-                <li><strong>Updates:</strong> Erfolgen automatisch über den Play Store oder die Web-App</li>
+                <li><strong>Download:</strong> Aktuelle APK-Datei über die App-Seite der Anwendung herunterladen</li>
+                <li><strong>Installation:</strong> Nach dem Download die APK öffnen und die Installation aus unbekannter Quelle einmalig erlauben</li>
+                <li><strong>Inhalte immer aktuell:</strong> Die App lädt die Inhalte live von der Website – neue Ergebnisse, Termine und Funktionen erscheinen also sofort, ohne die App neu zu installieren</li>
+                <li><strong>Neue App-Version:</strong> Bei größeren App-Updates wird eine neue APK bereitgestellt, die einfach über die vorhandene installiert wird</li>
                 <li><strong>iPhone-Nutzer:</strong> Können die Web-App im Safari-Browser nutzen oder als PWA zum Home-Bildschirm hinzufügen</li>
               </ul>
-              
-              <div className="bg-blue-50 dark:bg-blue-950/50 p-3 rounded-md border border-blue-200 dark:border-blue-800 mt-4">
-                <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Play Store Installation:</h4>
-                <ol className="list-decimal pl-5 space-y-1 text-blue-700 dark:text-blue-300">
-                  <li>Google Play Store öffnen</li>
-                  <li>Nach "RWK Einbeck" suchen</li>
-                  <li>Installieren und loslegen!</li>
-                </ol>
-              </div>
             </CardContent>
         </Card>
       </section>
@@ -475,7 +468,7 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Kreismeisterschaften - Benutzerhandbuch</CardTitle>
-              <CardDescription>Anleitung zur Nutzung des Kreismeisterschafts-Moduls - Version 3.0.11</CardDescription>
+              <CardDescription>Anleitung zur Nutzung des Kreismeisterschafts-Moduls - Version {APP_VERSION}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">
@@ -660,7 +653,7 @@ export default function HandbuchPage() {
                 <CardTitle className="text-xl text-accent flex items-center justify-between">
                   Wettkampfklassen nach DSB-Sportordnung
                   <a 
-                    href="https://dsb.de/fileladmin/dsb/sportordnung/" 
+                    href="https://dsb.de/fileadmin/dsb/sportordnung/" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-sm text-blue-600 hover:text-blue-800 underline"
@@ -714,7 +707,7 @@ export default function HandbuchPage() {
                 
                 <h4 className="font-semibold mt-4 mb-2">VM-Ergebnisse-Übersicht:</h4>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li><strong>Qualifikationslimits 2025:</strong> Automatische Prüfung gegen LM-Limits</li>
+                  <li><strong>Qualifikationslimits:</strong> Automatische Prüfung gegen die aktuellen LM-Limits</li>
                   <li><strong>Status-Anzeige:</strong> OK, Fraglich oder VM fehlt</li>
                   <li><strong>Filter-Funktionen:</strong> Nach Disziplin und Status filterbar</li>
                   <li><strong>Excel-Export:</strong> Für weitere Bearbeitung und Archivierung</li>
@@ -742,7 +735,7 @@ export default function HandbuchPage() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl text-accent">Schießnachweis - Benutzerhandbuch</CardTitle>
-              <CardDescription>Das digitale Schießtagebuch für Sportschützen - Version 3.0.11</CardDescription>
+              <CardDescription>Das digitale Schießtagebuch für Sportschützen - Version {APP_VERSION}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <ul className="list-disc list-inside pl-4 space-y-1">
