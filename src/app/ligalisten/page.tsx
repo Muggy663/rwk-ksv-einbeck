@@ -11,17 +11,18 @@ import { useAuth } from '@/hooks/use-auth';
 import { BackButton } from '@/components/ui/back-button';
 import { logError } from '@/lib/utils/secure-logger';
 import { EmptyState } from '@/components/ui/empty-state';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 
 export default function LigalistenPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
-  
-  const years = [
-    new Date().getFullYear().toString(),
-    (new Date().getFullYear() - 1).toString(),
-    (new Date().getFullYear() - 2).toString()
-  ];
+
+  // Auswählbare Jahre: die tatsächlich angelegten Saison-Jahre (aus 'seasons'),
+  // nicht ein fest verdrahtetes Fenster. So erscheinen genau die richtigen
+  // Jahre (z. B. die laufende Saison) und keine Jahre ohne Saison.
+  const [years, setYears] = useState<string[]>([new Date().getFullYear().toString()]);
 
   const { user, userAppPermissions } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -36,6 +37,34 @@ export default function LigalistenPage() {
     }
     setIsAuthorized(false);
   }, [user, userAppPermissions, isAdmin]);
+
+  // Auswählbare Jahre aus den real angelegten Saisons laden.
+  useEffect(() => {
+    async function loadSeasonYears() {
+      try {
+        const snap = await getDocs(collection(db, 'seasons'));
+        const yearSet = new Set<string>();
+        snap.forEach(d => {
+          const cy = (d.data() as any).competitionYear;
+          if (typeof cy === 'number' && !Number.isNaN(cy)) yearSet.add(cy.toString());
+        });
+        if (yearSet.size > 0) {
+          // Neueste zuerst.
+          const sorted = Array.from(yearSet).sort((a, b) => Number(b) - Number(a));
+          setYears(sorted);
+          // Vorauswahl: aktuelles Jahr, falls vorhanden – sonst das neueste.
+          const current = new Date().getFullYear().toString();
+          setSelectedYear(sorted.includes(current) ? current : sorted[0]);
+        }
+      } catch (error) {
+        logError('Fehler beim Laden der Saison-Jahre:', error);
+        // Fallback: aktuelles Jahr + 2 zurück (bisheriges Verhalten).
+        const now = new Date().getFullYear();
+        setYears([now.toString(), (now - 1).toString(), (now - 2).toString()]);
+      }
+    }
+    loadSeasonYears();
+  }, []);
 
   useEffect(() => {
     async function loadDocuments() {
