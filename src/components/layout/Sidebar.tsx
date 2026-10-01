@@ -44,8 +44,7 @@ export function Sidebar() {
   const helpRoutes = [
     { href: '/handbuch', label: 'Handbuch', icon: BookOpen },
     { href: '/schiesssport-erklaerung', label: 'Schießsport erklärt', icon: BookOpen },
-    { href: '/support', label: 'Support', icon: MessageSquare },
-    { href: '/feedback', label: 'Feedback geben', icon: MessageSquare },
+    { href: '/support', label: 'Support & Feedback', icon: MessageSquare },
   ];
 
   const adminRoutes = [

@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { HelpCircle, Send, Loader2, Upload, CheckCircle } from 'lucide-react';
+import { HelpCircle, Send, Loader2, Upload, CheckCircle, Star, User, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { BackButton } from '@/components/ui/back-button';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 import { FeedbackWidget } from '@/components/feedback/FeedbackWidget';
 
 const SUPPORT_TICKETS_COLLECTION = "support_tickets";
@@ -31,12 +32,44 @@ export default function SupportPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
+  // Öffentliche Feedbacks + Durchschnittsbewertung (aus der früheren /feedback-Seite übernommen).
+  const [publicFeedbacks, setPublicFeedbacks] = useState<any[]>([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [ratingCount, setRatingCount] = useState(0);
+
   React.useEffect(() => {
     if (user) {
       if (!name && user.displayName) setName(user.displayName);
       if (!email && user.email) setEmail(user.email);
     }
   }, [user, name, email]);
+
+  React.useEffect(() => {
+    const loadPublicFeedbacks = async () => {
+      try {
+        const q = query(
+          collection(db, 'feedback'),
+          where('showPublicly', '==', true),
+          orderBy('timestamp', 'desc'),
+          limit(10)
+        );
+        const snapshot = await getDocs(q);
+        setPublicFeedbacks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+        // Durchschnitt über alle abgegebenen Bewertungen (> 0).
+        const allSnapshot = await getDocs(collection(db, 'feedback'));
+        const ratings = allSnapshot.docs.map(d => d.data().rating).filter((r: number) => r > 0);
+        if (ratings.length > 0) {
+          const avg = ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length;
+          setAvgRating(Math.round(avg * 10) / 10);
+          setRatingCount(ratings.length);
+        }
+      } catch (error) {
+        logError('Fehler beim Laden der öffentlichen Feedbacks:', error);
+      }
+    };
+    loadPublicFeedbacks();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -122,44 +155,30 @@ export default function SupportPage() {
               const ctx = canvas.getContext('2d');
               const img = new Image();
               
+              const objectUrl = URL.createObjectURL(file);
               const compressedData = await new Promise<string>((resolve, reject) => {
-                img.onload = () => {
-                  const maxWidth = 800;
-                  const maxHeight = 600;
-                  let { width, height } = img;
-                  
-                  if (width > maxWidth || height > maxHeight) {
-                    const ratio = Math.min(maxWidth / width, maxHeight / height);
-                    width *= ratio;
-                    height *= ratio;
-                  }
-                  
-                  canvas.width = width;
-                  canvas.height = height;
-                  ctx?.drawImage(img, 0, 0, width, height);
-                  resolve(canvas.toDataURL('image/jpeg', 0.6));
-                };
-                img.onerror = () => reject(new Error('Image load failed'));
-                const objectUrl = URL.createObjectURL(file);
-                img.src = objectUrl;
-                // Clean up object URL after image loads
                 img.onload = () => {
                   URL.revokeObjectURL(objectUrl);
                   const maxWidth = 800;
                   const maxHeight = 600;
                   let { width, height } = img;
-                  
+
                   if (width > maxWidth || height > maxHeight) {
                     const ratio = Math.min(maxWidth / width, maxHeight / height);
                     width *= ratio;
                     height *= ratio;
                   }
-                  
+
                   canvas.width = width;
                   canvas.height = height;
                   ctx?.drawImage(img, 0, 0, width, height);
                   resolve(canvas.toDataURL('image/jpeg', 0.6));
                 };
+                img.onerror = () => {
+                  URL.revokeObjectURL(objectUrl);
+                  reject(new Error('Image load failed'));
+                };
+                img.src = objectUrl;
               });
               
               filesData.push({
@@ -400,6 +419,76 @@ export default function SupportPage() {
       {/* Feedback Widget */}
       <FeedbackWidget />
 
+      {/* Öffentliche Bewertungen / Was andere sagen */}
+      {(ratingCount > 0 || publicFeedbacks.length > 0) && (
+        <div className="max-w-2xl mx-auto space-y-4">
+          <Separator />
+          <h2 className="text-2xl font-bold text-primary flex items-center gap-2">
+            <MessageSquare className="h-6 w-6" />
+            Was andere sagen
+          </h2>
+
+          {ratingCount > 0 && (
+            <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20">
+              <CardContent className="py-6">
+                <div className="flex items-center justify-center gap-4">
+                  <div className="flex">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-7 w-7 ${
+                          i < Math.round(avgRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary">{avgRating}</div>
+                    <div className="text-sm text-muted-foreground">
+                      aus {ratingCount} Bewertung{ratingCount !== 1 ? 'en' : ''}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {publicFeedbacks.map((fb) => (
+            <Card key={fb.id}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {fb.rating > 0 && (
+                      <div className="flex">
+                        {Array.from({ length: fb.rating }).map((_, i) => (
+                          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
+                    )}
+                    {(fb.name || fb.club) && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <User className="h-4 w-4" />
+                        <span>
+                          {fb.name}
+                          {fb.name && fb.club && ' • '}
+                          {fb.club}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {fb.timestamp?.toDate?.()?.toLocaleDateString('de-DE') || ''}
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="whitespace-pre-wrap text-sm">{fb.feedback}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
       {/* Konto-Löschung Sektion */}
       <Card className="shadow-lg max-w-2xl mx-auto border-destructive/20">
         <CardHeader>
@@ -408,24 +497,24 @@ export default function SupportPage() {
             Konto löschen
           </CardTitle>
           <CardDescription>
-            Beantragen Sie die Löschung Ihres Kontos und aller zugehörigen Daten
+            Beantrage die Löschung deines Kontos und aller zugehörigen Daten
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="bg-muted p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">So beantragen Sie die Kontolöschung:</h3>
+            <h3 className="font-semibold mb-2">So beantragst du die Kontolöschung:</h3>
             <ol className="list-decimal list-inside space-y-1 text-sm">
-              <li>Senden Sie eine E-Mail an: <strong>rwk-leiter-ksve@gmx.de</strong></li>
+              <li>Sende eine E-Mail an: <strong>rwk-leiter-ksve@gmx.de</strong></li>
               <li>Betreff: "Kontolöschung RWK App"</li>
-              <li>Geben Sie Ihre registrierte E-Mail-Adresse an</li>
-              <li>Bestätigen Sie Ihre Identität durch Angabe Ihres Vereins</li>
+              <li>Gib deine registrierte E-Mail-Adresse an</li>
+              <li>Bestätige deine Identität durch Angabe deines Vereins</li>
             </ol>
           </div>
 
           <div>
             <h3 className="font-semibold mb-2">Welche Daten werden gelöscht:</h3>
             <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-              <li>Ihr Benutzerkonto und Anmeldedaten</li>
+              <li>Dein Benutzerkonto und Anmeldedaten</li>
               <li>Persönliche Kontaktdaten (E-Mail, Telefon)</li>
               <li>Login-Berechtigung und Zugriff auf die App</li>
               <li>Persönliche Einstellungen und Präferenzen</li>
@@ -445,7 +534,7 @@ export default function SupportPage() {
           <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
             <h3 className="font-semibold mb-2 text-yellow-800">Bearbeitungszeit:</h3>
             <p className="text-sm text-yellow-700">
-              Ihr Löschungsantrag wird innerhalb von 30 Tagen bearbeitet. 
+              Dein Löschungsantrag wird innerhalb von 30 Tagen bearbeitet. 
               Wettkampfdaten bleiben anonymisiert für Tabellenintegrität erhalten.
             </p>
           </div>
