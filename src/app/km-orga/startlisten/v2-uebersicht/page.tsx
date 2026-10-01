@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getDocs, collection, doc, updateDoc, deleteDoc, addDoc, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -138,14 +139,8 @@ export default function StartlistenV2Uebersicht() {
 
   const loadData = async () => {
     try {
-      // Verwende die korrekte Datenbank-Instanz
-      const { getFirestore } = await import('firebase/firestore');
-      const { app } = await import('@/lib/firebase/config');
-      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
-      const correctDb = getFirestore(app, databaseId);
-      
       const [startlistenSnapshot, saisonsRes] = await Promise.all([
-        getDocs(collection(correctDb, 'km_startlisten_v2')),
+        getDocs(collection(db, 'km_startlisten_v2')),
         fetch('/api/km/saisons')
       ]);
       
@@ -183,10 +178,7 @@ export default function StartlistenV2Uebersicht() {
       }));
       
       // Lade Meldungen direkt aus Firebase
-      const { getDocs: getDocsFirebase, collection: collectionFirebase, query, orderBy } = await import('firebase/firestore');
-      const { db: dbFirebase } = await import('@/lib/firebase/config');
-      
-      const shootersSnapshot = await getDocsFirebase(query(collectionFirebase(dbFirebase, 'shooters'), orderBy('lastName', 'asc')));
+      const shootersSnapshot = await getDocs(query(collection(db, 'shooters'), orderBy('lastName', 'asc')));
       const schuetzenMap: Record<string, any> = {};
       shootersSnapshot.docs.forEach(doc => {
         schuetzenMap[doc.id] = { id: doc.id, ...doc.data() };
@@ -200,7 +192,7 @@ export default function StartlistenV2Uebersicht() {
       for (const typ of collections) {
         try {
           const collectionName = `km_meldungen_${jahr}_${typ}`;
-          const meldungenSnapshot = await getDocsFirebase(collectionFirebase(dbFirebase, collectionName));
+          const meldungenSnapshot = await getDocs(collection(db, collectionName));
           const meldungen = meldungenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<{ id: string; [key: string]: any }>;
           alleMeldungen.push(...meldungen);
         } catch (e) {
@@ -273,14 +265,9 @@ export default function StartlistenV2Uebersicht() {
 
   const loadAenderungswuensche = async () => {
     try {
-      const { getFirestore } = await import('firebase/firestore');
-      const { app } = await import('@/lib/firebase/config');
-      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
-      const correctDb = getFirestore(app, databaseId);
-      
       const aenderungenSnapshot = await getDocs(
         query(
-          collection(correctDb, 'km_startlisten_aenderungen'),
+          collection(db, 'km_startlisten_aenderungen'),
           orderBy('timestamp', 'desc')
         )
       );
@@ -303,12 +290,7 @@ export default function StartlistenV2Uebersicht() {
     if (!neuerWunsch.trim()) return;
     
     try {
-      const { getFirestore } = await import('firebase/firestore');
-      const { app } = await import('@/lib/firebase/config');
-      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
-      const correctDb = getFirestore(app, databaseId);
-      
-      await addDoc(collection(correctDb, 'km_startlisten_aenderungen'), {
+      await addDoc(collection(db, 'km_startlisten_aenderungen'), {
         text: neuerWunsch,
         autor: user?.displayName || user?.email || 'KM-Orga',
         timestamp: new Date(),
@@ -335,12 +317,7 @@ export default function StartlistenV2Uebersicht() {
 
   const deleteAenderungswunsch = async (id: string) => {
     try {
-      const { getFirestore } = await import('firebase/firestore');
-      const { app } = await import('@/lib/firebase/config');
-      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
-      const correctDb = getFirestore(app, databaseId);
-      
-      await deleteDoc(doc(correctDb, 'km_startlisten_aenderungen', id));
+      await deleteDoc(doc(db, 'km_startlisten_aenderungen', id));
       loadAenderungswuensche();
       toast({
         title: "🗑️ Änderungswunsch gelöscht",
@@ -358,12 +335,7 @@ export default function StartlistenV2Uebersicht() {
 
   const updateAenderungswunschStatus = async (id: string, status: string) => {
     try {
-      const { getFirestore } = await import('firebase/firestore');
-      const { app } = await import('@/lib/firebase/config');
-      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
-      const correctDb = getFirestore(app, databaseId);
-      
-      await updateDoc(doc(correctDb, 'km_startlisten_aenderungen', id), { status });
+      await updateDoc(doc(db, 'km_startlisten_aenderungen', id), { status });
       loadAenderungswuensche();
     } catch (error) {
       logError('Fehler beim Update:', error);
@@ -387,13 +359,7 @@ export default function StartlistenV2Uebersicht() {
       return;
     }
     try {
-      // Verwende die korrekte Datenbank-Instanz
-      const { getFirestore } = await import('firebase/firestore');
-      const { app } = await import('@/lib/firebase/config');
-      const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
-      const correctDb = getFirestore(app, databaseId);
-      
-      await updateDoc(doc(correctDb, 'km_startlisten_v2', editingId), editData);
+      await updateDoc(doc(db, 'km_startlisten_v2', editingId), editData);
       setEditingId(null);
       loadData();
       toast({ title: '✅ Gespeichert', description: 'Die Startliste wurde erfolgreich gespeichert.' });
@@ -406,13 +372,7 @@ export default function StartlistenV2Uebersicht() {
   const handleDelete = async (id: string) => {
     if (confirm('Startliste wirklich löschen?')) {
       try {
-        // Verwende die korrekte Datenbank-Instanz
-        const { getFirestore } = await import('firebase/firestore');
-        const { app } = await import('@/lib/firebase/config');
-        const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || '(default)';
-        const correctDb = getFirestore(app, databaseId);
-        
-        await deleteDoc(doc(correctDb, 'km_startlisten_v2', id));
+        await deleteDoc(doc(db, 'km_startlisten_v2', id));
         loadData();
       } catch (error) {
         logError('Fehler beim Löschen:', error);
