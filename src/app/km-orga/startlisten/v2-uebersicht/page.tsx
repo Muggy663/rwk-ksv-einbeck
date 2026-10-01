@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { getDocs, collection, doc, updateDoc, deleteDoc, addDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { getShooterClubId } from '@/lib/utils/altersklassen';
+import { recalculateAllPositions as recalculateAllPositionsPure } from '../_lib/startlisten-positionen';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -402,29 +403,9 @@ export default function StartlistenV2Uebersicht() {
     }
   };
   
-  // Funktion zur Neuberechnung aller Positionen
-  const recalculateAllPositions = (startliste: Starter[]) => {
-    const konfigurierteStaende = editData.konfiguration?.staende || [1,2,3,4,5,6,7,8,9];
-    const maxStaende = konfigurierteStaende.length;
-    const durchgangMin = editData.konfiguration?.durchgang || 50;
-    const wechselMin = editData.konfiguration?.wechsel || 10;
-    const baseTime = new Date(`1970-01-01T${editData.konfiguration?.startzeit || '14:00'}:00`);
-    
-    return startliste.map((starter: Starter, index: number) => {
-      const durchgangNr = Math.floor(index / maxStaende) + 1;
-      const standNr = konfigurierteStaende[index % maxStaende];
-      const minutesOffset = (durchgangNr - 1) * (durchgangMin + wechselMin);
-      const startzeit = new Date(baseTime.getTime() + minutesOffset * 60000)
-        .toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      
-      return {
-        ...starter,
-        stand: standNr.toString(),
-        startzeit: startzeit,
-        durchgang: durchgangNr
-      };
-    });
-  };
+  // Neuberechnung aller Positionen über das zentrale, getestete Util.
+  const recalculateAllPositions = (startliste: Starter[]) =>
+    recalculateAllPositionsPure(startliste, editData.konfiguration);
 
   const removeStarter = (starterIndex: number) => {
     const updatedStartliste = (editData.startliste || []).filter((_, index) => index !== starterIndex);
