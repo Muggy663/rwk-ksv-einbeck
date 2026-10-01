@@ -98,25 +98,13 @@ function TippDesTagesCard() {
 export default function SchießnachweisPage() {
   const [statistik, setStatistik] = useState<SchießStatistik | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
   
   usePullToRefresh(async () => {
     await loadStatistik();
   });
 
   useEffect(() => {
-    // Mobile Detection
-    const checkMobile = () => {
-      const isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-      setIsMobile(isMobileDevice);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
     loadStatistik();
-    
-    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const loadStatistik = async () => {
@@ -311,19 +299,11 @@ export default function SchießnachweisPage() {
               asChild
               size="lg"
               className="w-full md:w-auto flex-shrink-0 bg-green-600 hover:bg-green-700 text-white flex items-center justify-center gap-2 h-14"
-              disabled={isMobile}
             >
-              {isMobile ? (
-                <span>
-                  <FileText className="h-5 w-5" />
-                  Nur am Desktop
-                </span>
-              ) : (
-                <Link href="/schiessnachweis/pdf-export">
-                  <FileText className="h-5 w-5" />
-                  Nachweis vorbereiten
-                </Link>
-              )}
+              <Link href="/schiessnachweis/pdf-export">
+                <FileText className="h-5 w-5" />
+                Nachweis vorbereiten
+              </Link>
             </Button>
           </div>
         </CardContent>

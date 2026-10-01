@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { logError } from '@/lib/utils/secure-logger';
 import { ArrowLeft, Download, Upload, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,21 +8,10 @@ import { SchießnachweisService } from "@/lib/services/schiessnachweis-service";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { format } from "date-fns";
+import { shareOrDownloadBlob } from '@/lib/utils/share-or-download';
 
 export default function DatensicherungPage() {
   const { toast } = useToast();
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      const isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-      setIsMobile(isMobileDevice);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   const handleExportExcel = async () => {
     try {
@@ -39,18 +27,14 @@ export default function DatensicherungPage() {
       }
       
       const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `schiessnachweis_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
+      const filename = `schiessnachweis_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      const result = await shareOrDownloadBlob(blob, filename, 'text/csv');
+
       toast({
         title: "Export erfolgreich",
-        description: "CSV-Datei wurde heruntergeladen.",
+        description: result === 'shared'
+          ? "CSV-Datei wurde zum Teilen/Speichern bereitgestellt."
+          : "CSV-Datei wurde heruntergeladen.",
       });
     } catch (error) {
       logError('Excel-Export fehlgeschlagen:', error);
@@ -150,28 +134,19 @@ export default function DatensicherungPage() {
                 onClick={handleExportExcel} 
                 variant="outline" 
                 className="flex items-center justify-center gap-2 h-12"
-                disabled={isMobile}
               >
                 <Download className="h-4 w-4" />
-                Excel (.csv) {isMobile && '(Desktop)'}
+                Excel (.csv)
               </Button>
               <Button 
-                asChild={!isMobile} 
+                asChild
                 variant="outline" 
                 className="flex items-center justify-center gap-2 h-12"
-                disabled={isMobile}
               >
-                {isMobile ? (
-                  <span>
-                    <FileText className="h-4 w-4" />
-                    PDF für Behörden (Desktop)
-                  </span>
-                ) : (
-                  <Link href="/schiessnachweis/pdf-export">
-                    <FileText className="h-4 w-4" />
-                    PDF für Behörden
-                  </Link>
-                )}
+                <Link href="/schiessnachweis/pdf-export">
+                  <FileText className="h-4 w-4" />
+                  PDF für Behörden
+                </Link>
               </Button>
             </div>
           </CardContent>
@@ -194,10 +169,9 @@ export default function DatensicherungPage() {
                 onClick={() => document.getElementById('csv-import')?.click()} 
                 variant="outline" 
                 className="flex items-center justify-center gap-2 h-12 w-full"
-                disabled={isMobile}
               >
                 <Upload className="h-4 w-4" />
-                CSV/Excel importieren {isMobile && '(Desktop)'}
+                CSV/Excel importieren
               </Button>
               <input
                 id="csv-import"

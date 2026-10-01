@@ -64,11 +64,52 @@ export class SchießnachweisService {
   }
 
   static async saveEintrag(eintrag: Omit<SchießEintrag, 'id' | 'createdAt'>): Promise<SchießEintrag> {
-    // Prüfe Auth-Status
-    const { auth } = await import('@/lib/firebase/config');
-    
+    const neuerEintrag: SchießEintrag = {
+      ...eintrag,
+      id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
+      createdAt: new Date()
+    };
+
+    await this.mutateEinträge((aktuelle) => [...aktuelle, neuerEintrag]);
+    return neuerEintrag;
+  }
+
+  static async updateEintrag(id: string, updates: Partial<Omit<SchießEintrag, 'id' | 'createdAt'>>): Promise<SchießEintrag | null> {
+    let aktualisiert: SchießEintrag | null = null;
+    await this.mutateEinträge((aktuelle) => {
+      const index = aktuelle.findIndex(e => e.id === id);
+      if (index === -1) return aktuelle; // nichts zu tun
+      const kopie = [...aktuelle];
+      kopie[index] = { ...kopie[index], ...updates };
+      aktualisiert = kopie[index];
+      return kopie;
+    });
+    return aktualisiert;
+  }
+
+  static async deleteEintrag(id: string): Promise<void> {
+    await this.mutateEinträge((aktuelle) => aktuelle.filter(e => e.id !== id));
+  }
+
+  /**
+   * Führt eine Änderung an der Eintrags-Liste in einer Firestore-TRANSAKTION
+   * aus. Wichtig gegen Race Conditions: Alle Einträge eines Users liegen in
+   * EINEM Dokument (schiessnachweis_data/{uid}) als Array. Früher wurde das
+   * Array per getEinträge() gelesen, im Speicher mutiert und mit setDoc
+   * komplett zurückgeschrieben – schrieben zwei Geräte gleichzeitig, ging die
+   * Änderung des einen verloren (lost update). Die Transaktion liest das
+   * Dokument frisch innerhalb der Transaktion und wird bei einem parallelen
+   * Schreibzugriff von Firestore automatisch wiederholt.
+   *
+   * @param mutator bekommt die aktuellen Einträge und gibt die neue Liste zurück.
+   */
+  private static async mutateEinträge(
+    mutator: (aktuelle: SchießEintrag[]) => SchießEintrag[],
+  ): Promise<void> {
+    const { auth, db } = await import('@/lib/firebase/config');
+
+    // Auf Auth-Initialisierung warten (max. 2s), analog zum bisherigen Verhalten.
     if (!auth.currentUser) {
-      // Warte kurz auf Auth-Initialisierung
       await new Promise((resolve) => {
         const timeout = setTimeout(() => resolve(null), 2000);
         const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -78,75 +119,44 @@ export class SchießnachweisService {
         });
       });
     }
-    
     if (!auth.currentUser) {
       throw new Error('❌ Sie müssen angemeldet sein, um Einträge zu speichern.\n\nBitte melden Sie sich an unter /schiessnachweis/login');
     }
-    
-    const neuerEintrag: SchießEintrag = {
-      ...eintrag,
-      id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
-      createdAt: new Date()
-    };
 
-    const einträge = await this.getEinträge();
-    einträge.push(neuerEintrag);
-    
-    await this.saveToDatabase(einträge);
-    
-    return neuerEintrag;
-  }
+    const { doc, runTransaction } = await import('firebase/firestore');
+    const ref = doc(db, 'schiessnachweis_data', auth.currentUser.uid);
 
-  static async updateEintrag(id: string, updates: Partial<Omit<SchießEintrag, 'id' | 'createdAt'>>): Promise<SchießEintrag | null> {
-    const einträge = await this.getEinträge();
-    const index = einträge.findIndex(e => e.id === id);
-    
-    if (index === -1) return null;
-    
-    einträge[index] = { ...einträge[index], ...updates };
-    
-    await this.saveToDatabase(einträge);
-    
-    return einträge[index];
-  }
-
-  static async deleteEintrag(id: string): Promise<void> {
-    const einträge = (await this.getEinträge()).filter(e => e.id !== id);
-    
-    await this.saveToDatabase(einträge);
-  }
-  
-  private static async saveToDatabase(einträge: SchießEintrag[]): Promise<void> {
     try {
-      const { auth, db } = await import('@/lib/firebase/config');
-      
-      if (!auth.currentUser) {
-        throw new Error('Benutzer nicht angemeldet');
-      }
-      
-      const { doc, setDoc } = await import('firebase/firestore');
-      
-      // Entferne undefined Werte für Firebase
-      const cleanedEinträge = einträge.map(eintrag => {
-        const cleaned: any = {};
-        Object.entries(eintrag).forEach(([key, value]) => {
-          if (value !== undefined) {
-            cleaned[key] = value;
-          }
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        const data = snap.exists() ? snap.data() : {};
+        // Rohdaten in echte Date-Objekte wandeln (wie in getEinträge).
+        const aktuelle: SchießEintrag[] = ((data?.einträge as any[]) || []).map((e: any) => {
+          const datum = this.convertToDate(e.datum);
+          const createdAt = this.convertToDate(e.createdAt, datum);
+          return { ...e, datum, createdAt };
         });
-        return cleaned;
+
+        const neu = mutator(aktuelle);
+
+        // undefined-Werte entfernen (Firestore mag kein undefined).
+        const cleaned = neu.map((eintrag) => {
+          const c: any = {};
+          Object.entries(eintrag).forEach(([key, value]) => {
+            if (value !== undefined) c[key] = value;
+          });
+          return c;
+        });
+
+        tx.set(ref, {
+          einträge: cleaned,
+          lastModified: new Date(),
+          deviceId: this.getDeviceId(),
+        });
       });
-      
-      const cloudData = {
-        einträge: cleanedEinträge,
-        lastModified: new Date(),
-        deviceId: this.getDeviceId()
-      };
-      
-      await setDoc(doc(db, 'schiessnachweis_data', auth.currentUser.uid), cloudData);
-      logDebug(`💾 ${einträge.length} Einträge in Datenbank gespeichert`);
+      logDebug('💾 Schießnachweis-Eintrag transaktional gespeichert');
     } catch (error) {
-      logError('Speichern in Datenbank fehlgeschlagen:', error);
+      logError('Transaktionales Speichern fehlgeschlagen:', error);
       throw error;
     }
   }
@@ -219,32 +229,36 @@ export class SchießnachweisService {
         throw new Error('Kein gültiges Datenformat erkannt.');
       }
 
-      const existingEinträge = await this.getEinträge();
-
-      // Merge und Duplikate vermeiden
-      const allEinträge = [...existingEinträge];
       let importCount = 0;
 
-      importedEinträge.forEach((imported: any) => {
-        const importDatum = new Date(imported.datum);
-        const exists = allEinträge.some(existing =>
-          existing.datum.getTime() === importDatum.getTime() &&
-          existing.disziplin === imported.disziplin &&
-          existing.ergebnis === imported.ergebnis
-        );
+      // Merge innerhalb der Transaktion gegen die frisch gelesenen Einträge,
+      // damit paralleles Speichern auf anderen Geräten nicht überschrieben wird.
+      await this.mutateEinträge((existingEinträge) => {
+        const allEinträge = [...existingEinträge];
+        importCount = 0;
 
-        if (!exists) {
-          allEinträge.push({
-            ...imported,
-            id: Date.now().toString() + '_' + Math.random().toString(36).substring(2, 9),
-            datum: importDatum,
-            createdAt: new Date(imported.createdAt || imported.datum)
-          });
-          importCount++;
-        }
+        importedEinträge.forEach((imported: any) => {
+          const importDatum = new Date(imported.datum);
+          const exists = allEinträge.some(existing =>
+            existing.datum.getTime() === importDatum.getTime() &&
+            existing.disziplin === imported.disziplin &&
+            existing.ergebnis === imported.ergebnis
+          );
+
+          if (!exists) {
+            allEinträge.push({
+              ...imported,
+              id: Date.now().toString() + '_' + Math.random().toString(36).substring(2, 9),
+              datum: importDatum,
+              createdAt: new Date(imported.createdAt || imported.datum)
+            });
+            importCount++;
+          }
+        });
+
+        return allEinträge;
       });
 
-      await this.saveToDatabase(allEinträge);
       return importCount;
     } catch (error) {
       logError('Fehler beim Importieren der Daten:', error);
