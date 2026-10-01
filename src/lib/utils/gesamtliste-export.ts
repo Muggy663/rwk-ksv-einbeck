@@ -1,4 +1,6 @@
 // src/lib/utils/gesamtliste-export.ts
+import { logError } from '@/lib/utils/secure-logger';
+
 // Export der RWK-Gesamtergebnisliste als Excel (mit echten Formeln) und als PDF (leere Vorlage).
 // Layout orientiert sich an der bestehenden Kreis-Vorlage:
 //   Kopf: Sportjahr + je Durchgang (1..5) Ort / Datum / Uhrzeit
@@ -257,7 +259,8 @@ export async function exportGesamtlisteExcel(data: GesamtlisteExportData): Promi
   }
 
   const buf = await wb.xlsx.writeBuffer();
-  triggerDownload(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `Gesamtliste_${sanitizeFilename(data.kopf.liga)}.xlsx`);
+  const xlsxMime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  await triggerDownload(new Blob([buf], { type: xlsxMime }), `Gesamtliste_${sanitizeFilename(data.kopf.liga)}.xlsx`, xlsxMime);
 }
 
 // Baut eine Rang-Formel ohne RANK: Rang = Anzahl der (verstreuten) End-Gesamt-Zellen,
@@ -287,7 +290,47 @@ function sanitizeFilename(name: string): string {
   return (name || 'Liga').replace(/[^a-zA-Z0-9äöüÄÖÜß _-]/g, '').replace(/\s+/g, '_');
 }
 
-function triggerDownload(blob: Blob, filename: string): void {
+// Entfernt/ersetzt Zeichen, die die jsPDF-Standardschrift (helvetica, Latin-1)
+// nicht sauber darstellt – v.a. den typografischen Gedankenstrich „–" (U+2013)
+// und Anführungszeichen. Umlaute (ä/ö/ü/ß) bleiben erhalten (Latin-1-fähig).
+function sanitizePdfText(text: string): string {
+  return (text || '')
+    .replace(/[\u2013\u2014]/g, '-')   // – — → -
+    .replace(/[\u2018\u2019]/g, "'")   // ' ' → '
+    .replace(/[\u201C\u201D]/g, '"')   // " " → "
+    .replace(/\u2026/g, '...');        // … → ...
+}
+
+// Blob herunterladen (Browser) bzw. in der nativen App (Capacitor) über das
+// Share-Sheet bereitstellen. In der WebView funktioniert ein <a download> nicht,
+// deshalb wird dort die Datei als Base64-data-URL geteilt.
+async function triggerDownload(blob: Blob, filename: string, mimeType: string): Promise<void> {
+  const isNativeApp = typeof window !== 'undefined' && !!window.Capacitor?.isNativePlatform?.();
+
+  if (isNativeApp) {
+    try {
+      const { Share } = await import('@capacitor/share');
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1] || '');
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      await Share.share({
+        title: filename,
+        url: `data:${mimeType};base64,${base64}`,
+        dialogTitle: filename,
+      });
+      return;
+    } catch (error) {
+      logError('Native Share des Exports fehlgeschlagen, versuche Fallback:', error);
+      // Fällt unten auf den Web-Weg zurück.
+    }
+  }
+
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -310,13 +353,13 @@ export async function exportGesamtlistePdf(data: GesamtlisteExportData): Promise
   const pageWidth = doc.internal.pageSize.getWidth();
 
   doc.setFontSize(13);
-  doc.text(`${data.kopf.verband || VERBAND_DEFAULT}`, pageWidth / 2, 12, { align: 'center' });
+  doc.text(sanitizePdfText(data.kopf.verband || VERBAND_DEFAULT), pageWidth / 2, 12, { align: 'center' });
   doc.setFontSize(11);
-  doc.text(`${data.kopf.sportjahr} – ${data.kopf.liga}`, pageWidth / 2, 18, { align: 'center' });
+  doc.text(sanitizePdfText(`${data.kopf.sportjahr} - ${data.kopf.liga}`), pageWidth / 2, 18, { align: 'center' });
   if (data.kopf.abgabetermin) {
     doc.setFontSize(9);
     doc.setTextColor(200, 0, 0);
-    doc.text(`Abgabetermin: ${data.kopf.abgabetermin}`, pageWidth - 10, 12, { align: 'right' });
+    doc.text(sanitizePdfText(`Abgabetermin: ${data.kopf.abgabetermin}`), pageWidth - 10, 12, { align: 'right' });
     doc.setTextColor(0, 0, 0);
   }
 
@@ -346,7 +389,9 @@ export async function exportGesamtlistePdf(data: GesamtlisteExportData): Promise
     ringRow.push({ content: 'Gesamt', styles: { halign: 'center' } });
   }
 
-  // Datenzeilen: leer außer Name/Mannschaft/Telefon
+  // Datenzeilen: Name/Mannschaft/Telefon gefüllt. Vorhandene Ring-Ergebnisse
+  // werden vorbefüllt (konsistent zum Excel-Export); „Gesamt"-Spalten bleiben
+  // leer (werden summiert / handschriftlich ergänzt).
   const body: any[] = [];
   for (const team of data.mannschaften) {
     const istEinzel = !!team.einzel;
@@ -354,13 +399,14 @@ export async function exportGesamtlistePdf(data: GesamtlisteExportData): Promise
     schuetzen.forEach((s, i) => {
       const zeile: any[] = [];
       if (i === 0) {
-        zeile.push({ content: team.name, rowSpan: istEinzel ? schuetzen.length : schuetzen.length + 1, styles: { fontStyle: 'bold', valign: 'middle' } });
-        zeile.push({ content: team.telefon || '', rowSpan: istEinzel ? schuetzen.length : schuetzen.length + 1, styles: { valign: 'middle' } });
+        zeile.push({ content: sanitizePdfText(team.name), rowSpan: istEinzel ? schuetzen.length : schuetzen.length + 1, styles: { fontStyle: 'bold', valign: 'middle' } });
+        zeile.push({ content: sanitizePdfText(team.telefon || ''), rowSpan: istEinzel ? schuetzen.length : schuetzen.length + 1, styles: { valign: 'middle' } });
       }
-      zeile.push(s.name);
+      zeile.push(sanitizePdfText(s.name));
       for (let dg = 1; dg <= ANZAHL_DURCHGAENGE; dg++) {
-        zeile.push('');
-        zeile.push('');
+        const ring = s.ringe?.[dg];
+        zeile.push(typeof ring === 'number' ? String(ring) : ''); // Ring: vorhandenes Ergebnis
+        zeile.push(''); // Gesamt bleibt leer
       }
       zeile.push(''); // Einzel-Rang
       if (i === 0) zeile.push({ content: '', rowSpan: istEinzel ? schuetzen.length : schuetzen.length + 1 }); // Mannschaft-Rang
@@ -387,5 +433,6 @@ export async function exportGesamtlistePdf(data: GesamtlisteExportData): Promise
     columnStyles: { 0: { cellWidth: 30 }, 1: { cellWidth: 18 }, 2: { cellWidth: 30 } },
   });
 
-  doc.save(`Gesamtliste_${sanitizeFilename(data.kopf.liga)}.pdf`);
+  const pdfBlob = doc.output('blob');
+  await triggerDownload(pdfBlob, `Gesamtliste_${sanitizeFilename(data.kopf.liga)}.pdf`, 'application/pdf');
 }

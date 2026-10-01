@@ -401,10 +401,9 @@ export default function GesamtergebnislisteGeneratorPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="gesamt-print-area border rounded-lg p-2 bg-white w-full overflow-auto" style={{
-              transform: `scale(${Math.max(0.4, 0.6 - (teams.length * 0.01))})`, 
-              transformOrigin: 'top left',
-              height: '500px'
+            <p className="text-xs text-muted-foreground mb-2 lg:hidden">Vorschau – zum Ansehen horizontal wischen. Zum Speichern „PDF" oder „Excel" nutzen.</p>
+            <div className="gesamt-print-area border rounded-lg p-2 bg-white w-full overflow-auto text-black" style={{
+              maxHeight: '500px'
             }}>
               <div className="flex justify-between items-center mb-4">
                 <img src={typeof window !== 'undefined' ? `${window.location.origin}/images/logo.png` : '/images/logo.png'} alt="Logo" className="w-12 h-12 object-contain" />

@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FileText, Printer, BarChart3, ArrowLeft } from 'lucide-react';
+import { FileText, Printer, BarChart3, ArrowLeft, FileDown, Loader2 } from 'lucide-react';
 import { BackButton } from '@/components/ui/back-button';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
+import { exportHandzettelPdf } from '@/lib/utils/handzettel-export';
 import type { Season, League, Team } from '@/types/rwk';
 import { useAuth } from '@/hooks/use-auth';
 import Link from 'next/link';
@@ -57,6 +58,7 @@ export function HandzettelGenerator({
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
   const [loadResults, setLoadResults] = useState(false);
   const [results, setResults] = useState<any>({});
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -329,6 +331,49 @@ export function HandzettelGenerator({
     }
   };
 
+  // Erzeugt ein echtes PDF (funktioniert in Browser UND nativer App) – im
+  // Gegensatz zu printDurchgang(), dessen window.print() in der WebView
+  // wirkungslos ist.
+  const exportPdf = async () => {
+    const season = seasons.find(s => s.id === selectedSeasonId);
+    const league = availableLeagues.find(l => l.id === selectedLeagueId);
+    if (!season || !league) {
+      toast({ title: 'Bitte Saison und Liga wählen', variant: 'destructive' });
+      return;
+    }
+    setIsExporting(true);
+    try {
+      const sortedTeams = [...teams].sort((a, b) => a.name.localeCompare(b.name));
+      await exportHandzettelPdf({
+        saison: season.name,
+        liga: league.name,
+        durchgang: selectedDurchgang,
+        datum: wettkampfData.datum ? new Date(wettkampfData.datum).toLocaleDateString('de-DE') : '',
+        uhrzeit: wettkampfData.uhrzeit,
+        ort: wettkampfData.ort,
+        teams: sortedTeams.map(team => ({
+          verein: team.name,
+          schuetzen: ((team.shooters || []).map((s: any) => ({
+            name: (s.firstName && s.lastName) ? `${s.firstName} ${s.lastName}` : (s.name || ''),
+          }))),
+        })),
+      });
+      toast({ title: 'PDF erstellt', description: 'Der Meldebogen wurde als PDF bereitgestellt.' });
+    } catch (e) {
+      logError('Handzettel-PDF-Export fehlgeschlagen:', e);
+      toast({ title: 'Fehler', description: 'Das PDF konnte nicht erstellt werden.', variant: 'destructive' });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Druck mit kurzem Nutzerfeedback (der window.print()-Dialog erscheint sonst
+  // kommentarlos bzw. in der App gar nicht – dann hilft der PDF-Button).
+  const handlePrintClick = async () => {
+    toast({ title: 'Druckansicht wird vorbereitet…', description: 'Falls kein Druckdialog erscheint, bitte „PDF" nutzen.' });
+    await printDurchgang();
+  };
+
   return (
     <div className={showGesamtTab ? "space-y-6" : "container mx-auto py-8 space-y-6"}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -474,7 +519,7 @@ export function HandzettelGenerator({
                 <CardTitle>Vorschau</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="print-area border rounded-lg p-4 bg-white text-xs mx-auto overflow-auto flex flex-col" style={{width: '100%', maxWidth: '400px', height: '600px', transform: 'scale(0.7)', transformOrigin: 'top center'}}>
+                <div className="print-area border rounded-lg p-4 bg-white text-black text-xs mx-auto overflow-auto flex flex-col" style={{width: '100%', maxWidth: '400px', maxHeight: '600px'}}>
                   <div className="flex justify-between items-start mb-4">
                     <div className="border p-2 text-xs">
                       <div className="font-bold mb-1">Ergebnisse an:</div>
@@ -578,11 +623,18 @@ export function HandzettelGenerator({
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-wrap gap-3">
-                <Button variant="outline" onClick={printDurchgang} disabled={!selectedSeasonId || !selectedLeagueId}>
+                <Button variant="outline" onClick={handlePrintClick} disabled={!selectedSeasonId || !selectedLeagueId}>
                   <Printer className="mr-2 h-4 w-4" />
                   Drucken
                 </Button>
+                <Button onClick={exportPdf} disabled={!selectedSeasonId || !selectedLeagueId || isExporting}>
+                  {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+                  Als PDF {typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.() ? 'teilen' : 'speichern'}
+                </Button>
               </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                In der App bitte „Als PDF teilen" nutzen – der Druckdialog ist dort nicht verfügbar.
+              </p>
             </CardContent>
           </Card>
         </>
