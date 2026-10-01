@@ -4,11 +4,8 @@ import { logError, logWarn } from '@/lib/utils/secure-logger';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Info, Lock, Calendar, Filter, LogIn, FileText, BarChart3, Loader2 } from 'lucide-react';
-import { LigaGrouping } from './LigaGrouping';
+import { Info, Lock, LogIn, FileText, BarChart3, Loader2 } from 'lucide-react';
 import { SearchBar } from './SearchBar';
-
-import { NativeSelect } from '@/components/ui/native-select';
 import Link from 'next/link';
 import { DocumentCard } from './DocumentCard';
 import { Document } from '@/lib/services/document-service';
@@ -21,15 +18,7 @@ export default function DokumentePage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [searchQuery, setSearchQuery] = useState<string>('');
-  
-  // Jahre für den Filter (aktuelles Jahr und 2 Jahre zurück)
-  const years = [
-    new Date().getFullYear().toString(),
-    (new Date().getFullYear() - 1).toString(),
-    (new Date().getFullYear() - 2).toString()
-  ];
 
   // Auth-Kontext verwenden
   const { user, userAppPermissions } = useAuth();
@@ -63,10 +52,11 @@ export default function DokumentePage() {
     setIsAuthorized(false);
   }, [user, userAppPermissions, isAdmin]);
 
-  // URL-Hash-Handler für Tab-Navigation
+  // Alt-Links mit #ligalisten auf die eigene Ligalisten-Seite umleiten
+  // (der frühere, nur per Hash erreichbare Ligalisten-Tab wurde entfernt).
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash === '#ligalisten') {
-      setActiveTab('ligalisten');
+      window.location.replace('/ligalisten');
     }
   }, []);
 
@@ -149,15 +139,6 @@ export default function DokumentePage() {
   const ausschreibungen = filterBySearch(documents.filter(doc => doc.category === 'ausschreibung'));
   const formulare = filterBySearch(documents.filter(doc => doc.category === 'formular'));
   const ordnungen = filterBySearch(documents.filter(doc => doc.category === 'ordnung'));
-  const ligalisten = documents.filter(doc => doc.category === 'ligaliste');
-  
-  // Gefilterte Ligalisten basierend auf Jahr und Suchanfrage
-  const filteredLigalisten = filterBySearch(ligalisten.filter(doc => 
-    doc.title.includes(selectedYear) || 
-    doc.description.includes(selectedYear) ||
-    // Wenn kein Jahr im Titel oder in der Beschreibung gefunden wird, zeige es trotzdem an
-    (!doc.title.match(/\b20\d{2}\b/) && !doc.description.match(/\b20\d{2}\b/))
-  ));
 
   return (
     <div className="flex gap-6">
@@ -202,6 +183,12 @@ export default function DokumentePage() {
               >
                 📖 Regelwerke
               </button>
+              <Link
+                href="/ligalisten"
+                className="block w-full text-left px-3 py-2 rounded-md text-sm transition-colors hover:bg-muted"
+              >
+                📊 Ligalisten & Handtabellen
+              </Link>
             </CardContent>
           </Card>
           
@@ -257,13 +244,19 @@ export default function DokumentePage() {
       ) : (
         <Tabs defaultValue="ausschreibungen" value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Mobile Tabs - nur auf kleinen Bildschirmen sichtbar */}
-          <TabsList className="grid grid-cols-2 md:hidden gap-1 mb-4 h-auto">
-            <TabsTrigger value="ausschreibungen" className="text-xs px-2 py-2">Ausschreibungen</TabsTrigger>
-            <TabsTrigger value="formulare" className="text-xs px-2 py-2">Formulare</TabsTrigger>
-          </TabsList>
-          <TabsList className="grid grid-cols-1 md:hidden gap-1 mb-4 h-auto">
-            <TabsTrigger value="ordnungen" className="text-xs px-2 py-2">Regelwerke</TabsTrigger>
-          </TabsList>
+          <div className="md:hidden mb-4 space-y-2">
+            <TabsList className="grid grid-cols-3 gap-1 h-auto w-full">
+              <TabsTrigger value="ausschreibungen" className="text-xs px-2 py-2">Ausschreibungen</TabsTrigger>
+              <TabsTrigger value="formulare" className="text-xs px-2 py-2">Formulare</TabsTrigger>
+              <TabsTrigger value="ordnungen" className="text-xs px-2 py-2">Regelwerke</TabsTrigger>
+            </TabsList>
+            <Link href="/ligalisten" className="block">
+              <Button variant="outline" size="sm" className="w-full justify-start text-xs">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Ligalisten & Handtabellen
+              </Button>
+            </Link>
+          </div>
 
           <TabsContent value="ausschreibungen" className="space-y-4">
             <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Aktuelle Ausschreibungen</h2>
@@ -293,104 +286,6 @@ export default function DokumentePage() {
                 <DocumentCard key={doc.id} document={doc} />
               ))
             )}
-          </TabsContent>
-
-          <TabsContent value="ligalisten" className="space-y-4">
-            <div className="mb-4">
-              <h2 className="text-lg md:text-xl font-semibold mb-2">Ligalisten</h2>
-              <div className="h-px bg-border mb-4"></div>
-            </div>
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col gap-6">
-                  <CardTitle className="text-lg md:text-xl">Ligalisten & Handtabellen</CardTitle>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="border-2 border-primary/20 hover:border-primary/40 transition-colors">
-                      <CardContent className="p-3 md:p-6">
-                        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
-                          <div className="p-2 md:p-3 bg-muted rounded-lg">
-                            <FileText className="h-6 w-6 md:h-8 md:w-8 text-primary" />
-                          </div>
-                          <div className="flex-1 text-center md:text-left">
-                            <h3 className="font-semibold text-base md:text-lg mb-2">Durchgangs-Meldebögen</h3>
-                            <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">Erstellen Sie Handzettel für einzelne Durchgänge mit allen Mannschaften</p>
-                            <Link href="/handzettel-generator">
-                              <Button className="w-full text-sm">
-                                <FileText className="h-4 w-4 mr-2" />
-                                Handzettel erstellen
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card className="border-2 border-primary/20 hover:border-primary/40 transition-colors">
-                      <CardContent className="p-3 md:p-6">
-                        <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4">
-                          <div className="p-2 md:p-3 bg-muted rounded-lg">
-                            <BarChart3 className="h-6 w-6 md:h-8 md:w-8 text-primary" />
-                          </div>
-                          <div className="flex-1 text-center md:text-left">
-                            <h3 className="font-semibold text-base md:text-lg mb-2">Gesamtergebnislisten</h3>
-                            <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">Erstellen Sie Übersichten für alle 5 Durchgänge einer Liga</p>
-                            <Link href="/gesamtergebnisliste-generator">
-                              <Button className="w-full text-sm">
-                                <BarChart3 className="h-4 w-4 mr-2" />
-                                Gesamtergebnisliste erstellen
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                  
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-2 bg-muted/30 p-3 rounded-md">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <NativeSelect
-                        value={selectedYear}
-                        onValueChange={setSelectedYear}
-                        placeholder="Jahr wählen"
-                        options={years.map(year => ({ value: year, label: year }))}
-                        className="w-[120px] h-8 text-sm"
-                      />
-                    </div>
-                    <span className="text-xs text-muted-foreground">Jahr für hochgeladene Dokumente filtern</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {ligalisten.length === 0 ? (
-                  <EmptyState
-                    icon={FileText}
-                    title="Keine Ligalisten"
-                    description="Aktuell sind keine Ligalisten oder Handtabellen verfügbar"
-                  />
-                ) : filteredLigalisten.length === 0 ? (
-                  <EmptyState
-                    icon={Calendar}
-                    title={`Keine Dokumente für ${selectedYear}`}
-                    description="Wählen Sie ein anderes Jahr"
-                  />
-                ) : (
-                  <div className="space-y-4">
-                    <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-md p-3 flex items-start">
-                      <Filter className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-blue-800 dark:text-blue-200">
-                          Zeige Ligalisten & Handtabellen für <span className="font-medium">{selectedYear}</span>
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <LigaGrouping documents={filteredLigalisten} />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="ordnungen" className="space-y-4">
