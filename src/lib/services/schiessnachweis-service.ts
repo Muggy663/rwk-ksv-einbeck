@@ -13,54 +13,137 @@ export class SchießnachweisService {
     }
   }
 
+  // Wartet auf die Auth-Initialisierung und liefert die aktuelle User-ID (oder null).
+  private static async waitForUid(timeoutMs = 2000): Promise<string | null> {
+    const { auth } = await import('@/lib/firebase/config');
+    if (auth.currentUser) return auth.currentUser.uid;
+    const user = await new Promise<{ uid: string } | null>((resolve) => {
+      const timeout = setTimeout(() => resolve(null), timeoutMs);
+      const unsubscribe = auth.onAuthStateChanged((u) => {
+        clearTimeout(timeout);
+        unsubscribe();
+        resolve(u);
+      });
+    });
+    return user?.uid ?? null;
+  }
+
+  // Entfernt undefined-Werte (Firestore erlaubt kein undefined).
+  private static clean(eintrag: any): any {
+    const c: any = {};
+    Object.entries(eintrag).forEach(([key, value]) => {
+      if (value !== undefined) c[key] = value;
+    });
+    return c;
+  }
+
+  // Rohdaten (Firestore) → SchießEintrag mit echten Date-Objekten.
+  private static fromRaw(raw: any): SchießEintrag {
+    const datum = this.convertToDate(raw.datum);
+    const createdAt = this.convertToDate(raw.createdAt, datum);
+    return { ...raw, datum, createdAt } as SchießEintrag;
+  }
+
+  /**
+   * Migriert bei Bedarf das alte Datenmodell (alle Einträge in EINEM Dokument
+   * schiessnachweis_data/{uid} als Array 'einträge') in das neue Modell
+   * (ein Dokument pro Eintrag in der Subcollection .../eintraege/{id}).
+   *
+   * Grund: Ein einzelnes Dokument ist auf 1 MB begrenzt – bei vielen Einträgen
+   * würde das Speichern irgendwann fehlschlagen. Einzeldokumente skalieren
+   * unbegrenzt. Die Migration läuft automatisch beim ersten Zugriff pro Nutzer,
+   * genau einmal (danach ist das Array geleert und ein Flag gesetzt), und
+   * verliert keine Daten.
+   */
+  private static async migrateIfNeeded(uid: string): Promise<void> {
+    const { db } = await import('@/lib/firebase/config');
+    const { doc, getDoc, collection, writeBatch } = await import('firebase/firestore');
+
+    const parentRef = doc(db, 'schiessnachweis_data', uid);
+    const parentSnap = await getDoc(parentRef);
+    if (!parentSnap.exists()) return; // Nichts Altes vorhanden.
+
+    const data = parentSnap.data() as any;
+    const legacy = Array.isArray(data?.einträge) ? data.einträge : [];
+    if (data?.migratedToSubcollection === true || legacy.length === 0) {
+      return; // Bereits migriert oder nichts zu migrieren.
+    }
+
+    logDebug(`🔄 Migriere ${legacy.length} Schießnachweis-Einträge in Einzeldokumente …`);
+    const subRef = collection(db, 'schiessnachweis_data', uid, 'eintraege');
+
+    // In Firestore-Batches (max. 500 Operationen) schreiben.
+    // WICHTIG für Idempotenz: Als Dokument-ID wird die vorhandene eintrag.id
+    // verwendet. Fehlt sie ausnahmsweise, wird eine DETERMINISTISCHE Ersatz-ID
+    // aus der Array-Position gebildet (nicht Zufall) – so schreibt ein
+    // Wiederholungslauf (nach Abbruch oder parallel auf zwei Geräten) dasselbe
+    // Dokument erneut, statt ein Duplikat anzulegen.
+    for (let i = 0; i < legacy.length; i += 450) {
+      const batch = writeBatch(db);
+      legacy.slice(i, i + 450).forEach((eintrag: any, offset: number) => {
+        const index = i + offset;
+        const id = (eintrag && eintrag.id) ? String(eintrag.id) : `legacy_${index}`;
+        batch.set(doc(subRef, id), this.clean({ ...eintrag, id }));
+      });
+      await batch.commit();
+    }
+
+    // Legacy-Array leeren und Migration markieren (Daten bleiben als Einzeldocs erhalten).
+    const finalBatch = writeBatch(db);
+    finalBatch.set(parentRef, { einträge: [], migratedToSubcollection: true, migratedAt: new Date() }, { merge: true });
+    await finalBatch.commit();
+    logDebug('✅ Migration abgeschlossen.');
+  }
+
   static async getEinträge(): Promise<SchießEintrag[]> {
     if (typeof window === 'undefined') return [];
-    
+
     try {
-      const { auth, db } = await import('@/lib/firebase/config');
-      
-      // Warte auf Auth-Initialisierung
-      if (!auth.currentUser) {
-        await new Promise((resolve) => {
-          const unsubscribe = auth.onAuthStateChanged((user) => {
-            unsubscribe();
-            resolve(user);
-          });
-        });
-      }
-      
-      if (!auth.currentUser) {
+      const uid = await this.waitForUid();
+      if (!uid) {
         logDebug('⚠️ Benutzer nicht angemeldet - keine Daten verfügbar');
         return [];
       }
-      
-      const { doc, getDoc } = await import('firebase/firestore');
-      const docRef = doc(db, 'schiessnachweis_data', auth.currentUser.uid);
-      const docSnap = await getDoc(docRef);
-      
-      if (!docSnap.exists()) {
-        logDebug('📝 Keine Schießnachweis-Daten für User:', auth.currentUser.uid);
-        return [];
+
+      const { db } = await import('@/lib/firebase/config');
+      const { doc, getDoc, collection, getDocs } = await import('firebase/firestore');
+
+      // Alte Array-Daten bei Bedarf einmalig in Einzeldokumente migrieren.
+      // Schlägt die Migration fehl (Netz/Rechte), NICHT leer zurückgeben,
+      // sondern das noch vorhandene Legacy-Array als Fallback lesen – sonst
+      // würde die UI fälschlich „keine Einträge" zeigen, obwohl Daten da sind.
+      try {
+        await this.migrateIfNeeded(uid);
+      } catch (migErr) {
+        logError('Migration fehlgeschlagen, lese Legacy-Array als Fallback:', migErr);
+        const parentSnap = await getDoc(doc(db, 'schiessnachweis_data', uid));
+        const legacy = parentSnap.exists() ? ((parentSnap.data() as any)?.einträge || []) : [];
+        return (legacy as any[]).map((e) => this.fromRaw(e));
       }
-      
-      const data = docSnap.data();
-      const einträge = (data.einträge || []).map((eintrag: any) => {
-        const datum = this.convertToDate(eintrag.datum);
-        const createdAt = this.convertToDate(eintrag.createdAt, datum);
-        
-        return {
-          ...eintrag,
-          datum,
-          createdAt
-        };
-      });
-      
+
+      const subRef = collection(db, 'schiessnachweis_data', uid, 'eintraege');
+      const snap = await getDocs(subRef);
+
+      const einträge = snap.docs.map((d) => this.fromRaw({ ...d.data(), id: d.id }));
       logDebug(`✅ ${einträge.length} Einträge aus Datenbank geladen`);
       return einträge;
     } catch (error) {
       logError('Fehler beim Laden der Einträge aus Datenbank:', error);
       return [];
     }
+  }
+
+  // Liefert die Referenz auf die Einträge-Subcollection des angemeldeten Users
+  // und stellt sicher, dass eine evtl. nötige Legacy-Migration gelaufen ist.
+  private static async requireSubcollection() {
+    const uid = await this.waitForUid();
+    if (!uid) {
+      throw new Error('❌ Sie müssen angemeldet sein, um Einträge zu speichern.\n\nBitte melden Sie sich an unter /schiessnachweis/login');
+    }
+    await this.migrateIfNeeded(uid);
+    const { db } = await import('@/lib/firebase/config');
+    const { collection } = await import('firebase/firestore');
+    return { uid, db, subRef: collection(db, 'schiessnachweis_data', uid, 'eintraege') };
   }
 
   static async saveEintrag(eintrag: Omit<SchießEintrag, 'id' | 'createdAt'>): Promise<SchießEintrag> {
@@ -70,95 +153,30 @@ export class SchießnachweisService {
       createdAt: new Date()
     };
 
-    await this.mutateEinträge((aktuelle) => [...aktuelle, neuerEintrag]);
+    const { subRef } = await this.requireSubcollection();
+    const { doc, setDoc } = await import('firebase/firestore');
+    // Ein Dokument pro Eintrag – umgeht das 1-MB-Limit und vermeidet Lost Updates.
+    await setDoc(doc(subRef, neuerEintrag.id), this.clean(neuerEintrag));
+    logDebug('💾 Schießnachweis-Eintrag gespeichert');
     return neuerEintrag;
   }
 
   static async updateEintrag(id: string, updates: Partial<Omit<SchießEintrag, 'id' | 'createdAt'>>): Promise<SchießEintrag | null> {
-    let aktualisiert: SchießEintrag | null = null;
-    await this.mutateEinträge((aktuelle) => {
-      const index = aktuelle.findIndex(e => e.id === id);
-      if (index === -1) return aktuelle; // nichts zu tun
-      const kopie = [...aktuelle];
-      kopie[index] = { ...kopie[index], ...updates };
-      aktualisiert = kopie[index];
-      return kopie;
-    });
-    return aktualisiert;
+    const { subRef } = await this.requireSubcollection();
+    const { doc, getDoc, updateDoc } = await import('firebase/firestore');
+    const ref = doc(subRef, id);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return null;
+
+    await updateDoc(ref, this.clean(updates));
+    const updated = await getDoc(ref);
+    return this.fromRaw({ ...updated.data(), id });
   }
 
   static async deleteEintrag(id: string): Promise<void> {
-    await this.mutateEinträge((aktuelle) => aktuelle.filter(e => e.id !== id));
-  }
-
-  /**
-   * Führt eine Änderung an der Eintrags-Liste in einer Firestore-TRANSAKTION
-   * aus. Wichtig gegen Race Conditions: Alle Einträge eines Users liegen in
-   * EINEM Dokument (schiessnachweis_data/{uid}) als Array. Früher wurde das
-   * Array per getEinträge() gelesen, im Speicher mutiert und mit setDoc
-   * komplett zurückgeschrieben – schrieben zwei Geräte gleichzeitig, ging die
-   * Änderung des einen verloren (lost update). Die Transaktion liest das
-   * Dokument frisch innerhalb der Transaktion und wird bei einem parallelen
-   * Schreibzugriff von Firestore automatisch wiederholt.
-   *
-   * @param mutator bekommt die aktuellen Einträge und gibt die neue Liste zurück.
-   */
-  private static async mutateEinträge(
-    mutator: (aktuelle: SchießEintrag[]) => SchießEintrag[],
-  ): Promise<void> {
-    const { auth, db } = await import('@/lib/firebase/config');
-
-    // Auf Auth-Initialisierung warten (max. 2s), analog zum bisherigen Verhalten.
-    if (!auth.currentUser) {
-      await new Promise((resolve) => {
-        const timeout = setTimeout(() => resolve(null), 2000);
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-          clearTimeout(timeout);
-          unsubscribe();
-          resolve(user);
-        });
-      });
-    }
-    if (!auth.currentUser) {
-      throw new Error('❌ Sie müssen angemeldet sein, um Einträge zu speichern.\n\nBitte melden Sie sich an unter /schiessnachweis/login');
-    }
-
-    const { doc, runTransaction } = await import('firebase/firestore');
-    const ref = doc(db, 'schiessnachweis_data', auth.currentUser.uid);
-
-    try {
-      await runTransaction(db, async (tx) => {
-        const snap = await tx.get(ref);
-        const data = snap.exists() ? snap.data() : {};
-        // Rohdaten in echte Date-Objekte wandeln (wie in getEinträge).
-        const aktuelle: SchießEintrag[] = ((data?.einträge as any[]) || []).map((e: any) => {
-          const datum = this.convertToDate(e.datum);
-          const createdAt = this.convertToDate(e.createdAt, datum);
-          return { ...e, datum, createdAt };
-        });
-
-        const neu = mutator(aktuelle);
-
-        // undefined-Werte entfernen (Firestore mag kein undefined).
-        const cleaned = neu.map((eintrag) => {
-          const c: any = {};
-          Object.entries(eintrag).forEach(([key, value]) => {
-            if (value !== undefined) c[key] = value;
-          });
-          return c;
-        });
-
-        tx.set(ref, {
-          einträge: cleaned,
-          lastModified: new Date(),
-          deviceId: this.getDeviceId(),
-        });
-      });
-      logDebug('💾 Schießnachweis-Eintrag transaktional gespeichert');
-    } catch (error) {
-      logError('Transaktionales Speichern fehlgeschlagen:', error);
-      throw error;
-    }
+    const { subRef } = await this.requireSubcollection();
+    const { doc, deleteDoc } = await import('firebase/firestore');
+    await deleteDoc(doc(subRef, id));
   }
   
   static async getStatistik(): Promise<SchießStatistik> {
@@ -229,37 +247,39 @@ export class SchießnachweisService {
         throw new Error('Kein gültiges Datenformat erkannt.');
       }
 
-      let importCount = 0;
+      const { db, subRef } = await this.requireSubcollection();
+      const { doc, writeBatch } = await import('firebase/firestore');
 
-      // Merge innerhalb der Transaktion gegen die frisch gelesenen Einträge,
-      // damit paralleles Speichern auf anderen Geräten nicht überschrieben wird.
-      await this.mutateEinträge((existingEinträge) => {
-        const allEinträge = [...existingEinträge];
-        importCount = 0;
+      // Vorhandene Einträge zur Duplikat-Erkennung laden.
+      const vorhandene = await this.getEinträge();
 
-        importedEinträge.forEach((imported: any) => {
-          const importDatum = new Date(imported.datum);
-          const exists = allEinträge.some(existing =>
-            existing.datum.getTime() === importDatum.getTime() &&
-            existing.disziplin === imported.disziplin &&
-            existing.ergebnis === imported.ergebnis
-          );
-
-          if (!exists) {
-            allEinträge.push({
-              ...imported,
-              id: Date.now().toString() + '_' + Math.random().toString(36).substring(2, 9),
-              datum: importDatum,
-              createdAt: new Date(imported.createdAt || imported.datum)
-            });
-            importCount++;
-          }
-        });
-
-        return allEinträge;
+      // Neue (nicht-doppelte) Einträge sammeln.
+      const neue = importedEinträge.filter((imported: any) => {
+        const importDatum = new Date(imported.datum);
+        return !vorhandene.some(existing =>
+          existing.datum.getTime() === importDatum.getTime() &&
+          existing.disziplin === imported.disziplin &&
+          existing.ergebnis === imported.ergebnis
+        );
       });
 
-      return importCount;
+      // In Firestore-Batches (max. 500 Operationen) schreiben.
+      for (let i = 0; i < neue.length; i += 450) {
+        const batch = writeBatch(db);
+        for (const imported of neue.slice(i, i + 450)) {
+          const id = Date.now().toString() + '_' + Math.random().toString(36).substring(2, 9);
+          const eintrag = this.clean({
+            ...imported,
+            id,
+            datum: new Date(imported.datum),
+            createdAt: new Date(imported.createdAt || imported.datum),
+          });
+          batch.set(doc(subRef, id), eintrag);
+        }
+        await batch.commit();
+      }
+
+      return neue.length;
     } catch (error) {
       logError('Fehler beim Importieren der Daten:', error);
       const errorMessage = error instanceof Error ? error.message : 'Ungültiges Datenformat';
@@ -438,15 +458,4 @@ export class SchießnachweisService {
     return '\uFEFF' + csvContent;
   }
 
-  // Hilfsfunktion für Device-ID
-  private static getDeviceId(): string {
-    if (typeof window === 'undefined') return 'server';
-    
-    let deviceId = localStorage.getItem('schiessnachweis_device_id');
-    if (!deviceId) {
-      deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
-      localStorage.setItem('schiessnachweis_device_id', deviceId);
-    }
-    return deviceId;
-  }
 }
