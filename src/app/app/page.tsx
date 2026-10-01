@@ -118,6 +118,33 @@ export default function AppPage() {
           <CardTitle>❓ Häufige Fragen</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <details className="border rounded-lg p-4" open>
+            <summary className="cursor-pointer font-medium">
+              📲 Ausführliche Installationsanleitung (Schritt für Schritt)
+            </summary>
+            <div className="mt-3 text-sm text-muted-foreground space-y-3">
+              <p>
+                Da die App nicht aus dem Play Store kommt, fragt Android beim ersten Mal nach einer Erlaubnis. Das ist normal und sicher – so geht's:
+              </p>
+              <ol className="list-decimal list-inside space-y-2">
+                <li><strong>Herunterladen:</strong> Oben auf „Aktuelle App-Version herunterladen" tippen. Auf der GitHub-Seite unter „Assets" die Datei mit der Endung <strong>.apk</strong> antippen.</li>
+                <li><strong>Download bestätigen:</strong> Falls eine Warnung „Datei könnte schädlich sein" erscheint, auf <strong>„Trotzdem herunterladen"</strong> tippen. Die Datei ist in Ordnung.</li>
+                <li><strong>Datei öffnen:</strong> Nach dem Download die <strong>.apk-Datei öffnen</strong> (über die Download-Benachrichtigung oder in der App „Dateien" → Downloads).</li>
+                <li><strong>Installation aus unbekannter Quelle erlauben:</strong> Beim ersten Mal zeigt Android „Aus Sicherheitsgründen …". Dann auf <strong>„Einstellungen"</strong> tippen und den Schalter <strong>„Aus dieser Quelle erlauben"</strong> (bzw. „Dieser App vertrauen") aktivieren. Danach zurück.</li>
+                <li><strong>Installieren:</strong> Auf <strong>„Installieren"</strong> tippen und kurz warten.</li>
+                <li><strong>Öffnen & anmelden:</strong> App starten und mit deinem RWK-Konto einloggen – fertig!</li>
+              </ol>
+              <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+                <p className="text-blue-800 dark:text-blue-200">
+                  💡 <strong>Keine Sorge wegen der Warnung:</strong> Android warnt generell bei Apps außerhalb des Play Stores – unabhängig davon, ob die App sicher ist. Diese App wird vom RWK-Leiter selbst bereitgestellt.
+                </p>
+              </div>
+              <p className="text-xs">
+                Die Schalter heißen je nach Android-Version und Hersteller leicht anders (z. B. „Unbekannte Apps installieren"). Du musst die Erlaubnis nur einmal geben.
+              </p>
+            </div>
+          </details>
+
           <details className="border rounded-lg p-4">
             <summary className="cursor-pointer font-medium">
               Wie aktualisiere ich die App?
