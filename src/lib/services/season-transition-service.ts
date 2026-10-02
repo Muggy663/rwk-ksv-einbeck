@@ -162,7 +162,7 @@ export async function calculateLeagueStandings(leagueId: string, competitionYear
  * Wichtig: Nicht allein am Namen "luftgewehr" festmachen — sonst würde die
  * LG-Auflage-Liga fälschlich als offene Klasse behandelt.
  */
-function istOffeneKlasse(league: { type?: string; name?: string } | null | undefined): boolean {
+export function istOffeneKlasse(league: { type?: string; name?: string } | null | undefined): boolean {
   if (!league) return false;
   const type = (league.type || '').toUpperCase();
   const name = (league.name || '').toLowerCase();
@@ -183,6 +183,116 @@ function istOffeneKlasse(league: { type?: string; name?: string } | null | undef
  * Generiert Auf-/Abstiegsvorschläge basierend auf RWK-Ordnung §16
  * Berücksichtigt Abmeldungen und Ligagrößen-Anpassungen
  */
+export type AufAbstiegAction = 'promote' | 'relegate' | 'stay';
+
+export interface AufAbstiegEntscheidung {
+  action: AufAbstiegAction;
+  reason: string;
+}
+
+export interface AufAbstiegInput {
+  /** Platzierung des Teams in seiner Liga (1 = Meister). */
+  position: number;
+  /** Anzahl Teams (wertbare Mannschaften) in der Liga. */
+  totalTeams: number;
+  /** Gesamtringe des Teams. */
+  totalScore: number;
+  /** Ist die aktuelle Liga eine offene Klasse (kein Auf-/Abstieg)? */
+  istOffen: boolean;
+  /** Ist die aktuelle Liga die höchste Kreisliga (Kreisoberliga)? */
+  istHoechsteLiga: boolean;
+  /** Ist die aktuelle Liga die niedrigste Liga (2. Kreisklasse)? */
+  istNiedrigsteLiga: boolean;
+  /** Gibt es eine direkt höhere Liga? */
+  hatHoehereLiga: boolean;
+  /** Gibt es eine direkt niedrigere Liga? */
+  hatNiedrigereLiga: boolean;
+  /** Wurde das Team nach Meldeschluss abgemeldet? */
+  abgemeldet: boolean;
+  /** Ringe des Vorletzten der höheren Liga (für den Zweiten-Vergleich), falls vorhanden. */
+  ringeVorletzterHoehere?: number | null;
+  /** Ringe des Zweiten der niedrigeren Liga (für den Vorletzten-Vergleich), falls vorhanden. */
+  ringeZweiterNiedrigere?: number | null;
+  /** Anzahl Plätze, um die diese Liga verkleinert werden soll (0 = keine Verkleinerung). */
+  sizeReduction: number;
+}
+
+/**
+ * Reine Entscheidungslogik für Auf-/Abstieg EINES Teams nach RWK-Ordnung §16.
+ * Enthält keinerlei Firebase-Zugriff und ist damit vollständig unit-testbar.
+ *
+ * Regeln:
+ *   - Abmeldung nach Meldeschluss      -> automatischer Abstieg (sofern niedrigere Liga existiert).
+ *   - Meister (Platz 1)                -> Aufstieg, außer offene Klasse / höchste Liga.
+ *   - Letzter (Platz = totalTeams)     -> Abstieg, außer offene Klasse / niedrigste Liga.
+ *   - Zweiter (Platz 2)                -> Aufstieg, wenn Ringe > Vorletzter der höheren Liga.
+ *   - Vorletzter (Platz totalTeams-1)  -> Abstieg, wenn Ringe <= Zweiter der niedrigeren Liga.
+ *   - Ligaverkleinerung                -> zusätzliche Absteiger von unten.
+ * Gleichstand wird zugunsten des höherklassigen Teams ausgelegt (striktes >).
+ */
+export function ermittleTeamAufAbstieg(input: AufAbstiegInput): AufAbstiegEntscheidung {
+  const {
+    position, totalTeams, totalScore, istOffen, istHoechsteLiga, istNiedrigsteLiga,
+    hatHoehereLiga, hatNiedrigereLiga, abgemeldet, ringeVorletzterHoehere,
+    ringeZweiterNiedrigere, sizeReduction,
+  } = input;
+
+  // Abmeldung hat Vorrang vor allem anderen.
+  if (abgemeldet) {
+    return hatNiedrigereLiga
+      ? { action: 'relegate', reason: 'Nach Meldeschluss abgemeldet - steigt automatisch ab (RWK-Ordnung §16)' }
+      : { action: 'stay', reason: 'Nach Meldeschluss abgemeldet - verbleibt (niedrigste Liga)' };
+  }
+
+  // Meister
+  if (position === 1) {
+    if (istOffen) return { action: 'stay', reason: 'Meister - verbleibt (offene Gruppe, keine Auf-/Abstiege)' };
+    if (hatHoehereLiga && !istHoechsteLiga) return { action: 'promote', reason: 'Meister - steigt automatisch auf' };
+    return { action: 'stay', reason: 'Meister - verbleibt (höchste Liga)' };
+  }
+
+  // Letzter
+  if (position === totalTeams) {
+    if (istOffen) return { action: 'stay', reason: 'Letzter Platz - verbleibt (offene Gruppe, keine Auf-/Abstiege)' };
+    if (istNiedrigsteLiga) return { action: 'stay', reason: 'Letzter Platz - verbleibt (niedrigste Liga)' };
+    if (hatNiedrigereLiga && sizeReduction === 0) return { action: 'relegate', reason: 'Letzter Platz - steigt automatisch ab' };
+    if (sizeReduction > 0) return { action: 'relegate', reason: `Letzter Platz - steigt ab (Ligaverkleinerung um ${sizeReduction} Teams)` };
+    return { action: 'stay', reason: 'Letzter Platz - verbleibt (niedrigste Liga)' };
+  }
+
+  // Zweiter: Aufstieg bei besserem Ergebnis als Vorletzter der höheren Liga.
+  if (position === 2 && hatHoehereLiga) {
+    if (istOffen) return { action: 'stay', reason: 'Zweiter - verbleibt (offene Gruppe, keine Auf-/Abstiege)' };
+    if (ringeVorletzterHoehere === null || ringeVorletzterHoehere === undefined) {
+      return { action: 'stay', reason: 'Zweiter - verbleibt (kein Vergleichsteam gefunden)' };
+    }
+    if (totalScore > ringeVorletzterHoehere) {
+      return { action: 'promote', reason: `Zweiter - steigt auf (${totalScore} > ${ringeVorletzterHoehere} Ringe)` };
+    }
+    return { action: 'stay', reason: `Zweiter - verbleibt (${totalScore} <= ${ringeVorletzterHoehere} Ringe)` };
+  }
+
+  // Vorletzter: Abstieg, wenn Zweiter der niedrigeren Liga besser/gleich ist (Kehrseite zum Zweiten).
+  if (position === totalTeams - 1 && hatNiedrigereLiga) {
+    if (istOffen) return { action: 'stay', reason: 'Vorletzter - verbleibt (offene Gruppe, keine Auf-/Abstiege)' };
+    if (istNiedrigsteLiga) return { action: 'stay', reason: 'Vorletzter - verbleibt (niedrigste Liga)' };
+    if (ringeZweiterNiedrigere === null || ringeZweiterNiedrigere === undefined) {
+      return { action: 'stay', reason: 'Vorletzter - verbleibt (kein Vergleichsteam gefunden)' };
+    }
+    if (totalScore > ringeZweiterNiedrigere) {
+      return { action: 'stay', reason: `Vorletzter - verbleibt (${totalScore} > ${ringeZweiterNiedrigere} Ringe)` };
+    }
+    return { action: 'relegate', reason: `Vorletzter - steigt ab (${totalScore} <= ${ringeZweiterNiedrigere} Ringe)` };
+  }
+
+  // Ligaverkleinerung: zusätzliche Absteiger von unten.
+  if (sizeReduction > 0 && position > totalTeams - sizeReduction) {
+    return { action: 'relegate', reason: `Platz ${position} - steigt ab (Ligaverkleinerung: ${sizeReduction} weniger Teams)` };
+  }
+
+  return { action: 'stay', reason: 'Verbleibt in aktueller Liga' };
+}
+
 export async function generatePromotionRelegationSuggestions(
   leagueId: string, 
   competitionYear: number,
@@ -211,16 +321,7 @@ export async function generatePromotionRelegationSuggestions(
 
     // Prüfe auf Abmeldungen in dieser Liga
     const withdrawnInThisLeague = standings.filter(team => withdrawnTeams.includes(team.teamId));
-    
-    // Berechne verfügbare Plätze basierend auf Abmeldungen aus höheren Ligen
-    const withdrawnFromHigherLeagues = allLeagues
-      .filter(league => (league.order || 0) < (currentLeague.order || 0))
-      .reduce((count) => {
-        // Hier würde man die Abmeldungen aus höheren Ligen zählen
-        return count;
-      }, 0);
-    
-    const additionalPromotionSlots = withdrawnFromHigherLeagues;
+
     const targetSize = targetLeagueSizes.get(leagueId) || totalTeams;
     const sizeReduction = totalTeams - targetSize;
 
@@ -228,106 +329,36 @@ export async function generatePromotionRelegationSuggestions(
     const higherLeagueStandings = higherLeague ? await calculateLeagueStandings(higherLeague.id, competitionYear) : [];
     const lowerLeagueStandings = lowerLeague ? await calculateLeagueStandings(lowerLeague.id, competitionYear) : [];
 
-    for (const team of standings) {
-      let action: 'promote' | 'relegate' | 'stay' | 'compare' = 'stay';
-      let reason = 'Verbleibt in aktueller Liga';
-      let targetLeague = undefined;
+    // Hinweis: Das AUFFÜLLEN unterbesetzter Ligen nach Abmeldungen passiert bewusst
+    // NICHT hier, sondern über berechneLigaAusgleich (ringstärkste Mannschaft der
+    // Liga darunter rückt nach) + den manuellen Einteilungs-Editor. Die RWK-Ordnung
+    // behandelt Abmeldung/Bezirks-Rückkehrer als Ermessensfälle des RWK-Leiters.
 
-      // Abgemeldete Teams automatisch absteigen lassen
-      if (withdrawnTeams.includes(team.teamId)) {
-        if (lowerLeague) {
-          action = 'relegate';
-          reason = 'Nach Meldeschluss abgemeldet - steigt automatisch ab (RWK-Ordnung §16)';
-          targetLeague = lowerLeague.name;
-        } else {
-          reason = 'Nach Meldeschluss abgemeldet - verbleibt (niedrigste Liga)';
-        }
-      }
-      // Meister steigt auf (außer höchste Liga oder offene Klassen)
-      else if (team.position === 1) {
-        const isOpenGroup = istOffeneKlasse(currentLeague);
-        if (isOpenGroup) {
-          reason = 'Meister - verbleibt (offene Gruppe, keine Auf-/Abstiege)';
-        } else if (higherLeague && !currentLeague.name.includes('Kreisoberliga')) {
-          action = 'promote';
-          reason = 'Meister - steigt automatisch auf';
-          targetLeague = higherLeague.name;
-        } else {
-          reason = 'Meister - verbleibt (höchste Liga)';
-        }
-      } else if (team.position === totalTeams) {
-        // Letzter steigt ab (außer bei Ligaverkleinerung, offene Klassen oder niedrigste Liga)
-        const isOpenGroup = istOffeneKlasse(currentLeague);
-        if (isOpenGroup) {
-          reason = 'Letzter Platz - verbleibt (offene Gruppe, keine Auf-/Abstiege)';
-        } else if (currentLeague.name.toLowerCase().includes('2. kreisklasse')) {
-          reason = 'Letzter Platz - verbleibt (niedrigste Liga)';
-        } else if (lowerLeague && sizeReduction === 0) {
-          action = 'relegate';
-          reason = 'Letzter Platz - steigt automatisch ab';
-          targetLeague = lowerLeague.name;
-        } else if (sizeReduction > 0) {
-          action = 'relegate';
-          reason = `Letzter Platz - steigt ab (Ligaverkleinerung um ${sizeReduction} Teams)`;
-          targetLeague = lowerLeague?.name || 'Niedrigere Liga';
-        } else {
-          reason = 'Letzter Platz - verbleibt (niedrigste Liga)';
-        }
-      } else if (team.position === 2 && higherLeague) {
-        const isOpenGroup = istOffeneKlasse(currentLeague);
-        if (isOpenGroup) {
-          reason = 'Zweiter - verbleibt (offene Gruppe, keine Auf-/Abstiege)';
-        } else {
-        // Zweiter: Vergleich mit Vorletztem der höheren Liga
-        if (additionalPromotionSlots > 0) {
-          action = 'promote';
-          reason = 'Zweiter - steigt auf (zusätzlicher Platz durch Abmeldung aus höherer Liga)';
-          targetLeague = higherLeague.name;
-        } else {
-          // Vorletzten der höheren Liga finden und vergleichen
-          const penultimateTeam = higherLeagueStandings.find(t => t.position === higherLeagueStandings.length - 1);
-          
-          if (penultimateTeam && team.totalScore > penultimateTeam.totalScore) {
-            action = 'promote';
-            reason = `Zweiter - steigt auf (${team.totalScore} > ${penultimateTeam.totalScore} Ringe vs. ${penultimateTeam.teamName})`;
-            targetLeague = higherLeague.name;
-          } else if (penultimateTeam) {
-            reason = `Zweiter - verbleibt (${team.totalScore} <= ${penultimateTeam.totalScore} Ringe vs. ${penultimateTeam.teamName})`;
-          } else {
-            reason = 'Zweiter - verbleibt (kein Vergleichsteam gefunden)';
-          }
-        }
-        }
-      } else if (team.position === totalTeams - 1 && lowerLeague) {
-        const isOpenGroup = istOffeneKlasse(currentLeague);
-        const isLowestLeague = currentLeague.name.toLowerCase().includes('2. kreisklasse');
-        if (isOpenGroup || isLowestLeague) {
-          reason = isOpenGroup ? 'Vorletzter - verbleibt (offene Gruppe, keine Auf-/Abstiege)' : 'Vorletzter - verbleibt (niedrigste Liga)';
-        } else {
-        // Vorletzter: Vergleich mit Zweitem der niedrigeren Liga
-        const secondTeam = lowerLeagueStandings.find(t => t.position === 2);
-        
-        if (secondTeam && team.totalScore > secondTeam.totalScore) {
-          reason = `Vorletzter - verbleibt (${team.totalScore} > ${secondTeam.totalScore} Ringe vs. ${secondTeam.teamName})`;
-        } else if (secondTeam) {
-          action = 'relegate';
-          reason = `Vorletzter - steigt ab (${team.totalScore} <= ${secondTeam.totalScore} Ringe vs. ${secondTeam.teamName})`;
-          targetLeague = lowerLeague.name;
-        } else {
-          reason = 'Vorletzter - verbleibt (kein Vergleichsteam gefunden)';
-        }
-        }
-      } else if (sizeReduction > 0 && team.position > totalTeams - sizeReduction) {
-        // Zusätzliche Absteiger bei Ligaverkleinerung
-        action = 'relegate';
-        reason = `Platz ${team.position} - steigt ab (Ligaverkleinerung: ${sizeReduction} weniger Teams)`;
-        targetLeague = lowerLeague?.name || 'Niedrigere Liga';
-      } else if (additionalPromotionSlots > 1 && team.position <= 2 + additionalPromotionSlots - 1) {
-        // Zusätzliche Aufsteiger bei vielen Abmeldungen aus höheren Ligen
-        action = 'promote';
-        reason = `Platz ${team.position} - steigt auf (${additionalPromotionSlots} zusätzliche Plätze durch Abmeldungen)`;
-        targetLeague = higherLeague?.name || 'Höhere Liga';
-      }
+    for (const team of standings) {
+      // Reine Entscheidungslogik (testbar) – ohne Firebase.
+      const penultimateHigher = higherLeagueStandings.find(t => t.position === higherLeagueStandings.length - 1);
+      const secondLower = lowerLeagueStandings.find(t => t.position === 2);
+      const entscheidung = ermittleTeamAufAbstieg({
+        position: team.position,
+        totalTeams,
+        totalScore: team.totalScore,
+        istOffen: istOffeneKlasse(currentLeague),
+        istHoechsteLiga: currentLeague.name.includes('Kreisoberliga'),
+        istNiedrigsteLiga: currentLeague.name.toLowerCase().includes('2. kreisklasse'),
+        hatHoehereLiga: !!higherLeague,
+        hatNiedrigereLiga: !!lowerLeague,
+        abgemeldet: withdrawnTeams.includes(team.teamId),
+        ringeVorletzterHoehere: penultimateHigher?.totalScore ?? null,
+        ringeZweiterNiedrigere: secondLower?.totalScore ?? null,
+        sizeReduction,
+      });
+
+      const action = entscheidung.action;
+      const reason = entscheidung.reason;
+      const targetLeague =
+        action === 'promote' ? higherLeague?.name :
+        action === 'relegate' ? lowerLeague?.name :
+        undefined;
 
       suggestions.push({
         teamId: team.teamId,
@@ -348,9 +379,6 @@ export async function generatePromotionRelegationSuggestions(
     }
     if (sizeReduction > 0) {
       logDebug(`Liga ${currentLeague.name}: Verkleinerung um ${sizeReduction} Teams geplant`);
-    }
-    if (additionalPromotionSlots > 0) {
-      logDebug(`Liga ${currentLeague.name}: ${additionalPromotionSlots} zusätzliche Aufstiegsplätze verfügbar`);
     }
 
     return suggestions;
