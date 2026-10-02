@@ -366,22 +366,29 @@ export function useRwkTabellenData() {
           
           // Berechne Team-Grunddaten mit zentralem Service
           const teamScores = scoresByTeam.get(teamData.id) || [];
-          
+
+          // Einzelmeldung erkennen: weniger als 3 Schützen = keine echte Mannschaft.
+          // (Namen mit "Einzel" werden bereits weiter oben herausgefiltert.)
+          const anzahlSchuetzen = Array.isArray(teamData.shooterIds) ? teamData.shooterIds.length : 0;
+          const istEinzelwertung = anzahlSchuetzen < 3;
+
+          // Bei einer Einzelwertung werden pro Durchgang die tatsächlich gemeldeten
+          // Schützen gewertet (1 oder 2), damit ein Durchgang nicht fälschlich leer
+          // bleibt, nur weil keine 3 Schützen vorhanden sind. Echte Mannschaften: beste 3.
+          const wertungsSchuetzen = istEinzelwertung && anzahlSchuetzen > 0 ? anzahlSchuetzen : 3;
+
           const calculationResult = TeamCalculationService.calculateTeamResults(
             teamData.id,
             teamScores,
             numRoundsForCompetition,
             substitutions,
-            teamData.name
+            teamData.name,
+            wertungsSchuetzen
           );
           
           const roundResults = calculationResult.roundResults;
           const teamTotal = calculationResult.totalScore;
           const numScoredRds = calculationResult.numScoredRounds;
-
-          // Einzelmeldung erkennen: weniger als 3 Schützen = keine echte Mannschaft.
-          // (Namen mit "Einzel" werden bereits weiter oben herausgefiltert.)
-          const istEinzelwertung = (Array.isArray(teamData.shooterIds) ? teamData.shooterIds.length : 0) < 3;
 
           const teamDisplayItem: TeamDisplay = { 
             ...teamData, 

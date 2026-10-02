@@ -48,9 +48,18 @@ export class TeamCalculationService {
     teamScores: ScoreEntry[],
     numRounds: number,
     substitutions: Map<string, SubstitutionInfo>,
-    teamName?: string
+    teamName?: string,
+    /**
+     * Mindest-/Wertungsanzahl Schützen pro Durchgang. Standard: 3 (echte
+     * Mannschaft, beste 3 zählen). Für Einzelwertungen (1-2 gemeldete Schützen)
+     * wird hier die tatsächliche Schützenzahl übergeben, damit ein Durchgang
+     * auch mit weniger als 3 Schützen gewertet wird.
+     */
+    minShootersForScore: number = MAX_SHOOTERS_PER_TEAM
   ): TeamCalculationResult {
     const warnings: string[] = [];
+    // Mindestens 1, höchstens die regulären 3 Wertungsschützen.
+    const wertungsSchuetzen = Math.max(1, Math.min(minShootersForScore, MAX_SHOOTERS_PER_TEAM));
     
     // 1. Deduplizierung (Original bevorzugen, neuestes Timestamp)
     const dedupedScores = deduplicateScores(teamScores, {
@@ -79,11 +88,11 @@ export class TeamCalculationService {
     // 3. Gruppiere nach Durchgang
     const scoresByRound = groupScoresByRound(filteredScores, numRounds);
     
-    // 4. Berechne beste 3 pro Durchgang
-    const roundResults = this.calculateBestThreePerRound(scoresByRound, numRounds);
+    // 4. Berechne beste N pro Durchgang (N = wertungsSchuetzen, i.d.R. 3)
+    const roundResults = this.calculateBestThreePerRound(scoresByRound, numRounds, wertungsSchuetzen);
     
     // 5. Validierung & Warnings
-    this.validateResults(roundResults, scoresByRound, warnings, teamName || teamId);
+    this.validateResults(roundResults, scoresByRound, warnings, teamName || teamId, wertungsSchuetzen);
     
     // 6. Gesamt-Berechnung
     return this.calculateTotals(roundResults, numRounds, warnings);
@@ -98,7 +107,8 @@ export class TeamCalculationService {
    */
   private static calculateBestThreePerRound(
     scoresByRound: Map<number, number[]>,
-    numRounds: number
+    numRounds: number,
+    wertungsSchuetzen: number = MAX_SHOOTERS_PER_TEAM
   ): { [key: string]: number | null } {
     const results: { [key: string]: number | null } = {};
     
@@ -110,13 +120,14 @@ export class TeamCalculationService {
         .filter(s => typeof s === 'number' && !isNaN(s))
         .sort((a, b) => b - a);
       
-      const best3 = validScores.slice(0, MAX_SHOOTERS_PER_TEAM);
+      const besteN = validScores.slice(0, wertungsSchuetzen);
       
       // Summiere mit Rundung pro Score (verhindert Fließkomma-Fehler)
-      const sum = best3.reduce((total, score) => total + Math.round(score), 0);
+      const sum = besteN.reduce((total, score) => total + Math.round(score), 0);
       
-      // Nur setzen wenn genau 3 Schützen vorhanden
-      results[`dg${r}`] = best3.length === MAX_SHOOTERS_PER_TEAM ? sum : null;
+      // Nur setzen, wenn die geforderte Anzahl Schützen vorhanden ist
+      // (für echte Mannschaften 3, für Einzelwertungen die gemeldete Anzahl).
+      results[`dg${r}`] = besteN.length === wertungsSchuetzen ? sum : null;
     }
     
     return results;
@@ -134,28 +145,29 @@ export class TeamCalculationService {
     roundResults: { [key: string]: number | null },
     scoresByRound: Map<number, number[]>,
     warnings: string[],
-    teamName: string
+    teamName: string,
+    wertungsSchuetzen: number = MAX_SHOOTERS_PER_TEAM
   ): void {
     scoresByRound.forEach((scores, round) => {
       const validScores = scores.filter(s => typeof s === 'number' && !isNaN(s));
       const roundKey = `dg${round}`;
       
-      // Warnung: Zu viele Schützen
-      if (validScores.length > MAX_SHOOTERS_PER_TEAM + 1) {
-        const warning = `DG${round}: ${validScores.length} Schützen (erwartet: max 4)`;
+      // Warnung: Zu viele Schützen (ein Ersatzschütze über der Wertungszahl ist ok)
+      if (validScores.length > wertungsSchuetzen + 1) {
+        const warning = `DG${round}: ${validScores.length} Schützen (erwartet: max ${wertungsSchuetzen + 1})`;
         warnings.push(warning);
         logWarn(`Team ${teamName}: ${warning}`);
       }
       
       // Warnung: Zu wenige Schützen aber Ergebnis gesetzt
-      if (validScores.length < MAX_SHOOTERS_PER_TEAM && roundResults[roundKey] !== null) {
+      if (validScores.length < wertungsSchuetzen && roundResults[roundKey] !== null) {
         const warning = `DG${round}: Nur ${validScores.length} Schützen, aber Ergebnis gesetzt`;
         warnings.push(warning);
         logWarn(`Team ${teamName}: ${warning}`);
       }
       
       // Warnung: Genug Schützen aber kein Ergebnis
-      if (validScores.length >= MAX_SHOOTERS_PER_TEAM && roundResults[roundKey] === null) {
+      if (validScores.length >= wertungsSchuetzen && roundResults[roundKey] === null) {
         const warning = `DG${round}: ${validScores.length} Schützen vorhanden, aber kein Ergebnis`;
         warnings.push(warning);
         logWarn(`Team ${teamName}: ${warning}`);

@@ -9,6 +9,14 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     globals: true,
+    // Dummy-Firebase-Werte, damit Module, die src/lib/firebase/config.ts
+    // transitiv importieren, in Tests laden können. KEINE echten Credentials –
+    // in Unit-Tests wird nie eine echte Firebase-Verbindung aufgebaut.
+    env: {
+      NEXT_PUBLIC_FIREBASE_API_KEY: 'test-api-key',
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: 'test.firebaseapp.com',
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: 'test-project',
+    },
   },
   resolve: {
     alias: {
