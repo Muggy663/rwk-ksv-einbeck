@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Mail, Users, FileText, Send, Plus, Trash2, Edit, Save, X, Search, UserCog } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, addDoc, query, where, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import Link from 'next/link';
 
 interface EmailContact {
@@ -53,8 +53,6 @@ export default function EmailSystemPage() {
   // Contacts & Groups
   const [contacts, setContacts] = useState<EmailContact[]>([]);
   const [groups, setGroups] = useState<EmailGroup[]>([]);
-  const [leagues, setLeagues] = useState<any[]>([]);
-  const [selectedLeague, setSelectedLeague] = useState<string>('alle');
   const [isLoading, setIsLoading] = useState(false);
   // Kontakte-Tab: Suche + Rollenfilter
   const [contactSearch, setContactSearch] = useState('');
@@ -82,7 +80,6 @@ export default function EmailSystemPage() {
   useEffect(() => {
     loadContacts();
     loadGroups();
-    loadLeagues();
   }, []);
 
   const loadContacts = async () => {
@@ -221,33 +218,8 @@ export default function EmailSystemPage() {
     setGroups(defaultGroups);
   };
 
-  const loadLeagues = async () => {
-    try {
-      const seasonsQuery = query(collection(db, 'seasons'), where('status', '==', 'Laufend'));
-      const seasonsSnapshot = await getDocs(seasonsQuery);
-      const seasonIds = seasonsSnapshot.docs.map(doc => doc.id);
-      
-      if (seasonIds.length > 0) {
-        const leaguesQuery = query(collection(db, 'rwk_leagues'), where('seasonId', 'in', seasonIds));
-        const leaguesSnapshot = await getDocs(leaguesQuery);
-        const loadedLeagues = leaguesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setLeagues(loadedLeagues);
-      }
-    } catch (error) {
-      logError('Fehler beim Laden der Ligen:', error);
-    }
-  };
-
   const getFilteredContacts = (): EmailContact[] => {
-    let filtered = contacts.filter(c => c.isActive);
-    
-    // Liga-Filter anwenden (hier würde die Liga-Logik kommen)
-    if (selectedLeague !== 'alle') {
-      // TODO: Liga-Filter implementieren wenn Benutzer Liga-Zuordnungen haben
-      // filtered = filtered.filter(c => c.leagueIds?.includes(selectedLeague));
-    }
-    
-    return filtered;
+    return contacts.filter(c => c.isActive);
   };
 
   // Kontakte für den Kontakte-Tab, gefiltert nach Suchtext und Rollenfilter.
@@ -793,26 +765,6 @@ export default function EmailSystemPage() {
                       </div>
                     ))}
                   </div>
-                </div>
-
-                <div>
-                  <Label>Liga-Filter</Label>
-                  <Select value={selectedLeague} onValueChange={setSelectedLeague}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Liga auswählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="alle">Alle Ligen</SelectItem>
-                      {leagues.map(league => (
-                        <SelectItem key={league.id} value={league.id}>
-                          {league.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Filtert Gruppen und Einzelkontakte nach Liga
-                  </p>
                 </div>
 
                 <div>
