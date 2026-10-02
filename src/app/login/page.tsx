@@ -16,10 +16,9 @@ import { logLoginEvent } from '@/lib/services/login-monitor-service';
 
 const SECURITY_HINTS = [
   "🔒 Verbindung ist SSL-verschlüsselt",
-  "📋 Alle Login-Versuche werden protokolliert",
-  "⏱️ Fehlversuche führen zur Sperrung",
-  "🛡️ Angriffserkennung durch Firebase Security aktiv",
-  "🚫 Bei Missbrauch wird die IP-Adresse gesperrt",
+  "📋 Login-Versuche werden protokolliert",
+  "⏱️ Nach vielen Fehlversuchen bremst Firebase weitere Anmeldungen",
+  "🛡️ Anmeldung über Firebase Authentication",
 ];
 
 function SecurityHint() {
@@ -71,7 +70,7 @@ export default function UnifiedLoginPage() {
     if (!email || !password) {
       toast({
         title: "Fehler",
-        description: "Bitte füllen Sie alle Felder aus.",
+        description: "Bitte fülle alle Felder aus.",
         variant: "destructive"
       });
       setIsSubmitting(false);
@@ -258,7 +257,7 @@ export default function UnifiedLoginPage() {
     if (!resetEmail) {
       toast({
         title: "Fehler",
-        description: "Bitte geben Sie Ihre E-Mail-Adresse ein.",
+        description: "Bitte gib deine E-Mail-Adresse ein.",
         variant: "destructive"
       });
       setIsSubmitting(false);
@@ -269,7 +268,7 @@ export default function UnifiedLoginPage() {
       await sendPasswordResetEmail(auth, resetEmail);
       toast({
         title: "✅ E-Mail gesendet",
-        description: "Passwort-Zurücksetzen-Link wurde an Ihre E-Mail gesendet.",
+        description: "Passwort-Zurücksetzen-Link wurde an deine E-Mail gesendet.",
       });
       setShowResetPassword(false);
       setResetEmail("");
@@ -444,14 +443,14 @@ export default function UnifiedLoginPage() {
                 <strong>Registrierung = Sofort Schießnachweis nutzen!</strong>
               </p>
               <p className="text-xs text-green-600 dark:text-green-400 mb-2">
-                Nach der Registrierung haben Sie automatisch Zugriff auf den Schießnachweis.
+                Nach der Registrierung hast du automatisch Zugriff auf den Schießnachweis.
               </p>
               <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800">
                 <p className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">
                   🏆 RWK/KM-Vereinszugang benötigt?
                 </p>
                 <p className="text-xs text-green-600 dark:text-green-400">
-                  Erst hier registrieren, dann E-Mail an <strong>rwk-leiter-ksve@gmx.de</strong> mit Ihrer Vereinsrolle. Ich schalte Ihnen dann die entsprechenden Rechte frei.
+                  Erst hier registrieren, dann E-Mail an <strong>rwk-leiter-ksve@gmx.de</strong> mit deiner Vereinsrolle. Ich schalte dir dann die entsprechenden Rechte frei.
                 </p>
               </div>
             </div>
@@ -466,7 +465,7 @@ export default function UnifiedLoginPage() {
             <CardHeader>
               <CardTitle>Passwort zurücksetzen</CardTitle>
               <CardDescription>
-                Geben Sie Ihre E-Mail-Adresse ein, um einen Link zum Zurücksetzen zu erhalten.
+                Gib deine E-Mail-Adresse ein, um einen Link zum Zurücksetzen zu erhalten.
               </CardDescription>
             </CardHeader>
             <CardContent>
