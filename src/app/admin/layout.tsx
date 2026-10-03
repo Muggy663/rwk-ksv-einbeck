@@ -5,7 +5,7 @@ import { MobileAdminNav } from '@/components/admin/MobileAdminNav';
 import { useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, Users, Trophy, ListChecks, Edit3, UserCog, 
-  MessagesSquare, FileUp, History, FileText, Database, RefreshCw
+  MessagesSquare, FileUp, History, FileText, Database, RefreshCw, KeyRound
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -19,6 +19,7 @@ export const adminNavItems = [
   { href: '/admin/results', label: 'Ergebnisse erfassen', icon: ListChecks },
   { href: '/admin/edit-results', label: 'Ergebnisse bearbeiten', icon: Edit3 },
   { href: '/admin/user-management', label: 'Benutzerverwaltung', icon: UserCog },
+  { href: '/admin/access-requests', label: 'Zugang-Anträge', icon: KeyRound },
   { href: '/admin/team-managers', label: 'Mannschaftsführer', icon: UserCog },
   { href: '/admin/documents', label: 'Dokumente', icon: FileText },
   { href: '/admin/storage', label: 'Speichernutzung', icon: Database },

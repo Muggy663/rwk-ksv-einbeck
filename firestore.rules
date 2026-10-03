@@ -383,6 +383,15 @@ service cloud.firestore {
       allow read, update, delete: if isSuperAdmin();
     }
 
+    // Vereinszugang-Anträge: Erstellen und Genehmigen laufen über abgesicherte
+    // API-Routen (Admin SDK, umgeht Rules). Die Admin-Oberfläche LIEST sie
+    // client-seitig – daher Lesen nur für Super-Admin. Client-Schreiben ist nicht
+    // nötig und bleibt gesperrt.
+    match /access_requests/{requestId} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
     match /feedback/{feedbackId} {
       allow create: if true;
       allow read: if true; // Öffentlich lesbar für Durchschnittsbewertung

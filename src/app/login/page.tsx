@@ -449,9 +449,15 @@ export default function UnifiedLoginPage() {
                 <p className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">
                   🏆 RWK/KM-Vereinszugang benötigt?
                 </p>
-                <p className="text-xs text-green-600 dark:text-green-400">
-                  Erst hier registrieren, dann E-Mail an <strong>rwk-leiter-ksve@gmx.de</strong> mit deiner Vereinsrolle. Ich schalte dir dann die entsprechenden Rechte frei.
+                <p className="text-xs text-green-600 dark:text-green-400 mb-2">
+                  Erst hier registrieren bzw. anmelden, dann den Vereinszugang direkt in der App beantragen – der RWK-Leiter schaltet dir die Rechte frei.
                 </p>
+                <a
+                  href="/vereinszugang"
+                  className="inline-block text-xs font-medium text-green-800 dark:text-green-200 underline hover:no-underline"
+                >
+                  → Vereinszugang beantragen
+                </a>
               </div>
             </div>
           </div>
