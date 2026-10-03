@@ -486,7 +486,7 @@ export default function VereinMannschaftenPage() {
   const handleEditTeam = (team: Team) => {
     if (!isVereinsvertreter) { toast({ title: "Keine Berechtigung", variant: "destructive" }); return; }
     if (team.clubId !== activeClubId) {
-      toast({ title: "Nicht autorisiert", description: "Sie können nur Mannschaften Ihres aktuell ausgewählten Vereins bearbeiten.", variant: "destructive" }); return;
+      toast({ title: "Nicht autorisiert", description: "Du kannst nur Mannschaften deines aktuell ausgewählten Vereins bearbeiten.", variant: "destructive" }); return;
     }
     
     // Bei laufender Saison: nur Kontaktdaten bearbeitbar (kein Block mehr)
@@ -785,53 +785,26 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
         throw new Error("Invalid form mode or missing team ID for edit.");
       }
       
-      // SCHRITT 2: Schützen aktualisieren
-      const validShootersToAdd = [];
-      const validShootersToRemove = [];
-      
-      // Prüfe shootersToAdd
-      for (const shooterId of shootersToAdd) {
-        try {
-          const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
-          const shooterDoc = await getFirestoreDoc(shooterDocRef);
-          if (shooterDoc.exists()) {
-            validShootersToAdd.push(shooterId);
-          }
-        } catch (error) {
-          logWarn(`Error checking shooter ${shooterId}:`, getErrorMessage(error));
+      // SCHRITT 2: Schützen-Zuordnung aktualisieren.
+      // Validierung über die bereits geladenen Vereinsschützen (keine Einzel-Reads).
+      // Updates gebündelt in einem writeBatch (atomar, ein Round-Trip statt N).
+      const bekannteShooterIds = new Set(allClubShootersForDialog.map(s => s.id));
+      const validShootersToAdd = shootersToAdd.filter(id => bekannteShooterIds.has(id));
+      const validShootersToRemove = shootersToRemove.filter(id => bekannteShooterIds.has(id));
+
+      if (validShootersToAdd.length > 0 || validShootersToRemove.length > 0) {
+        const shooterBatch = writeBatch(db);
+        for (const shooterId of validShootersToAdd) {
+          shooterBatch.update(doc(db, SHOOTERS_COLLECTION, shooterId), {
+            teamIds: arrayUnion(teamIdForShooterUpdates),
+          });
         }
-      }
-      
-      // Prüfe shootersToRemove
-      for (const shooterId of shootersToRemove) {
-        try {
-          const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
-          const shooterDoc = await getFirestoreDoc(shooterDocRef);
-          if (shooterDoc.exists()) {
-            validShootersToRemove.push(shooterId);
-          }
-        } catch (error) {
-          logWarn(`Error checking shooter ${shooterId}:`, getErrorMessage(error));
+        for (const shooterId of validShootersToRemove) {
+          shooterBatch.update(doc(db, SHOOTERS_COLLECTION, shooterId), {
+            teamIds: arrayRemove(teamIdForShooterUpdates),
+          });
         }
-      }
-      
-      // SCHRITT 3: Schützen einzeln aktualisieren
-      for (const shooterId of validShootersToAdd) {
-        try {
-          const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
-          await updateDoc(shooterDocRef, { teamIds: arrayUnion(teamIdForShooterUpdates) });
-        } catch (error) {
-          logError(`Error adding team to shooter ${shooterId}:`, error);
-        }
-      }
-      
-      for (const shooterId of validShootersToRemove) {
-        try {
-          const shooterDocRef = doc(db, SHOOTERS_COLLECTION, shooterId);
-          await updateDoc(shooterDocRef, { teamIds: arrayRemove(teamIdForShooterUpdates) });
-        } catch (error) {
-          logError(`Error removing team from shooter ${shooterId}:`, error);
-        }
+        await shooterBatch.commit();
       }
       setIsFormOpen(false);
       setCurrentTeam(null);
@@ -1073,7 +1046,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
         <div className="p-6">
             <Card className="border-destructive bg-destructive/5">
                 <CardHeader><CardTitle className="text-destructive flex items-center"><AlertTriangle className="mr-2 h-5 w-5" /> {contextPermissionError}</CardTitle></CardHeader>
-                <CardContent><p>Bitte kontaktieren Sie den Administrator.</p></CardContent>
+                <CardContent><p>Bitte kontaktiere den Administrator.</p></CardContent>
             </Card>
         </div>
     );
@@ -1104,7 +1077,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
           <BackButton className="mr-2" fallbackHref="/verein/dashboard" />
           <h1 className="text-2xl font-semibold text-primary">Meine Mannschaften</h1>
           <HelpTooltip 
-            text="Hier können Sie Mannschaften für Ihren Verein anlegen und verwalten." 
+            text="Hier kannst du Mannschaften für deinen Verein anlegen und verwalten." 
             className="ml-2"
           />
         </div>
@@ -1116,7 +1089,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
           <div className="flex items-center">
             <Label htmlFor="vvm-saison-select">Saison auswählen</Label>
             <HelpTooltip 
-              text="Wählen Sie die Saison aus, für die Sie Mannschaften anzeigen oder anlegen möchten." 
+              text="Wähle die Saison aus, für die du Mannschaften anzeigen oder anlegen möchtest." 
               className="ml-2"
             />
           </div>
@@ -1152,7 +1125,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
           <div className="flex items-center">
             <Label htmlFor="vvm-liga-filter">Nach Liga filtern (Optional)</Label>
             <HelpTooltip 
-              text="Filtern Sie optional nach einer bestimmten Liga." 
+              text="Filtere optional nach einer bestimmten Liga." 
               className="ml-2"
             />
           </div>
@@ -1209,10 +1182,10 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
               </CardTitle>
               <CardDescription>
                 {isVereinsvertreter
-                  ? "Verwalten Sie hier die Mannschaften Ihres Vereins."
-                  : "Übersicht der Mannschaften Ihres Vereins."
+                  ? "Verwalte hier die Mannschaften deines Vereins."
+                  : "Übersicht der Mannschaften deines Vereins."
                 }
-                {!selectedSeasonId && " Bitte wählen Sie zuerst eine Saison."}
+                {!selectedSeasonId && " Bitte wähle zuerst eine Saison."}
               </CardDescription>
             </div>
             {isReadOnly && selectedSeasonId && (
@@ -1228,7 +1201,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
             <div className="p-4 text-center text-muted-foreground bg-secondary/30 rounded-md">
               <AlertTriangle className="mx-auto h-8 w-8 text-primary/70 mb-2" />
               <p>{`Keine Mannschaften für die aktuelle Auswahl gefunden.`}</p>
-              {isVereinsvertreter && <p className="text-sm mt-1">Klicken Sie auf "Neue Mannschaft", um eine anzulegen.</p>}
+              {isVereinsvertreter && <p className="text-sm mt-1">Klicke auf "Neue Mannschaft", um eine anzulegen.</p>}
             </div>
           )}
           {!isLoadingTeams && teamsOfActiveClub.length > 0 && activeClubId && selectedSeasonId && (
@@ -1335,7 +1308,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Mannschaft löschen?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Möchten Sie "{teamToDelete?.name}" wirklich löschen? Dies entfernt auch die Zuordnung der Schützen zu dieser Mannschaft.
+                                  Möchtest du "{teamToDelete?.name}" wirklich löschen? Dies entfernt auch die Zuordnung der Schützen zu dieser Mannschaft.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -1400,13 +1373,13 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
            {!activeClubId && !loadingPermissions && !contextPermissionError &&(
                 <div className="p-4 text-center text-muted-foreground bg-amber-50/50 rounded-md border border-amber-300">
                     <AlertTriangle className="mx-auto h-8 w-8 text-amber-600 mb-2" />
-                    <p>Ihrem Konto ist kein Verein für die Mannschaftsverwaltung zugewiesen oder der Verein konnte nicht geladen werden. Bitte kontaktieren Sie den Administrator.</p>
+                    <p>Deinem Konto ist kein Verein für die Mannschaftsverwaltung zugewiesen oder der Verein konnte nicht geladen werden. Bitte kontaktiere den Administrator.</p>
                 </div>
             )}
            {!selectedSeasonId && activeClubId && !loadingPermissions && !contextPermissionError &&(
                 <div className="p-4 text-center text-muted-foreground bg-blue-50/50 rounded-md border border-blue-300">
                     <InfoIcon className="mx-auto h-8 w-8 text-blue-600 mb-2" />
-                    <p>Bitte wählen Sie eine Saison aus, um Mannschaften anzuzeigen oder anzulegen.</p>
+                    <p>Bitte wähle eine Saison aus, um Mannschaften anzuzeigen oder anzulegen.</p>
                 </div>
             )}
         </CardContent>
@@ -1471,7 +1444,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                     <UiAlertDescription>
                         {isReadOnly && !isAdmin
                           ? "🔒 Saison läuft – nur Kontaktdaten des Mannschaftsführers können geändert werden."
-                          : "So legen Sie eine Mannschaft an: 1. Disziplin wählen (Luftgewehr Auflage, Luftgewehr Freihand oder Luftpistole). 2. Die Mannschaftsstärke (I, II, III …) wird automatisch vorgeschlagen – WICHTIG: Sie zählt PRO DISZIPLIN getrennt. Beispiel: erste Freihand-Mannschaft = I, erste Auflage-Mannschaft ebenfalls = I. Der Name wird automatisch gebildet; die Ligazuweisung erfolgt durch den Rundenwettkampfleiter."
+                          : "So legst du eine Mannschaft an: 1. Disziplin wählen (Luftgewehr Auflage, Luftgewehr Freihand oder Luftpistole). 2. Die Mannschaftsstärke (I, II, III …) wird automatisch vorgeschlagen – WICHTIG: Sie zählt PRO DISZIPLIN getrennt. Beispiel: erste Freihand-Mannschaft = I, erste Auflage-Mannschaft ebenfalls = I. Der Name wird automatisch gebildet; die Ligazuweisung erfolgt durch den Rundenwettkampfleiter."
                         }
                     </UiAlertDescription>
                 </Alert>
@@ -1481,7 +1454,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                         <div className="flex items-center">
                           <Label htmlFor="vvm-teamDisciplineDialog">1. Disziplin</Label>
                           <HelpTooltip 
-                            text="Wählen Sie zuerst die Disziplin. Danach wird die passende Mannschaftsstärke automatisch vorgeschlagen." 
+                            text="Wähle zuerst die Disziplin. Danach wird die passende Mannschaftsstärke automatisch vorgeschlagen." 
                             className="ml-2"
                           />
                         </div>
@@ -1504,7 +1477,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                         <div className="flex items-center">
                           <Label htmlFor="vvm-teamStrengthDialog">2. Mannschaftsstärke (pro Disziplin)</Label>
                           <HelpTooltip 
-                            text="Zählt getrennt je Disziplin: Ihre erste Freihand-Mannschaft ist I, Ihre erste Auflage-Mannschaft ebenfalls I. Der Vorschlag richtet sich nach Ihren bereits gemeldeten Mannschaften dieser Disziplin." 
+                            text="Zählt getrennt je Disziplin: Deine erste Freihand-Mannschaft ist I, deine erste Auflage-Mannschaft ebenfalls I. Der Vorschlag richtet sich nach deinen bereits gemeldeten Mannschaften dieser Disziplin." 
                             className="ml-2"
                           />
                         </div>
@@ -1580,7 +1553,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                     />
                     {suggestedTeamName && formMode === 'new' && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Vorschlag basierend auf Verein und Mannschaftsstärke. Sie können den Namen bei Bedarf anpassen.
+                        Vorschlag basierend auf Verein und Mannschaftsstärke. Du kannst den Namen bei Bedarf anpassen.
                       </p>
                     )}
                 </div>

@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 import { PasswordChangePrompt } from '@/components/auth/PasswordChangePrompt';
+import { ClubSwitcher } from '@/components/ui/club-switcher';
 
 const ADMIN_EMAIL = "admin@rwk-einbeck.de";
 
@@ -174,7 +175,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
 
     if (!userAppPermissions) {
       // No userAppPermissions document found
-      setDerivedPermissionError("Keine Berechtigungen für diesen Benutzer in Firestore gefunden. Bitte kontaktieren Sie den Administrator.");
+      setDerivedPermissionError("Keine Berechtigungen für diesen Benutzer in Firestore gefunden. Bitte kontaktiere den Administrator.");
       setUserPermissionForContext(null);
       setAssignedClubIdArray([]);
     } else {
@@ -285,7 +286,7 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
             <CardHeader><CardTitle className="text-amber-700 flex items-center gap-2"><ShieldAlert className="h-6 w-6" /> Zugriffsproblem im Vereinsbereich</CardTitle></CardHeader>
             <CardContent>
               <p>{derivedPermissionError}</p>
-              <p className="text-sm mt-2">Bitte kontaktieren Sie den Administrator, um diese Zuweisung vorzunehmen oder zu korrigieren.</p>
+              <p className="text-sm mt-2">Bitte kontaktiere den Administrator, um diese Zuweisung vorzunehmen oder zu korrigieren.</p>
             </CardContent>
           </Card>
         </main>
@@ -315,6 +316,11 @@ export default function VereinLayout({ children }: VereinLayoutProps) {
       <div className="p-6 lg:p-8 bg-muted/20">
         {/* Passwort-Änderungsdialog (nicht als Aufforderung) */}
         {user && <PasswordChangePrompt />}
+        {/* Club-Switcher global: erscheint auf allen Vereinsseiten, aber nur
+            für Nutzer mit mehreren Vereinen (ClubSwitcher rendert sonst null). */}
+        <div className="mb-4">
+          <ClubSwitcher />
+        </div>
         {children}
       </div>
     </VereinContext.Provider>

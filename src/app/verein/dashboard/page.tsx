@@ -13,7 +13,6 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { useVereinAuth } from '@/app/verein/layout';
 import { useAuthContext } from '@/components/auth/AuthContext';
-import { ClubSwitcher } from '@/components/ui/club-switcher';
 import { InteractiveGuide } from '@/components/onboarding/InteractiveGuide';
 import { BackButton } from '@/components/ui/back-button';
 
@@ -28,57 +27,57 @@ export default function VereinDashboardPage() {
     {
       id: 'welcome',
       title: 'Willkommen im RWK-Dashboard! 🎯',
-      description: 'Hier verwalten Sie alles für Ihren Verein: Mannschaften erstellen, Schützen hinzufügen und Wettkampfergebnisse eintragen. Das System ist vollständig funktional und wird aktiv genutzt.',
+      description: 'Hier verwaltest du alles für deinen Verein: Mannschaften erstellen, Mitglieder pflegen und Wettkampfergebnisse eintragen.',
       icon: <Sparkles className="h-6 w-6 text-purple-600" />,
-      example: 'Sie sehen 8 Funktionsbereiche - von Mannschaften bis Passwort-Änderung. Jeder Bereich hat eine eigene Farbe.',
+      example: 'Jeder Funktionsbereich hat eine eigene Kachel mit eigener Farbe – von Mannschaften bis Passwort-Änderung.',
       tips: [
         'Grüne und blaue Bereiche sind die wichtigsten für den Start',
-        'Orange für Ergebnisse - das machen Sie nach jedem Wettkampf',
+        'Orange für Ergebnisse - das machst du nach jedem Wettkampf',
         'Alle Funktionen sind sofort verfügbar und einsatzbereit'
       ]
     },
     {
       id: 'teams',
-      title: 'Mannschaften - Ihr Team aufstellen 👥',
-      description: 'Erstellen Sie Mannschaften für verschiedene Disziplinen. Pro Mannschaft können bis zu 3 Schützen antreten. Das System unterstützt Kleinkaliber, Luftgewehr und Luftpistole.',
+      title: 'Mannschaften - Dein Team aufstellen 👥',
+      description: 'Erstelle Mannschaften für verschiedene Disziplinen. Pro Mannschaft können bis zu 3 Schützen antreten. Das System unterstützt Kleinkaliber, Luftgewehr und Luftpistole.',
       icon: <Users className="h-6 w-6 text-green-600" />,
-      example: 'Erstellen Sie "SV Musterverein I" für die 1. Kreisklasse KK und "SV Musterverein II" für die 2. Kreisklasse.',
+      example: 'Erstelle "SV Musterverein I" für die 1. Kreisklasse KK und "SV Musterverein II" für die 2. Kreisklasse.',
       tips: [
         'Benennung: "Vereinsname I", "Vereinsname II" - das ist Standard',
-        'Der RWK-Leiter weist Ihre Mannschaft der passenden Liga zu',
+        'Der RWK-Leiter weist deine Mannschaft der passenden Liga zu',
         'Bei weniger als 3 Schützen: Einzelstarter-Mannschaft erstellen'
       ]
     },
     {
       id: 'shooters',
-      title: 'Schützen - Ihre Vereinsmitglieder 🎯',
-      description: 'Fügen Sie alle aktiven Schützen hinzu. Mindestens Vor- und Nachname sowie Geschlecht sind erforderlich. Das System berechnet automatisch Altersklassen.',
+      title: 'Mitglieder - Deine Vereinsmitglieder 🎯',
+      description: 'Mitglieder werden zentral unter „Mitglieder" gepflegt (gemeinsam für Rundenwettkampf und Kreismeisterschaft). Mindestens Vor- und Nachname sowie Geschlecht sind erforderlich. Das System berechnet automatisch Altersklassen.',
       icon: <Target className="h-6 w-6 text-blue-600" />,
       example: 'Max Mustermann, männlich, Jahrgang 1985 - wird automatisch als "Herren" eingestuft.',
       tips: [
-        'Ein Schütze kann pro Saison nur in einer Mannschaft stehen',
+        'Die Zuordnung zu Mannschaften erfolgt in der Mannschaftsverwaltung',
         'Geburtsjahr eingeben für korrekte Altersklassen-Zuordnung',
-        'Schützen können später zwischen Mannschaften gewechselt werden'
+        'Entfernte Mitglieder werden deaktiviert - Ergebnisse bleiben erhalten'
       ]
     },
     {
       id: 'results',
       title: 'Ergebnisse - Wettkampf eintragen 🏆',
-      description: 'Nach jedem Wettkampf tragen Sie die Schießergebnisse ein. Das System validiert automatisch und berechnet Tabellen live. Alle Vereine nutzen diese Funktion aktiv.',
+      description: 'Nach jedem Wettkampf trägst du die Schießergebnisse ein. Das System validiert automatisch und berechnet Tabellen live.',
       icon: <Trophy className="h-6 w-6 text-orange-600" />,
-      example: 'Saison 2024/25 → 1. Kreisklasse KK → 1. Durchgang → Ihre Mannschaft → Schütze auswählen → 285 Ringe.',
+      example: '1. Kreisklasse KK → 1. Durchgang → deine Mannschaft → Schütze auswählen → 285 Ringe.',
       tips: [
         'KK: max. 300 Ringe, LG: max. 400 Ringe, LP: max. 300 Ringe',
-        'Sie können auch Ergebnisse der Gegner-Mannschaften eintragen',
+        'Du kannst auch Ergebnisse der Gegner-Mannschaften eintragen',
         'Ergebnisse werden sofort in den Live-Tabellen sichtbar'
       ]
     },
     {
       id: 'handtabellen',
       title: 'Meldebögen - Wettkampf-Dokumente 📄',
-      description: 'Erstellen Sie professionelle Durchgangs-Meldebögen und Ergebnislisten. Diese Funktion wird von vielen Vereinen für offizielle Wettkämpfe genutzt.',
+      description: 'Erstelle Durchgangs-Meldebögen und Ergebnislisten als PDF für offizielle Wettkämpfe.',
       icon: <FileText className="h-6 w-6 text-indigo-600" />,
-      example: 'Generieren Sie einen Meldebogen für den 3. Durchgang mit allen Mannschaften Ihrer Liga.',
+      example: 'Generiere einen Meldebogen für den 3. Durchgang mit allen Mannschaften deiner Liga.',
       tips: [
         'PDFs können direkt ausgedruckt oder per E-Mail versendet werden',
         'Alle aktuellen Ergebnisse werden automatisch eingetragen',
@@ -88,7 +87,7 @@ export default function VereinDashboardPage() {
     {
       id: 'security',
       title: 'Sicherheit & Verwaltung 🔐',
-      description: 'Halten Sie Ihr Passwort sicher und nutzen Sie die Terminverwaltung. Bei Fragen steht der Support zur Verfügung.',
+      description: 'Halte dein Passwort sicher und nutze die Terminverwaltung. Bei Fragen steht der Support zur Verfügung.',
       icon: <Shield className="h-6 w-6 text-red-600" />,
       example: 'Passwort alle 3-6 Monate ändern und Wettkampftermine im Kalender prüfen.',
       tips: [
@@ -139,12 +138,6 @@ export default function VereinDashboardPage() {
               </span>
             </p>
           )}
-          <div className="mb-4">
-            <ClubSwitcher />
-            <p className="text-xs text-muted-foreground mt-1 sm:hidden">
-              ℹ️ Tippen Sie hier, um zwischen Ihren Vereinen zu wechseln
-            </p>
-          </div>
           <p className="text-base md:text-lg text-muted-foreground">
             Willkommen, {userAppPermissions?.displayName || user?.displayName || user?.email}
           </p>

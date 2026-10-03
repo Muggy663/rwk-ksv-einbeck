@@ -43,7 +43,7 @@ export default function ClubSelectionPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-center text-muted-foreground">
-            Sie sind mehreren Vereinen zugeordnet. Bitte wählen Sie einen aus:
+            Du bist mehreren Vereinen zugeordnet. Bitte wähle einen aus:
           </p>
           {clubs.map(club => (
             <Button
