@@ -419,50 +419,95 @@ export default function TeamManagersPage() {
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Verein</TableHead>
-                  <TableHead>Mannschaft</TableHead>
-                  <TableHead>Liga</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Kontakt</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Desktop-Tabelle */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Verein</TableHead>
+                      <TableHead>Mannschaft</TableHead>
+                      <TableHead>Liga</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Kontakt</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredManagers.map((manager) => (
+                      <TableRow key={manager.teamId}>
+                        <TableCell>{manager.clubName}</TableCell>
+                        <TableCell>{manager.teamName}</TableCell>
+                        <TableCell>{manager.leagueName}</TableCell>
+                        <TableCell>{manager.managerName || '-'}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            {manager.managerEmail && (
+                              <div className="flex items-center text-sm">
+                                <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                                <a href={`mailto:${manager.managerEmail}`} className="text-primary hover:underline break-all">
+                                  {manager.managerEmail}
+                                </a>
+                              </div>
+                            )}
+                            {manager.managerPhone && (
+                              <div className="flex items-center text-sm">
+                                <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                                <a href={`tel:${manager.managerPhone.replace(/\s/g, '')}`} className="text-primary hover:underline">
+                                  {manager.managerPhone}
+                                </a>
+                              </div>
+                            )}
+                            {!manager.managerEmail && !manager.managerPhone && (
+                              <span className="text-muted-foreground text-sm">Keine Kontaktdaten</span>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="md:hidden space-y-3">
                 {filteredManagers.map((manager) => (
-                  <TableRow key={manager.teamId}>
-                    <TableCell>{manager.clubName}</TableCell>
-                    <TableCell>{manager.teamName}</TableCell>
-                    <TableCell>{manager.leagueName}</TableCell>
-                    <TableCell>{manager.managerName || '-'}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        {manager.managerEmail && (
-                          <div className="flex items-center text-sm">
-                            <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                            <a href={`mailto:${manager.managerEmail}`} className="hover:underline">
-                              {manager.managerEmail}
-                            </a>
-                          </div>
-                        )}
-                        {manager.managerPhone && (
-                          <div className="flex items-center text-sm">
-                            <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                            <a href={`tel:${manager.managerPhone}`} className="hover:underline">
-                              {manager.managerPhone}
-                            </a>
-                          </div>
-                        )}
-                        {!manager.managerEmail && !manager.managerPhone && (
-                          <span className="text-muted-foreground text-sm">Keine Kontaktdaten</span>
-                        )}
+                  <Card key={manager.teamId} className="border">
+                    <CardContent className="p-3">
+                      <div className="space-y-2">
+                        <div>
+                          <h3 className="font-medium text-sm">{manager.teamName}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {manager.clubName} · {manager.leagueName}
+                          </p>
+                        </div>
+                        <p className="text-sm font-medium">{manager.managerName || 'Nicht angegeben'}</p>
+                        <div className="space-y-1">
+                          {manager.managerEmail && (
+                            <div className="flex items-center text-xs">
+                              <Mail className="h-3 w-3 mr-2 text-muted-foreground" />
+                              <a href={`mailto:${manager.managerEmail}`} className="text-primary hover:underline break-all">
+                                {manager.managerEmail}
+                              </a>
+                            </div>
+                          )}
+                          {manager.managerPhone && (
+                            <div className="flex items-center text-xs">
+                              <Phone className="h-3 w-3 mr-2 text-muted-foreground" />
+                              <a href={`tel:${manager.managerPhone.replace(/\s/g, '')}`} className="text-primary hover:underline">
+                                {manager.managerPhone}
+                              </a>
+                            </div>
+                          )}
+                          {!manager.managerEmail && !manager.managerPhone && (
+                            <span className="text-xs text-muted-foreground">Keine Kontaktdaten</span>
+                          )}
+                        </div>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </CardContent>
+                  </Card>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

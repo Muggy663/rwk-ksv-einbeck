@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Mail, Phone, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
+import { useVereinAuth } from '@/app/verein/layout';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { BackButton } from '@/components/ui/back-button';
@@ -23,14 +23,32 @@ interface TeamManager {
   captainName?: string;
   captainEmail?: string;
   captainPhone?: string;
-  managerName?: string;
-  managerEmail?: string;
-  managerPhone?: string;
+}
+
+// Firestore erlaubt max. 30 Werte je 'in'-Query. Diese Hilfsfunktion teilt
+// größere Listen in Blöcke und führt die Abfrage je Block aus.
+async function queryTeamsByLeagueIds(
+  dbInstance: typeof db,
+  leagueIds: string[],
+  clubId?: string
+): Promise<Array<{ id: string; data: any }>> {
+  const treffer: Array<{ id: string; data: any }> = [];
+  for (let i = 0; i < leagueIds.length; i += 30) {
+    const block = leagueIds.slice(i, i + 30);
+    const bedingungen = [where('leagueId', 'in', block)];
+    if (clubId) bedingungen.push(where('clubId', '==', clubId));
+    const snap = await getDocs(query(collection(dbInstance, 'rwk_teams'), ...bedingungen));
+    snap.forEach((d) => treffer.push({ id: d.id, data: d.data() }));
+  }
+  return treffer;
 }
 
 export default function TeamManagersPage() {
   const { toast } = useToast();
-  const { userAppPermissions } = useAuth();
+  // Aktiven Verein aus dem Vereins-Kontext nutzen (folgt dem Club-Switcher bei
+  // Mehrfach-Vereins-Nutzern), konsistent zur Ergebnis-Seite.
+  const { currentClubId, assignedClubId } = useVereinAuth();
+  const activeClubId = currentClubId || assignedClubId || undefined;
   const [seasons, setSeasons] = useState<Array<{ id: string; name: string; year: number }>>([]);
   const [selectedSeason, setSelectedSeason] = useState<string>('');
   const [leagues, setLeagues] = useState<Array<{ id: string; name: string }>>([]);
@@ -110,78 +128,47 @@ export default function TeamManagersPage() {
         }
 
         // 2. Erst eigene Teams finden, um die Ligen zu ermitteln, in denen der Verein schießt
-        let ownTeamsQuery = query(
-          collection(db, 'rwk_teams'),
-          where('leagueId', 'in', leagueIds)
+        const ownTeams = await queryTeamsByLeagueIds(
+          db,
+          leagueIds,
+          activeClubId
         );
-        
-        if (userAppPermissions && userAppPermissions.clubId) {
-          ownTeamsQuery = query(
-            collection(db, 'rwk_teams'),
-            where('leagueId', 'in', leagueIds),
-            where('clubId', '==', userAppPermissions.clubId)
-          );
-        }
-        
-        const ownTeamsSnapshot = await getDocs(ownTeamsQuery);
-        const ownLeagueIds = [...new Set(ownTeamsSnapshot.docs.map(doc => doc.data().leagueId))];
-        
+        const ownLeagueIds = [...new Set(ownTeams.map(t => t.data.leagueId))];
+
         if (ownLeagueIds.length === 0) {
           setTeamManagers([]);
           setFilteredManagers([]);
           setIsLoading(false);
           return;
         }
-        
+
         // 3. Alle Teams in den Ligen laden, in denen der eigene Verein auch schießt
-        let teamsQuery;
+        let teams: Array<{ id: string; data: any }>;
         if (selectedLeague) {
           // Wenn eine spezifische Liga ausgewählt ist, prüfe ob der Verein in dieser Liga schießt
-          if (ownLeagueIds.includes(selectedLeague)) {
-            teamsQuery = query(
-              collection(db, 'rwk_teams'),
-              where('leagueId', '==', selectedLeague)
-            );
-          } else {
+          if (!ownLeagueIds.includes(selectedLeague)) {
             // Verein schießt nicht in dieser Liga
             setTeamManagers([]);
             setFilteredManagers([]);
             setIsLoading(false);
             return;
           }
+          teams = await queryTeamsByLeagueIds(db, [selectedLeague]);
         } else {
           // Alle Teams in Ligen, in denen der Verein schießt
-          teamsQuery = query(
-            collection(db, 'rwk_teams'),
-            where('leagueId', 'in', ownLeagueIds)
-          );
+          teams = await queryTeamsByLeagueIds(db, ownLeagueIds);
         }
 
-        const teamsSnapshot = await getDocs(teamsQuery);
-        const managersData: TeamManager[] = [];
-
-        teamsSnapshot.forEach(doc => {
-          const teamData = doc.data();
-          const leagueName = leaguesMap.get(teamData.leagueId) || 'Unbekannte Liga';
-
-          // Keine Berechtigungsprüfung mehr - zeige alle Teams in den relevanten Ligen
-
-          const managerInfo: TeamManager = {
-            id: doc.id,
-            teamId: doc.id,
-            teamName: teamData.name || 'Unbenanntes Team',
-            leagueId: teamData.leagueId,
-            leagueName,
-            captainName: teamData.captainName,
-            captainEmail: teamData.captainEmail,
-            captainPhone: teamData.captainPhone,
-            managerName: teamData.managerName,
-            managerEmail: teamData.managerEmail,
-            managerPhone: teamData.managerPhone
-          };
-
-          managersData.push(managerInfo);
-        });
+        const managersData: TeamManager[] = teams.map(({ id, data: teamData }) => ({
+          id,
+          teamId: id,
+          teamName: teamData.name || 'Unbenanntes Team',
+          leagueId: teamData.leagueId,
+          leagueName: leaguesMap.get(teamData.leagueId) || 'Unbekannte Liga',
+          captainName: teamData.captainName,
+          captainEmail: teamData.captainEmail,
+          captainPhone: teamData.captainPhone,
+        }));
 
         setTeamManagers(managersData);
         setFilteredManagers(managersData); // Initial alle geladenen Manager anzeigen
@@ -199,7 +186,7 @@ export default function TeamManagersPage() {
 
     fetchLeaguesAndManagers();
     // Abhängigkeiten: Führt diesen Effekt bei Änderungen der Saison oder der Liga aus
-  }, [selectedSeason, selectedLeague, userAppPermissions, toast]);
+  }, [selectedSeason, selectedLeague, activeClubId, toast]);
 
   // --- Effekt zur clientseitigen Filterung (Suche) ---
   useEffect(() => {
@@ -209,7 +196,7 @@ export default function TeamManagersPage() {
     if (searchTerm.trim()) {
       const lowerSearchTerm = searchTerm.toLowerCase();
       currentFilteredManagers = currentFilteredManagers.filter(manager => {
-        const nameMatch = (manager.captainName || manager.managerName || '').toLowerCase().includes(lowerSearchTerm);
+        const nameMatch = (manager.captainName || '').toLowerCase().includes(lowerSearchTerm);
         const teamMatch = manager.teamName.toLowerCase().includes(lowerSearchTerm);
         const leagueMatch = manager.leagueName.toLowerCase().includes(lowerSearchTerm);
         return nameMatch || teamMatch || leagueMatch;
@@ -228,7 +215,7 @@ export default function TeamManagersPage() {
           <div>
             <h1 className="text-xl md:text-3xl font-bold text-primary">Mannschaftsführer</h1>
             <p className="text-sm md:text-base text-muted-foreground">
-              Übersicht aller Mannschaftsführer in Ligen, in denen Ihr Verein auch schießt.
+              Übersicht aller Mannschaftsführer in Ligen, in denen dein Verein auch schießt.
             </p>
           </div>
         </div>
@@ -312,23 +299,27 @@ export default function TeamManagersPage() {
                       <TableCell className="font-medium">{manager.teamName}</TableCell>
                       <TableCell>{manager.leagueName}</TableCell>
                       <TableCell>
-                        {manager.captainName || manager.managerName || 'Nicht angegeben'}
+                        {manager.captainName || 'Nicht angegeben'}
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          {(manager.captainEmail || manager.managerEmail) && (
+                          {manager.captainEmail && (
                             <div className="flex items-center text-sm">
                               <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                              <span>{manager.captainEmail || manager.managerEmail}</span>
+                              <a href={`mailto:${manager.captainEmail}`} className="text-primary hover:underline break-all">
+                                {manager.captainEmail}
+                              </a>
                             </div>
                           )}
-                          {(manager.captainPhone || manager.managerPhone) && (
+                          {manager.captainPhone && (
                             <div className="flex items-center text-sm">
                               <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                              <span>{manager.captainPhone || manager.managerPhone}</span>
+                              <a href={`tel:${manager.captainPhone.replace(/\s/g, '')}`} className="text-primary hover:underline">
+                                {manager.captainPhone}
+                              </a>
                             </div>
                           )}
-                          {!manager.captainEmail && !manager.managerEmail && !manager.captainPhone && !manager.managerPhone && (
+                          {!manager.captainEmail && !manager.captainPhone && (
                             <span className="text-sm text-muted-foreground">Keine Kontaktdaten</span>
                           )}
                         </div>
@@ -351,23 +342,27 @@ export default function TeamManagersPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">
-                          {manager.captainName || manager.managerName || 'Nicht angegeben'}
+                          {manager.captainName || 'Nicht angegeben'}
                         </p>
                       </div>
                       <div className="space-y-1">
-                        {(manager.captainEmail || manager.managerEmail) && (
+                        {manager.captainEmail && (
                           <div className="flex items-center text-xs">
                             <Mail className="h-3 w-3 mr-2 text-muted-foreground" />
-                            <span>{manager.captainEmail || manager.managerEmail}</span>
+                            <a href={`mailto:${manager.captainEmail}`} className="text-primary hover:underline break-all">
+                              {manager.captainEmail}
+                            </a>
                           </div>
                         )}
-                        {(manager.captainPhone || manager.managerPhone) && (
+                        {manager.captainPhone && (
                           <div className="flex items-center text-xs">
                             <Phone className="h-3 w-3 mr-2 text-muted-foreground" />
-                            <span>{manager.captainPhone || manager.managerPhone}</span>
+                            <a href={`tel:${manager.captainPhone.replace(/\s/g, '')}`} className="text-primary hover:underline">
+                              {manager.captainPhone}
+                            </a>
                           </div>
                         )}
-                        {!manager.captainEmail && !manager.managerEmail && !manager.captainPhone && !manager.managerPhone && (
+                        {!manager.captainEmail && !manager.captainPhone && (
                           <span className="text-xs text-muted-foreground">Keine Kontaktdaten</span>
                         )}
                       </div>
