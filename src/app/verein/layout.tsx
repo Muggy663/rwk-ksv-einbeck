@@ -40,7 +40,7 @@ const vereinNavItems = [
   { href: '/verein/handtabellen', label: 'Handtabellen', icon: FileText },
   { href: '/termine', label: 'Terminkalender', icon: CalendarDays },
   { href: '/termine/add', label:'Termin hinzufügen', icon: CalendarDays },
-  { href: '/admin/team-managers', label: 'Mannschaftsführer', icon: UserCog },
+  { href: '/verein/team-managers', label: 'Mannschaftsführer', icon: UserCog },
 ];
 
 export default function VereinLayout({ children }: VereinLayoutProps) {

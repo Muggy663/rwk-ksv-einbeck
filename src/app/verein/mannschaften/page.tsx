@@ -327,26 +327,39 @@ export default function VereinMannschaftenPage() {
       const currentSeason = allSeasons.find(s => s.id === selectedSeasonId);
       if (!currentSeason?.competitionYear) return;
 
-      const teamIds = teamsOfActiveClub.map(team => team.id).filter(Boolean);
+      const teamIds = teamsOfActiveClub.map(team => team.id).filter(Boolean) as string[];
       if (teamIds.length === 0) return;
 
-      const collectionName = getSeasonSpecificScoresCollection(currentSeason.competitionYear, 'KKG'); // Use KKG as default for checking
-      const scoresQuery = query(
-        collection(db, collectionName),
-        where('teamId', 'in', teamIds),
-        where('competitionYear', '==', currentSeason.competitionYear)
-      );
-      
-      const scoresSnapshot = await getDocs(scoresQuery);
+      // Alle vorkommenden Disziplin-Collections ermitteln (nicht nur KK!). Sonst
+      // würden Teams in LG/LP/KKP mit Ergebnissen übersehen und könnten trotz
+      // vorhandener Ergebnisse gelöscht/bearbeitet werden.
+      const collectionNames = new Set<string>();
+      for (const team of teamsOfActiveClub) {
+        const typ = (team.leagueType as FirestoreLeagueSpecificDiscipline) || 'KKG';
+        collectionNames.add(getSeasonSpecificScoresCollection(currentSeason.competitionYear, typ));
+      }
+      // Sicherheitsnetz: KK immer mitprüfen (Default für Teams ohne leagueType).
+      collectionNames.add(getSeasonSpecificScoresCollection(currentSeason.competitionYear, 'KKG'));
+
       const teamsWithResultsSet = new Set<string>();
-      
-      scoresSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        if (data.teamId) {
-          teamsWithResultsSet.add(data.teamId);
+
+      // Pro Collection: teamId-'in'-Query in 30er-Blöcke chunken (Firestore-Limit).
+      for (const collectionName of collectionNames) {
+        for (let i = 0; i < teamIds.length; i += 30) {
+          const block = teamIds.slice(i, i + 30);
+          const scoresQuery = query(
+            collection(db, collectionName),
+            where('teamId', 'in', block),
+            where('competitionYear', '==', currentSeason.competitionYear)
+          );
+          const scoresSnapshot = await getDocs(scoresQuery);
+          scoresSnapshot.docs.forEach(d => {
+            const data = d.data();
+            if (data.teamId) teamsWithResultsSet.add(data.teamId);
+          });
         }
-      });
-      
+      }
+
       setTeamsWithResults(teamsWithResultsSet);
     } catch (error) {
       logError('Fehler beim Prüfen der Ergebnisse:', error);
@@ -1075,8 +1088,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
         <Card className="border-amber-500 bg-amber-50/50">
             <CardHeader><CardTitle className="text-amber-700 flex items-center gap-2"><AlertTriangle />Kein Verein zugewiesen</CardTitle></CardHeader>
             <CardContent>
-                <p>Ihrem Konto ist kein Verein für die Mannschaftsverwaltung zugewiesen oder der Verein konnte nicht geladen werden. Bitte kontaktieren Sie den Administrator.</p>
-                {userPermission && <p className="text-xs mt-2">DEBUG: UserPermission ClubId from Context: {userPermission.assignedClubId}</p>}
+                <p>Deinem Konto ist kein Verein für die Mannschaftsverwaltung zugewiesen oder der Verein konnte nicht geladen werden. Bitte kontaktiere den Administrator.</p>
             </CardContent>
         </Card>
         </div>
@@ -1629,14 +1641,7 @@ Angelegt von: ${user?.displayName || user?.email || 'Unbekannt'}`);
                       type="search"
                       placeholder="Schützen suchen..."
                       value={shooterSearchQuery}
-                      onChange={(e) => {
-                        setShooterSearchQuery(e.target.value);
-                        // Debounce: Warte 300ms bevor Filter angewendet wird
-                        clearTimeout((window as any).shooterSearchTimeout);
-                        (window as any).shooterSearchTimeout = setTimeout(() => {
-                          // Filter wird nur alle 300ms angewendet, nicht bei jedem Tastendruck
-                        }, 300);
-                      }}
+                      onChange={(e) => setShooterSearchQuery(e.target.value)}
                       className="w-full"
                     />
                   </div>
