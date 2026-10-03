@@ -4,6 +4,15 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.3.0 (03.10.2026)
+- **🏆 Vereinszugang direkt in der App beantragen**: Neue Nutzer registrieren sich und beantragen ihre Vereinsrolle (Sportleiter oder Mannschaftsführer) jetzt über ein Formular in der App – statt per formloser E-Mail. Der RWK-Leiter sieht alle Anträge in einer Übersicht und schaltet die Rechte mit einem Klick frei
+- **👥 Mannschaftsführer-Seite verbessert**: Kontaktdaten (E-Mail/Telefon) sind jetzt anklickbar, auf dem Handy gibt es eine übersichtliche Karten-Ansicht statt gequetschter Tabelle. Nutzer mit mehreren Vereinen sehen die richtigen Daten je nach gewähltem Verein
+- **🔄 Vereinswechsel überall möglich**: Wer mehreren Vereinen zugeordnet ist, kann den Verein jetzt auf allen Vereinsseiten umschalten (vorher nur im Dashboard)
+- **🐛 Wichtiger Fix bei den Mannschaften**: Mannschaften in Luftgewehr/Luftpistole/KK-Pistole wurden beim Lösch-/Bearbeitungsschutz nicht korrekt als „hat bereits Ergebnisse" erkannt. Das ist behoben – Mannschaften mit Ergebnissen sind jetzt in allen Disziplinen zuverlässig geschützt
+- **✨ Einheitlichere Bedienung**: Durchgängige „Du"-Ansprache im Vereinsbereich, aufgeräumte Hilfe-Seite und aktualisierte Einführungstexte
+
+---
+
 ## Version 3.2.1 (02.10.2026)
 - **🎯 Einzelschützen in der Mannschaftstabelle korrigiert**: Bei Einzelmeldungen (ein oder zwei Schützen eines Vereins) wurde ein geschossener Durchgang in der Übersichtszeile fälschlich als Strich angezeigt, obwohl ein Ergebnis vorlag. Jetzt werden die Durchgänge einer Einzelwertung korrekt angezeigt und summiert
 - **🔄 Auf-/Abstiegs-Vorschläge zuverlässiger**: Die automatischen Auf-/Abstiegs-Vorschläge folgen jetzt sauber der RWK-Ordnung (inkl. „Zweiter steigt auf → Vorletzter der höheren Liga steigt ab"). Das Auffüllen von Ligen nach Abmeldungen bleibt wie gewohnt über den Einteilungs-Editor steuerbar
