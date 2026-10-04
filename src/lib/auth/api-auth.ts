@@ -101,3 +101,27 @@ export async function requireKMAuth(request: Request): Promise<KMAuthResult> {
 
   return { ok: true, uid: user.uid, email: user.email ?? null };
 }
+
+// Admin-E-Mails mit Vollzugriff auf die Nutzer-Verwaltungs-Routen.
+const ADMIN_EMAILS = ['admin@rwk-einbeck.de', 'stephanie.buenger@gmx.de'];
+
+export type AdminAuthResult =
+  | { ok: true; uid: string; email: string }
+  | { ok: false; status: number; error: string };
+
+/**
+ * Absicherung für Admin-only API-Routen (Nutzerverwaltung, Rechte, Konten).
+ * Verlangt ein gültiges Token UND eine Admin-E-Mail. Bewusst streng – diese
+ * Routen können Konten/Rechte verändern.
+ */
+export async function requireAdmin(request: Request): Promise<AdminAuthResult> {
+  const user = await verifyApiAuth(request);
+  if (!user) {
+    return { ok: false, status: 401, error: 'Authentication required' };
+  }
+  const email = (user.email || '').toLowerCase();
+  if (!ADMIN_EMAILS.includes(email)) {
+    return { ok: false, status: 403, error: 'Forbidden – nur für Administratoren' };
+  }
+  return { ok: true, uid: user.uid, email };
+}

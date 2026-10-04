@@ -15,6 +15,7 @@ import { collection, getDocs, query, orderBy, doc, setDoc, getDoc, Timestamp } f
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { UserList } from './user-list';
+import { UserTroubleshooting } from './user-troubleshooting';
 import Link from 'next/link';
 
 const CLUBS_COLLECTION = "clubs";
@@ -322,13 +323,16 @@ export default function AdminUserManagementPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="list" className="text-xs md:text-sm">Übersicht</TabsTrigger>
           <TabsTrigger value="edit" className="text-xs md:text-sm">🎯 Benutzer verwalten</TabsTrigger>
+          <TabsTrigger value="troubleshooting" className="text-xs md:text-sm">🔧 Troubleshooting</TabsTrigger>
         </TabsList>
-        
 
-        
+        <TabsContent value="troubleshooting" className="space-y-4">
+          <UserTroubleshooting />
+        </TabsContent>
+
         <TabsContent value="edit" className="space-y-4">
           <Card className="shadow-lg">
             <CardHeader>

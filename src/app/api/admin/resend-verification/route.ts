@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase/admin';
+import { requireAdmin } from '@/lib/auth/api-auth';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
+  // Diese Route konnte zuvor von jedem aufgerufen werden – jetzt nur noch Admin.
+  const auth = await requireAdmin(request);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
   try {
     const { email } = await request.json();
 

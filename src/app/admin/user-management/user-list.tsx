@@ -131,7 +131,8 @@ export function UserList({ clubs, onEditUser, refreshTrigger }: UserListProps) {
   const handleResendVerification = async (user: UserPermission) => {
     setSendingVerificationFor(user.uid);
     try {
-      const res = await fetch('/api/admin/resend-verification', {
+      const { authFetch } = await import('@/lib/auth/authFetch');
+      const res = await authFetch('/api/admin/resend-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ uid: user.uid, email: user.email }),
