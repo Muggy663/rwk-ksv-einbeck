@@ -4,6 +4,13 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.3.1 (04.10.2026)
+- **🔧 Admin: Nutzer-Troubleshooting**: Neues Werkzeug in der Benutzerverwaltung, mit dem der Administrator typische Zugangsprobleme (E-Mail-Bestätigung, Passwort zurücksetzen, Konto sperren/entsperren) direkt lösen kann – schnellere Hilfe bei Login-Problemen
+- **🔗 Vereinszugang-Beantragung nachgebessert**: Der Weg zum Antrag ist jetzt an mehreren Stellen klar erreichbar (Login-Seite, Dashboard, Schießnachweis-Startseite) und führt nicht mehr versehentlich zurück zur Anmeldung
+- **🔒 Kleinere interne Sicherheits- und Qualitätsverbesserungen**
+
+---
+
 ## Version 3.3.0 (03.10.2026)
 - **🏆 Vereinszugang direkt in der App beantragen**: Neue Nutzer registrieren sich und beantragen ihre Vereinsrolle (Sportleiter oder Mannschaftsführer) jetzt über ein Formular in der App – statt per formloser E-Mail. Der RWK-Leiter sieht alle Anträge in einer Übersicht und schaltet die Rechte mit einem Klick frei
 - **👥 Mannschaftsführer-Seite verbessert**: Kontaktdaten (E-Mail/Telefon) sind jetzt anklickbar, auf dem Handy gibt es eine übersichtliche Karten-Ansicht statt gequetschter Tabelle. Nutzer mit mehreren Vereinen sehen die richtigen Daten je nach gewähltem Verein
