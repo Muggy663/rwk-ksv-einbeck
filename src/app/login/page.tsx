@@ -449,9 +449,15 @@ export default function UnifiedLoginPage() {
                 <p className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">
                   🏆 RWK/KM-Vereinszugang benötigt?
                 </p>
-                <p className="text-xs text-green-600 dark:text-green-400">
-                  Registriere dich zuerst bzw. melde dich an. Danach kannst du den <strong>Vereinszugang</strong> direkt in der App beantragen – den Button dazu findest du auf deiner Schießnachweis-Startseite. Der RWK-Leiter schaltet dir die Rechte dann frei.
+                <p className="text-xs text-green-600 dark:text-green-400 mb-2">
+                  Registriere dich zuerst bzw. melde dich an – danach kannst du den <strong>Vereinszugang</strong> beantragen. Der RWK-Leiter schaltet dir die Rechte dann frei.
                 </p>
+                <a
+                  href="/vereinszugang"
+                  className="inline-block text-xs font-medium text-green-800 dark:text-green-200 underline hover:no-underline"
+                >
+                  → Vereinszugang beantragen
+                </a>
               </div>
             </div>
           </div>
