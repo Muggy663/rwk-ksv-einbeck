@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
@@ -23,7 +22,6 @@ const ROLLEN = [
 ];
 
 export default function VereinszugangPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
 
@@ -34,13 +32,6 @@ export default function VereinszugangPage() {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [erfolg, setErfolg] = useState(false);
-
-  // Nicht eingeloggte Nutzer zur Anmeldung schicken.
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [authLoading, user, router]);
 
   useEffect(() => {
     const ladeVereine = async () => {
@@ -87,10 +78,39 @@ export default function VereinszugangPage() {
     }
   };
 
-  if (authLoading || !user) {
+  if (authLoading) {
     return (
       <div className="flex justify-center items-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Nicht eingeloggt: erklären, dass erst ein Konto nötig ist (kein Redirect –
+  // sonst landet man vom Login-Hinweis aus sofort wieder im Login = Schleife).
+  if (!user) {
+    return (
+      <div className="container mx-auto p-4 sm:p-6 max-w-md">
+        <Card>
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
+              <Trophy className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <CardTitle className="text-2xl">Vereinszugang beantragen</CardTitle>
+            <CardDescription>
+              Um einen Vereinszugang zu beantragen, brauchst du zuerst ein Konto. Melde dich an
+              oder registriere dich – danach kannst du hier deine Vereinsrolle beantragen.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-center">
+            <Button asChild className="w-full">
+              <Link href="/login">Anmelden oder registrieren</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/">Zur Startseite</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }

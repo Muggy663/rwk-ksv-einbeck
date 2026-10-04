@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { logError } from '@/lib/utils/secure-logger';
-import { Target, Plus, Calendar, TrendingUp, FileText, User } from "lucide-react";
+import { Target, Plus, Calendar, TrendingUp, FileText, User, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -318,6 +318,24 @@ export default function SchießnachweisPage() {
           </Link>
         </Button>
       </div>
+
+      {/* Vereinszugang beantragen – für Nutzer, die im RWK/KM aktiv sind */}
+      <Card className="mb-6 sm:mb-8 border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20">
+        <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <Trophy className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <h3 className="font-medium text-blue-900 dark:text-blue-100 text-sm sm:text-base">Im Verein aktiv (RWK/KM)?</h3>
+              <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300 mt-0.5">
+                Beantrage deinen Vereinszugang als Sportleiter oder Mannschaftsführer – der RWK-Leiter schaltet dir die Rechte frei.
+              </p>
+            </div>
+          </div>
+          <Button asChild variant="outline" className="w-full sm:w-auto flex-shrink-0 border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-300">
+            <Link href="/vereinszugang">Vereinszugang beantragen</Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Statistik-Übersicht */}
       {!isLoading && statistik && (
