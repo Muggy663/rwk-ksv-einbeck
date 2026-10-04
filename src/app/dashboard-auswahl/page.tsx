@@ -112,9 +112,14 @@ export default function DashboardAuswahl() {
         
         <div className="mt-8 text-center">
           <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 max-w-2xl mx-auto">
-            <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              💡 <strong>Hinweis:</strong> Sie haben einen Schießnachweis-Account. Für Zugriff auf RWK/KM-Bereiche benötigen Sie eine Vereins-Berechtigung vom Kreisverband.
+            <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-3">
+              💡 <strong>Hinweis:</strong> Du hast einen Schießnachweis-Account. Für den Zugriff auf die RWK/KM-Bereiche brauchst du eine Vereins-Berechtigung – beantrage sie hier, der RWK-Leiter schaltet sie dir frei.
             </p>
+            <Link href="/vereinszugang">
+              <Button variant="outline" className="border-yellow-400 text-yellow-900 hover:bg-yellow-100 dark:text-yellow-100 dark:border-yellow-700">
+                🏆 Vereinszugang beantragen
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
