@@ -10,16 +10,19 @@ import { NativeSelect } from '@/components/ui/native-select';
 import { Settings, Save, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
-import { collection, getDocs, doc, updateDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, query, where, orderBy } from 'firebase/firestore';
 import type { League, Season } from '@/types/rwk';
+import { getDefaultShotConfigForType } from '@/lib/utils/league-shot-config';
 import Link from 'next/link';
 
 const DISCIPLINES = [
   'Kleinkaliber Gewehr',
-  'Kleinkaliber Pistole', 
+  'Kleinkaliber Pistole',
   'Luftgewehr Auflage',
   'Luftgewehr Freihand',
   'Luftpistole',
+  'Luftpistole Auflage',
+  'Blasrohr',
   'Benutzerdefiniert'
 ];
 
@@ -28,8 +31,43 @@ const DEFAULT_SETTINGS = {
   'Kleinkaliber Pistole': { shotCount: 30, maxRings: 300 },
   'Luftgewehr Auflage': { shotCount: 40, maxRings: 400 },
   'Luftgewehr Freihand': { shotCount: 40, maxRings: 400 },
-  'Luftpistole': { shotCount: 40, maxRings: 400 }
+  'Luftpistole': { shotCount: 40, maxRings: 400 },
+  'Luftpistole Auflage': { shotCount: 40, maxRings: 400 },
+  'Blasrohr': { shotCount: 30, maxRings: 300 }
 };
+
+/**
+ * Leitet aus league.type einen sinnvollen Default-shotSettings-Block ab.
+ * Wird genutzt, wenn eine Liga noch keine shotSettings besitzt – damit die
+ * Anzeige und das Speichern einen passenden Vorschlag (statt hart KK/30/300)
+ * haben. Die Zahlen kommen aus dem zentralen Helper (eine Quelle).
+ */
+function defaultSettingsForLeague(league: League): NonNullable<League['shotSettings']> {
+  const { shotCount, maxRings } = getDefaultShotConfigForType(league.type);
+  // Disziplin-Klartext passend zum Typ vorbelegen.
+  const disciplineByType: Record<string, string> = {
+    KK: 'Kleinkaliber Gewehr',
+    KKG: 'Kleinkaliber Gewehr',
+    KKP: 'Kleinkaliber Pistole',
+    LG: 'Luftgewehr Freihand',
+    LGA: 'Luftgewehr Auflage',
+    LGS: 'Luftgewehr Freihand',
+    LP: 'Luftpistole',
+    LPA: 'Luftpistole Auflage',
+    LD: 'Luftgewehr Freihand',
+  };
+  return {
+    discipline: disciplineByType[league.type] || 'Kleinkaliber Gewehr',
+    shotCount,
+    maxRings,
+    description: '',
+  };
+}
+
+/** shotSettings einer Liga, oder (wenn fehlend) der aus league.type abgeleitete Default. */
+function effectiveSettings(league: League): NonNullable<League['shotSettings']> {
+  return league.shotSettings ?? defaultSettingsForLeague(league);
+}
 
 export default function LeagueSettingsPage() {
   const { toast } = useToast();
@@ -81,13 +119,20 @@ export default function LeagueSettingsPage() {
     try {
       const leaguesQuery = query(
         collection(db, 'rwk_leagues'),
-        orderBy('order', 'asc')
+        where('seasonId', '==', selectedSeasonId)
       );
       const leaguesSnapshot = await getDocs(leaguesQuery);
       const leaguesData = leaguesSnapshot.docs
         .map(doc => ({ id: doc.id, ...doc.data() } as League))
-        .filter(league => league.seasonId === selectedSeasonId);
-      
+        // Clientseitig sortieren: nach order (fehlendes order ans Ende), dann Name.
+        // Kein orderBy in der Query, sonst würden Ligen ohne order-Feld verschwinden.
+        .sort((a, b) => {
+          const ao = typeof a.order === 'number' ? a.order : Number.MAX_SAFE_INTEGER;
+          const bo = typeof b.order === 'number' ? b.order : Number.MAX_SAFE_INTEGER;
+          if (ao !== bo) return ao - bo;
+          return (a.name || '').localeCompare(b.name || '');
+        });
+
       setLeagues(leaguesData);
     } catch (error) {
       logError('Fehler beim Laden der Ligen:', error);
@@ -99,16 +144,16 @@ export default function LeagueSettingsPage() {
     }
   };
 
-  const updateLeagueSetting = (leagueId: string, field: string, value: any) => {
+  const updateLeagueSetting = (leagueId: string, field: string, value: string | number) => {
     setLeagues(prev => prev.map(league => {
       if (league.id === leagueId) {
-        const shotSettings: NonNullable<League['shotSettings']> = league.shotSettings || { discipline: 'Kleinkaliber Gewehr', shotCount: 30, maxRings: 300 };
+        const shotSettings: NonNullable<League['shotSettings']> = league.shotSettings || defaultSettingsForLeague(league);
         
         if (field === 'discipline' && value !== 'Benutzerdefiniert') {
           const defaults = DEFAULT_SETTINGS[value as keyof typeof DEFAULT_SETTINGS];
           const newSettings: NonNullable<League['shotSettings']> = {
             ...shotSettings,
-            discipline: value,
+            discipline: value as string,
             shotCount: defaults?.shotCount || shotSettings.shotCount || 30,
             maxRings: defaults?.maxRings || shotSettings.maxRings || 300
           };
@@ -139,27 +184,29 @@ export default function LeagueSettingsPage() {
   const saveAllSettings = async () => {
     setIsSaving(true);
     try {
+      // ALLE Ligen speichern – auch solche, die noch kein shotSettings haben.
+      // Für sie wird der aus league.type abgeleitete Default geschrieben, damit
+      // ab sofort eine explizite, admin-kontrollierbare Konfiguration existiert.
       const updatePromises = leagues.map(async (league) => {
-        if (league.shotSettings) {
-          const leagueRef = doc(db, 'rwk_leagues', league.id);
-          
-          // Entferne undefined Werte
-          const cleanSettings: { discipline: string; shotCount: number; maxRings: number; description: string; customDiscipline?: string } = {
-            discipline: league.shotSettings.discipline || 'Kleinkaliber Gewehr',
-            shotCount: league.shotSettings.shotCount || 30,
-            maxRings: league.shotSettings.maxRings || 300,
-            description: league.shotSettings.description || ''
-          };
-          
-          // Nur customDiscipline hinzufügen wenn es einen Wert hat
-          if (league.shotSettings.customDiscipline) {
-            cleanSettings.customDiscipline = league.shotSettings.customDiscipline;
-          }
-          
-          await updateDoc(leagueRef, {
-            shotSettings: cleanSettings
-          });
+        const src = effectiveSettings(league);
+        const leagueRef = doc(db, 'rwk_leagues', league.id);
+
+        // Entferne undefined Werte
+        const cleanSettings: { discipline: string; shotCount: number; maxRings: number; description: string; customDiscipline?: string } = {
+          discipline: src.discipline || 'Kleinkaliber Gewehr',
+          shotCount: src.shotCount || 30,
+          maxRings: src.maxRings || 300,
+          description: src.description || ''
+        };
+
+        // Nur customDiscipline hinzufügen wenn es einen Wert hat
+        if (src.customDiscipline) {
+          cleanSettings.customDiscipline = src.customDiscipline;
         }
+
+        await updateDoc(leagueRef, {
+          shotSettings: cleanSettings
+        });
       });
 
       await Promise.all(updatePromises);
@@ -183,12 +230,7 @@ export default function LeagueSettingsPage() {
   const resetToDefaults = () => {
     setLeagues(prev => prev.map(league => ({
       ...league,
-      shotSettings: {
-        discipline: 'Kleinkaliber Gewehr',
-        shotCount: 30,
-        maxRings: 300,
-        description: ''
-      }
+      shotSettings: defaultSettingsForLeague(league)
     })));
   };
 
@@ -238,26 +280,36 @@ export default function LeagueSettingsPage() {
 
       {leagues.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {leagues.map(league => (
+          {leagues.map(league => {
+            const eff = effectiveSettings(league);
+            const notYetConfigured = !league.shotSettings;
+            return (
             <Card key={league.id}>
               <CardHeader>
-                <CardTitle className="text-lg">{league.name}</CardTitle>
+                <CardTitle className="text-lg flex items-center justify-between gap-2">
+                  <span>{league.name}</span>
+                  {notYetConfigured && (
+                    <span className="text-xs font-normal text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
+                      Vorschlag (noch nicht gespeichert)
+                    </span>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <Label>Disziplin</Label>
                   <NativeSelect
-                    value={league.shotSettings?.discipline || 'Kleinkaliber Gewehr'}
+                    value={eff.discipline || 'Kleinkaliber Gewehr'}
                     onValueChange={(value) => updateLeagueSetting(league.id, 'discipline', value)}
                     options={DISCIPLINES.map(discipline => ({ value: discipline, label: discipline }))}
                   />
                 </div>
 
-                {league.shotSettings?.discipline === 'Benutzerdefiniert' && (
+                {eff.discipline === 'Benutzerdefiniert' && (
                   <div>
                     <Label>Benutzerdefinierte Disziplin</Label>
                     <Input
-                      value={league.shotSettings?.customDiscipline || ''}
+                      value={eff.customDiscipline || ''}
                       onChange={(e) => updateLeagueSetting(league.id, 'customDiscipline', e.target.value)}
                       placeholder="z.B. Großkaliber Gewehr"
                     />
@@ -271,7 +323,7 @@ export default function LeagueSettingsPage() {
                       type="number"
                       min="1"
                       max="60"
-                      value={league.shotSettings?.shotCount || 30}
+                      value={eff.shotCount || 30}
                       onChange={(e) => updateLeagueSetting(league.id, 'shotCount', parseInt(e.target.value))}
                     />
                   </div>
@@ -281,7 +333,7 @@ export default function LeagueSettingsPage() {
                       type="number"
                       min="1"
                       max="600"
-                      value={league.shotSettings?.maxRings || 300}
+                      value={eff.maxRings || 300}
                       onChange={(e) => updateLeagueSetting(league.id, 'maxRings', parseInt(e.target.value))}
                     />
                   </div>
@@ -290,7 +342,7 @@ export default function LeagueSettingsPage() {
                 <div>
                   <Label>Zusätzliche Beschreibung (optional)</Label>
                   <Input
-                    value={league.shotSettings?.description || ''}
+                    value={eff.description || ''}
                     onChange={(e) => updateLeagueSetting(league.id, 'description', e.target.value)}
                     placeholder="z.B. stehend freihändig"
                   />
@@ -298,18 +350,19 @@ export default function LeagueSettingsPage() {
 
                 <div className="p-3 bg-muted rounded-md text-sm">
                   <strong>Aktuelle Einstellung:</strong><br />
-                  {league.shotSettings?.discipline === 'Benutzerdefiniert' 
-                    ? league.shotSettings?.customDiscipline || 'Benutzerdefiniert'
-                    : league.shotSettings?.discipline || 'Kleinkaliber Gewehr'
+                  {eff.discipline === 'Benutzerdefiniert'
+                    ? eff.customDiscipline || 'Benutzerdefiniert'
+                    : eff.discipline || 'Kleinkaliber Gewehr'
                   }<br />
-                  {league.shotSettings?.shotCount || 30} Schuss, max. {league.shotSettings?.maxRings || 300} Ringe
-                  {league.shotSettings?.description && (
-                    <><br />Zusatz: {league.shotSettings.description}</>
+                  {eff.shotCount || 30} Schuss, max. {eff.maxRings || 300} Ringe
+                  {eff.description && (
+                    <><br />Zusatz: {eff.description}</>
                   )}
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 

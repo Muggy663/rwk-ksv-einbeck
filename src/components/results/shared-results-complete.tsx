@@ -13,6 +13,7 @@ import { BackButton } from '@/components/ui/back-button';
 import { createProgressToast } from '@/components/ui/progress-toast';
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Season, League, Team, Shooter, PendingScoreEntry, ScoreEntry } from '@/types/rwk';
+import { getLeagueShotConfig } from '@/lib/utils/league-shot-config';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
@@ -508,7 +509,7 @@ export default function SharedResultsPage({
       return;
     }
 
-    const maxScore = ['LG', 'LGA', 'LP', 'LPA'].includes(league.type) ? 400 : 300;
+    const { maxRings: maxScore } = getLeagueShotConfig(league);
     if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > maxScore) {
       toast({ title: "Ungültiges Ergebnis", description: `Ringzahl (0-${maxScore}).`, variant: "destructive" });
       return;
@@ -667,7 +668,8 @@ export default function SharedResultsPage({
     // 1) Harte Prüfung: unmögliche Ringzahlen
     const harteFehler: string[] = [];
     for (const entry of pendingScores) {
-      const maxScore = ['LG', 'LGA', 'LP', 'LPA'].includes(entry.leagueType) ? 400 : 300;
+      const entryLeague = availableLeaguesForSeason.find(l => l.id === entry.leagueId);
+      const { maxRings: maxScore } = getLeagueShotConfig(entryLeague ?? { type: entry.leagueType });
       const ringe = entry.totalRinge;
       if (typeof ringe !== 'number' || isNaN(ringe) || ringe < 0 || ringe > maxScore) {
         harteFehler.push(`${entry.shooterName} (${entry.teamName}, DG ${entry.durchgang}): ${ringe} Ringe – erlaubt sind 0–${maxScore}`);
@@ -1373,7 +1375,7 @@ export default function SharedResultsPage({
                     const scoreVal = parseInt(value);
                     const league = availableLeaguesForSeason.find(l => l.id === selectedLeagueId);
                     if (league && !isNaN(scoreVal)) {
-                      const maxScore = ['LG', 'LGA', 'LP', 'LPA'].includes(league.type) ? 400 : 300;
+                      const { maxRings: maxScore } = getLeagueShotConfig(league);
                       const check = {
                         isValid: scoreVal >= 0 && scoreVal <= maxScore,
                         warning: scoreVal < 0 ? 'Negative Werte nicht möglich' : 
