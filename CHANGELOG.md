@@ -4,6 +4,14 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.3.2 (06.10.2026)
+- **🎯 Liga-Einstellungen jetzt wirklich einstellbar**: Schusszahl und maximale Ringzahl lassen sich pro Liga über „Admin → Liga-Einstellungen" festlegen und speichern – ohne Code-Änderung. Beispiel: KK Auflage auf 20 Schuss umstellen
+- **➕ Neue Disziplinen wählbar**: „Luftpistole Auflage" und „Blasrohr" stehen jetzt zur Auswahl; weitere Disziplinen lassen sich über „Benutzerdefiniert" ergänzen
+- **🐛 Fix: Ergebnis-Eingabe bei Luftgewehr Freihand**: In Luftgewehr-Freihand-Ligen konnten Ergebnisse über 300 Ringe nicht gespeichert werden. Die Ringgrenze richtet sich jetzt nach der Liga-Einstellung (bzw. dem korrekten Disziplin-Standard), sodass bis zu 400 Ringe sauber erfasst werden
+- **🔧 Liga-Einstellungen-Seite repariert**: Ligen ohne Sortier-Reihenfolge wurden nicht mehr angezeigt und Einstellungen für neue Ligen nicht gespeichert – beides behoben; die Seite zeigt für jede Liga einen passenden Vorschlag an
+
+---
+
 ## Version 3.3.1 (04.10.2026)
 - **🔧 Admin: Nutzer-Troubleshooting**: Neues Werkzeug in der Benutzerverwaltung, mit dem der Administrator typische Zugangsprobleme (E-Mail-Bestätigung, Passwort zurücksetzen, Konto sperren/entsperren) direkt lösen kann – schnellere Hilfe bei Login-Problemen
 - **🔗 Vereinszugang-Beantragung nachgebessert**: Der Weg zum Antrag ist jetzt an mehreren Stellen klar erreichbar (Login-Seite, Dashboard, Schießnachweis-Startseite) und führt nicht mehr versehentlich zurück zur Anmeldung
