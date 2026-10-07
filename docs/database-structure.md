@@ -1,552 +1,344 @@
-# 🗄️ Firestore Datenbankstruktur - RWK Einbeck App
+# Firestore-Datenbankstruktur – RWK Einbeck App
 
-> **Letzte Aktualisierung:** Januar 2025  
-> **Version:** 1.7.3
+> **Letzte Aktualisierung:** Oktober 2026 (App-Version 3.3.2)
+> **Quelle:** aus dem Code ermittelt (`firestore.rules`, `src/types/`, `src/lib/`). Belege sind je Abschnitt angegeben.
 
-## 📋 Übersicht Collections (Real Database)
+Dieses Dokument beschreibt den tatsächlichen Stand der Firestore-Collections und der wichtigsten Dokumentfelder. Es ersetzt die veraltete Vorgängerfassung (Stand Januar 2025), die in mehreren Punkten nicht mehr stimmte.
 
-### 🏆 **RWK (Rundenwettkampf) Collections**
+---
 
-#### `seasons` - Saisons
+## 0. Datenbank-Instanz (wichtig!)
+
+Die App nutzt **nicht** die Firestore-Default-Datenbank, sondern eine **benannte Datenbank** mit der ID `restored-main`.
+
+- Client-SDK: `src/lib/firebase/config.ts`
+  `const databaseId = process.env.FIREBASE_DATABASE_ID || process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || 'restored-main';`
+  → `getFirestore(app, databaseId)`. Cloud-Functions-Region: `europe-west1`.
+- Admin-SDK: `src/lib/firebase/admin.ts`
+  `const databaseId = process.env.FIREBASE_DATABASE_ID || 'restored-main';`. Service-Account aus `FIREBASE_PROJECT_ID` / `FIREBASE_CLIENT_EMAIL` / `FIREBASE_PRIVATE_KEY`.
+
+> ⚠️ **Stolperstein:** Wer gegen `(default)` statt `restored-main` testet, sieht leere Collections. Diagnose-Skripte müssen die DB-ID explizit setzen.
+
+---
+
+## 1. Dynamische (saison-/jahr-spezifische) Collections
+
+Zwei Daten-Arten liegen **nicht** in einer einzigen Collection, sondern nach Jahr und Disziplin aufgeteilt. Das ist der häufigste Grund für „ich finde ein Ergebnis nicht" und für neue Index-Anforderungen pro Saison.
+
+### RWK-Ergebnisse: `rwk_scores_{JAHR}_{TYP}`
+Erzeugt in `src/lib/utils/collection-names.ts` → `getSeasonSpecificScoresCollection(year, leagueType)` als `rwk_scores_${year}_${normalizedDiscipline}`.
+
+Die Disziplin wird dabei **normalisiert/zusammengefasst** (nicht 1:1 der Liga-Typ):
+
+| Liga-Typ | normalisiert zu |
+|---|---|
+| `KK`, `KKG` | `KK` |
+| `LG`, `LGA`, `LGS`, `LP`, `LPA` | `LD` |
+| `KKP` | `KKP` |
+| alles andere | `UNKNOWN` |
+
+> ⚠️ **Gotcha:** `LGS` (Luftgewehr Freihand) gehört bewusst zu `LD`. Fehlt die Zuordnung, landet ein LGS-Ergebnis in `rwk_scores_JAHR_UNKNOWN` und ist für Tabellen/Statistik unauffindbar.
+
+Beispiele real: `rwk_scores_2024_KK`, `rwk_scores_2026_LD`, `rwk_scores_2026_KKP`. Ohne Jahr/Typ fällt `getScoresCollectionName()` auf die Alt-Collection `rwk_scores` zurück. Die Rules matchen per Wildcard `collection.matches('rwk_scores_.*')`.
+
+### KM-Meldungen: `km_meldungen_{JAHR}_{kuerzel}`
+Erzeugt in `src/app/api/km/jahre/route.ts` beim Anlegen einer KM-Saison; der Name wird als Feld `collectionName` im `km_saisons`-Dokument gespeichert. Kürzel **kleingeschrieben**: `kk`, `ld`, `kkp` (z. B. `km_meldungen_2026_ld`).
+
+> ⚠️ KM-Meldungen liegen über mehrere Collections verteilt (Jahr + Disziplin), **plus** eine ältere unversionierte Sammel-Collection `km_meldungen`. Beim Suchen einer Meldung müssen ggf. mehrere Collections geprüft werden. Beachte: RWK-Scores nutzen Großbuchstaben (`KK/LD/KKP`), KM-Meldungen Kleinbuchstaben (`kk/ld/kkp`).
+
+---
+
+## 2. RWK-Collections (Rundenwettkampf)
+
+| Collection | Zweck | Entität | Zugriff (grob) |
+|---|---|---|---|
+| `seasons` | Saisons | `Season` | read öffentlich, write Admin |
+| `rwk_leagues` | Ligen | `League` | read öffentlich, write Admin |
+| `clubs` | Vereine | `Club` | read öffentlich; update Sportleiter/Vorstand des Vereins; create/delete Admin |
+| `shooters` | Schützen/Mitglieder (zentral für RWK **und** KM) | `Shooter` | read öffentlich; create/update bei Rolle; **delete nur Admin-SDK** |
+| `rwk_teams` | Mannschaften | `Team` | create/update/delete durch Admin oder Club-Rollen (anhand `clubId`) |
+| `rwk_scores` | Alt-/Fallback-Ergebnisse | `ScoreEntry` | read öffentlich; create auth+gültige Ringe; update/delete Admin |
+| `rwk_scores_{JAHR}_{TYP}` | saisonspezifische Ergebnisse | `ScoreEntry` | wie `rwk_scores` (per Wildcard) |
+| `team_substitutions` | Ersatzschützen | – | read öffentlich, write Admin |
+| `ausrichter_historie` | Ausrichter 1. Durchgang | – | write Admin/KM-Orga/Sportleiter/Vorstand |
+
+### Season (`src/types/rwk.ts`)
 ```typescript
 interface Season {
   id: string;
-  name: string;                    // "Saison 2024/25"
-  competitionYear: number;         // 2025
-  status: 'Laufend' | 'Beendet';
-  startDate?: Timestamp;
-  endDate?: Timestamp;
+  name: string;
+  competitionYear: number;
+  type: string;
+  status: 'Vorbereitung' | 'Anmeldung möglich' | 'Laufend' | 'Abgeschlossen';
+  startDate?: Date;
+  endDate?: Date;
+  meldestart?: string;   // ISO "YYYY-MM-DD" – Cron öffnet Meldefenster ab diesem Tag
+  meldeschluss?: string; // ISO "YYYY-MM-DD"
+  wettkampfende?: string; // ISO "YYYY-MM-DD" – Abgabeschluss
 }
 ```
+> ⚠️ 4 feste deutsche Status-Werte (inkl. „Anmeldung möglich" mit Leerzeichen). KM-Saisons nutzen ein **eigenes** Status-Feld mit anderen Werten (Default `'vorbereitung'`).
 
-#### `rwk_leagues` - Ligen
+### Liga-Disziplin-Typ (`FirestoreLeagueSpecificDiscipline`)
+```typescript
+type FirestoreLeagueSpecificDiscipline =
+  'KK' | 'KKP' | 'KKG' | 'LG' | 'LGA' | 'LGS' | 'LP' | 'LPA' | 'LD';
+```
+UI-Gruppierung: `KK` = {KK, KKP, KKG}; `LG`/Luftdruck = {LG, LGA, LGS, LP, LPA, LD}.
+
+### League (`src/types/rwk.ts`)
 ```typescript
 interface League {
   id: string;
-  name: string;                    // "1. Kreisklasse Gewehr"
-  seasonId: string;                // Referenz zu seasons
-  competitionYear: number;         // 2025
-  type: FirestoreLeagueSpecificDiscipline; // 'KKG' | 'KKP' | 'LGA' | 'LGS' | 'LP'
-  order?: number;                  // Sortierung
-  maxTeams?: number;
-  minTeams?: number;
+  name: string;
+  shortName?: string;
+  type: FirestoreLeagueSpecificDiscipline;
+  seasonId: string;
+  competitionYear: number;
+  order?: number;              // Liga-Rang (Hierarchie); kann fehlen
+  shotSettings?: {             // konfigurierbar über /admin/league-settings
+    discipline: string;        // Klartext, z. B. "Luftgewehr Freihand"
+    shotCount: number;
+    maxRings: number;
+    description?: string;
+    customDiscipline?: string;
+  };
 }
 ```
 
-#### `clubs` - Vereine
+### Club (`src/types/rwk.ts`)
 ```typescript
 interface Club {
   id: string;
-  name: string;                    // "SV Musterverein (SVM)"
-  shortName?: string;              // "SVM"
+  name: string;
+  shortName?: string;
+  clubNumber?: string;             // Vereinsnummer, Format "08-XXX"
   address?: string;
   contactPerson?: string;
   email?: string;
   phone?: string;
-  active: boolean;
+  ausrichterDisziplinen?: string[]; // 'LG' | 'KKG' | 'KKP' (Standkapazität)
+  mapsUrl?: string;                 // Anfahrt-Link
+  homepageUrl?: string;
+  keineEigenenStaende?: boolean;    // z. B. Schießsportgemeinschaft
 }
 ```
 
-#### `rwk_teams` - Mannschaften
+### Team (`src/types/rwk.ts`)
 ```typescript
 interface Team {
   id: string;
-  name: string;                    // "SVM I"
-  clubId: string;                  // Referenz zu clubs
-  seasonId: string;                // Referenz zu seasons
-  leagueId: string | null;         // Referenz zu rwk_leagues (null = nicht zugewiesen)
-  leagueType?: FirestoreLeagueSpecificDiscipline;
-  competitionYear: number;         // 2025
-  shooterIds: string[];            // Array von shooter IDs
+  name: string;
+  clubId: string;
+  leagueId?: string | null;        // null = (noch) nicht zugewiesen
+  leagueType?: FirestoreLeagueSpecificDiscipline | null;
+  seasonId: string;
+  competitionYear: number;
+  shooterIds: string[];
   captainName?: string;
   captainEmail?: string;
   captainPhone?: string;
-  outOfCompetition?: boolean;      // Außer Konkurrenz
+  teamLeader?: string;             // Legacy (nicht mehr geschrieben)
+  teamLeaderEmail?: string;        // Legacy
+  teamLeaderPhone?: string;        // Legacy
+  outOfCompetition?: boolean;
   outOfCompetitionReason?: string;
 }
 ```
 
-#### `shooters` - Schützen
+### Shooter (`src/types/rwk.ts`)
 ```typescript
 interface Shooter {
   id: string;
-  name: string;                    // Vollname oder Nachname
+  name: string;
   firstName?: string;
   lastName?: string;
+  title?: string;
   gender: 'male' | 'female' | 'unknown';
   birthYear?: number;
-  clubId?: string;                 // Hauptverein
-  rwkClubId?: string;              // RWK-spezifischer Verein
-  teamIds: string[];               // Array von team IDs
-  title?: string;                  // "Dr.", "Prof." etc.
+  birthDate?: Date;
+  clubId?: string;                 // EINZIGES aktives Vereinsfeld
+  rwkClubId?: string;              // Legacy (nur Lese-Fallback)
+  isActive?: boolean;              // false = Soft-Delete
+  teamIds?: string[];
   email?: string;
-  phone?: string;
-  active?: boolean;
+  telefon?: string;
+  mobil?: string;
+  phone?: string;                  // Legacy (nur Lese-Fallback)
+  strasse?: string;
+  plz?: string;
+  ort?: string;
+  // KM-spezifisch
+  mitgliedsnummer?: string;        // Verbandsnummer (ohne führende 0)
+  sondergenehmigung?: boolean;     // für Schützen unter 12
+  kmClubId?: string;               // Legacy
+  kmStartrechte?: Record<string, string>;
+  // Meta/Audit
+  genderGuessed?: boolean;
+  source?: string;                 // 'mitcom_import' | 'manual' | 'migration_excel' | 'auto-from-scores'
+  createdBy?: string; createdAt?: any; importedAt?: any;
+  updatedAt?: any; deletedAt?: any; deletedBy?: string;
 }
 ```
+> ⚠️ Mehrere konkurrierende Felder aus der Historie: Verein aktiv nur über `clubId` (`rwkClubId`/`kmClubId` sind Legacy); drei Telefon-Varianten (`telefon`/`mobil`/`phone`).
 
-#### `rwk_scores` - Ergebnisse
+### ScoreEntry (`src/types/rwk.ts`)
 ```typescript
 interface ScoreEntry {
   id: string;
-  seasonId: string;
-  seasonName: string;
-  leagueId: string;
-  leagueName: string;
-  leagueType: FirestoreLeagueSpecificDiscipline;
-  teamId: string;
-  teamName: string;
-  clubId: string;
-  shooterId: string;
-  shooterName: string;
-  shooterGender: 'male' | 'female' | 'unknown';
-  durchgang: number;               // 1-5 (Gewehr) oder 1-4 (Luftwaffen)
-  totalRinge: number;              // Ergebnis in Ringen
-  scoreInputType: 'regular' | 'pre' | 'post'; // Regulär/Vor-/Nachschießen
+  shooterId: string; shooterName: string; shooterGender?: string;
+  teamId: string; teamName: string; clubId: string;
+  leagueId: string; leagueType: FirestoreLeagueSpecificDiscipline;
   competitionYear: number;
-  entryTimestamp: Timestamp;
-  enteredByUserId: string;
-  enteredByUserName: string;
+  durchgang: number;
+  totalRinge: number;              // in Rules validiert: 0–600
+  scoreInputType: 'regular' | 'pre' | 'post'; // regulär / Vor- / Nachschießen
+  enteredByUserId?: string; enteredByUserName?: string;
+  entryTimestamp?: Timestamp;
+  teamOutOfCompetition?: boolean; teamOutOfCompetitionReason?: string;
+  isSubstitutionCopy?: boolean;
 }
 ```
-
-#### `league_updates` - Liga-Updates für Tabellen-Neuberechnung
-```typescript
-interface LeagueUpdateEntry {
-  id: string;
-  leagueId: string;
-  leagueName: string;
-  leagueType: FirestoreLeagueSpecificDiscipline;
-  competitionYear: number;
-  timestamp: Timestamp;
-  action: 'results_added' | 'team_added' | 'manual_update';
-}
-```
-
-### 🏅 **KM (Kreismeisterschaft) Collections**
-
-#### `km_jahre` - KM-Jahre
-```typescript
-interface KMYear {
-  id: string;
-  year: number;                   // 2025, 2026
-  status: 'Planung' | 'Meldungen' | 'Laufend' | 'Beendet';
-  disciplines: string[];          // Verfügbare Disziplinen
-}
-```
-
-#### `km_disziplinen` - KM-Disziplinen
-```typescript
-interface KMDiscipline {
-  id: string;
-  name: string;                   // "Kleinkaliber", "Luftgewehr"
-  shortName: string;              // "KK", "LG"
-  maxRings: number;               // 300, 400
-  active: boolean;
-}
-```
-
-#### `km_wettkampfklassen` - Wettkampfklassen
-```typescript
-interface KMCompetitionClass {
-  id: string;
-  name: string;                   // "Jugend", "Erwachsene", "Senioren"
-  minAge?: number;
-  maxAge?: number;
-  gender?: 'male' | 'female' | 'mixed';
-}
-```
-
-#### `km_meldungen_JAHR_DISZIPLIN` - KM-Meldungen
-```typescript
-// Beispiel: km_meldungen_2026_kk
-interface KMMeldung {
-  id: string;
-  shooterId: string;
-  shooterName: string;
-  clubId: string;
-  clubName: string;
-  discipline: string;
-  ageClass: string;
-  year: number;
-  registrationDate: Timestamp;
-  registeredBy: string;
-}
-```
-
-#### `km_mannschaften` - KM-Mannschaften
-```typescript
-interface KMTeam {
-  id: string;
-  name: string;
-  clubId: string;
-  discipline: string;
-  year: number;
-  shooterIds: string[];
-}
-```
-
-#### `km_startlisten` - Startlisten
-```typescript
-interface KMStartlist {
-  id: string;
-  discipline: string;
-  year: number;
-  ageClass: string;
-  participants: {
-    shooterId: string;
-    shooterName: string;
-    clubName: string;
-    startNumber: number;
-  }[];
-}
-```
-
-#### `km_startlisten_configs` - Startlisten-Konfiguration
-```typescript
-interface KMStartlistConfig {
-  id: string;
-  discipline: string;
-  year: number;
-  settings: {
-    groupSize: number;
-    startTime: string;
-    lanes: number;
-  };
-}
-```
-
-#### `km_vm_ergebnisse` - Vereinsmeisterschafts-Ergebnisse
-```typescript
-interface KMVMResult {
-  id: string;
-  shooterId: string;
-  discipline: string;
-  year: number;
-  result: number;
-  rank: number;
-}
-```
-
-#### `km_user_permissions` - KM-spezifische Berechtigungen
-```typescript
-interface KMUserPermission {
-  uid: string;
-  email: string;
-  role: 'km_orga' | 'vereinsvertreter';
-  clubIds: string[];
-  active: boolean;
-}
-```
-
-### 👥 **Vereinssoftware Collections**
-
-#### `clubs/{clubId}/mitglieder` - Mitglieder (Multi-Tenant)
-```typescript
-// Beispiel: clubs/xMDWdLkVW5kdugTVaMeZ/mitglieder
-interface Member {
-  id: string;
-  firstName: string;
-  lastName: string;
-  gender: 'male' | 'female';
-  birthDate: Timestamp;
-  joinDate: Timestamp;
-  exitDate?: Timestamp;
-  address?: {
-    street: string;
-    zipCode: string;
-    city: string;
-  };
-  contact?: {
-    email: string;
-    phone: string;
-    mobile: string;
-  };
-  membershipType: 'Erwachsene' | 'Jugend' | 'Senioren' | 'Familie';
-  status: 'active' | 'inactive';
-  sepaMandate?: {
-    mandateId: string;
-    iban: string;
-    bic: string;
-    bankName: string;
-    accountHolder: string;
-    signedDate: Timestamp;
-  };
-  paymentMethod: 'SEPA' | 'Überweisung' | 'Bar';
-}
-```
-
-#### `vereinsrecht_protokolle` - Vereinsrecht Protokolle
-```typescript
-interface VereinsrechtProtocol {
-  id: string;
-  clubId: string;                 // clubs/xMDWdLkVW5kdugTVaMeZ
-  title: string;
-  date: Timestamp;
-  type: 'Vorstandssitzung' | 'Mitgliederversammlung' | 'Sonstige';
-  agenda: string[];
-  decisions: string[];
-  participants: string[];
-  status: 'Entwurf' | 'Fertig' | 'Versendet';
-  createdBy: string;
-  createdAt: Timestamp;
-}
-```
-
-### 📰 **News & Events**
-
-#### `newsItems` - News-Artikel
-```typescript
-interface NewsItem {
-  id: string;
-  title: string;
-  content: string;
-  author: string;
-  publishDate: Timestamp;
-  category: 'RWK' | 'KM' | 'Allgemein';
-  published: boolean;
-  tags?: string[];
-}
-```
-
-#### `rwk_news` - RWK-spezifische News
-```typescript
-interface RWKNews {
-  id: string;
-  title: string;
-  content: string;
-  leagueId?: string;
-  seasonId?: string;
-  publishDate: Timestamp;
-  author: string;
-}
-```
-
-#### `events` - Termine/Events
-```typescript
-interface Event {
-  id: string;
-  title: string;
-  description?: string;
-  startDate: Timestamp;
-  endDate?: Timestamp;
-  location?: string;
-  type: 'RWK' | 'KM' | 'Training' | 'Sonstige';
-  clubId?: string;
-  public: boolean;
-}
-```
-
-### 📧 **Kommunikation & Support**
-
-#### `email_contacts` - E-Mail-Kontakte
-```typescript
-interface EmailContact {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  clubId?: string;
-  active: boolean;
-}
-```
-
-#### `support_tickets` - Support-Tickets
-```typescript
-interface SupportTicket {
-  id: string;
-  userId: string;
-  subject: string;
-  description: string;
-  status: 'Offen' | 'In Bearbeitung' | 'Geschlossen';
-  priority: 'Niedrig' | 'Normal' | 'Hoch' | 'Kritisch';
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-}
-```
-
-#### `support_sessions` - Support-Sitzungen
-```typescript
-interface SupportSession {
-  id: string;
-  userId: string;
-  clubId?: string;
-  sessionCode: string;
-  startTime: Timestamp;
-  endTime?: Timestamp;
-  status: 'active' | 'expired';
-}
-```
-
-### ⚙️ **System & Configuration**
-
-#### `admin_settings` - Admin-Einstellungen
-```typescript
-interface AdminSetting {
-  id: string;
-  key: string;
-  value: any;
-  description?: string;
-  updatedBy: string;
-  updatedAt: Timestamp;
-}
-```
-
-#### `system_config` - System-Konfiguration
-```typescript
-interface SystemConfig {
-  id: string;
-  feature: string;
-  enabled: boolean;
-  config: Record<string, any>;
-  version: string;
-}
-```
-
-#### `app_stats` - App-Statistiken
-```typescript
-interface AppStats {
-  id: string;
-  date: Timestamp;
-  activeUsers: number;
-  totalLogins: number;
-  featuresUsed: Record<string, number>;
-  errors: number;
-}
-```
-
-#### `audit_logs` - Audit-Protokolle
-```typescript
-interface AuditLog {
-  id: string;
-  userId: string;
-  action: string;
-  resource: string;
-  resourceId?: string;
-  timestamp: Timestamp;
-  ipAddress?: string;
-  userAgent?: string;
-  success: boolean;
-}
-```
-
-### 🔐 **Benutzer & Berechtigungen**
-
-#### `user_permissions` - Benutzerberechtigungen
-```typescript
-interface UserPermission {
-  uid: string;                    // Firebase Auth UID
-  email: string;
-  
-  // Legacy Rollen (wird ausgemustert)
-  role?: 'vereinsvertreter' | 'mannschaftsfuehrer' | 'superadmin';
-  clubId?: string;                // Legacy
-  clubIds?: string[];             // Legacy
-  representedClubs?: string[];    // Legacy
-  
-  // Neue Rollen-Struktur
-  clubRoles?: {                   // Multi-Verein-Rollen
-    [clubId: string]: 'SPORTLEITER' | 'VORSTAND' | 'KASSENWART' | 'SCHRIFTFUEHRER';
-  };
-  kvRole?: 'KV_WETTKAMPFLEITER' | 'KV_KM_ORGA'; // Kreisverband-Rollen
-  
-  // Zusätzliche Berechtigungen
-  roles?: string[];               // ['vereinssoftware', 'km_access']
-  lastLogin?: Timestamp;
-  active: boolean;
-}
-```
-
-## 🔄 **Datenbeziehungen**
-
-### RWK-Beziehungen
-```
-seasons (1) ←→ (n) rwk_leagues
-clubs (1) ←→ (n) rwk_teams
-rwk_leagues (1) ←→ (n) rwk_teams
-rwk_teams (1) ←→ (n) shooters (via shooterIds array)
-rwk_teams (1) ←→ (n) rwk_scores
-shooters (1) ←→ (n) rwk_scores
-```
-
-### KM-Beziehungen
-```
-clubs (1) ←→ (n) km_shooters
-km_shooters (1) ←→ (n) km_meldungen_JAHR_DISZIPLIN
-```
-
-### Vereinssoftware-Beziehungen (Multi-Tenant)
-```
-clubs/{clubId}/members (1) ←→ (n) clubs/{clubId}/licenses
-clubs/{clubId}/members (1) ←→ (n) clubs/{clubId}/birthdays
-clubs/{clubId}/members (1) ←→ (n) clubs/{clubId}/tasks (assignedTo)
-```
-
-## 🛡️ **Firestore Security Rules Struktur**
-
-### RWK-Bereiche
-- **Admin (superadmin)**: Vollzugriff auf alle RWK-Collections
-- **Sportleiter**: Lese-/Schreibzugriff auf eigene Vereins-Teams und Schützen
-- **Vereinsvertreter**: Lesezugriff auf eigene Daten
-
-### KM-Bereiche  
-- **KV_KM_ORGA**: Vollzugriff auf KM-Collections
-- **Vereinsvertreter**: Schreibzugriff auf eigene KM-Meldungen
-
-### Vereinssoftware
-- **Multi-Tenant**: Zugriff nur auf `/clubs/{clubId}/` wo User berechtigt ist
-- **Rollen-basiert**: SPORTLEITER, VORSTAND, KASSENWART, SCHRIFTFUEHRER
-
-## 📊 **Wichtige Indizes**
-
-### Performance-kritische Abfragen
-```javascript
-// rwk_teams
-{ clubId: 1, competitionYear: 1 }
-{ leagueId: 1, competitionYear: 1 }
-
-// rwk_scores  
-{ teamId: 1, competitionYear: 1, durchgang: 1 }
-{ leagueId: 1, competitionYear: 1 }
-{ shooterId: 1, competitionYear: 1 }
-
-// shooters
-{ clubId: 1, active: 1 }
-{ rwkClubId: 1 }
-
-// user_permissions
-{ email: 1 }
-{ clubRoles: 1 }
-```
-
-## 🔧 **Disziplin-Typen**
-
-```typescript
-type FirestoreLeagueSpecificDiscipline = 
-  | 'KKG'    // Kleinkaliber Gewehr
-  | 'KKP'    // Kleinkaliber Pistole  
-  | 'LGA'    // Luftgewehr Auflage
-  | 'LGS'    // Luftgewehr Freihand
-  | 'LP'     // Luftpistole
-  | 'LPA';   // Luftpistole Auflage
-```
-
-## 📝 **Besonderheiten**
-
-### Multi-Tenant Architektur
-- Vereinssoftware nutzt `/clubs/{clubId}/` Subcollections
-- Automatische Datentrennung zwischen Vereinen
-- Skalierbar für beliebig viele Vereine
-
-### Jahres-spezifische Collections
-- KM-Meldungen: `km_meldungen_2025_KKG`, `km_meldungen_2025_LGA`, etc.
-- Automatische Erstellung neuer Collections pro Jahr/Disziplin
-
-### Legacy-Support
-- Alte Rollen-Struktur wird noch unterstützt
-- Schrittweise Migration zu neuer `clubRoles`-Struktur
-- Rückwärtskompatibilität gewährleistet
 
 ---
 
-**📧 Kontakt bei Fragen:** rwk-leiter-ksve@gmx.de
+## 3. KM-Collections (Kreismeisterschaft)
+
+| Collection | Zweck | Zugriff (grob) |
+|---|---|---|
+| `km_saisons` | KM-Saisons (Felder u. a. `jahr`, `disziplinTyp`, `name`, `collectionName`, `meldeschluss`, `status`) | read öffentlich, write Admin |
+| `km_jahre` | KM-Jahre | read öffentlich, write Admin |
+| `km_meldungen` + `km_meldungen_{jahr}_{kk\|ld\|kkp}` | Meldungen (`KMMeldung`) | write Admin/KM-Orga (+ Verein bei Alt-Collection) |
+| `km_disziplinen` | Disziplinen (`KMDisziplin`) | read öffentlich, write Admin |
+| `km_shooters` | KM-Schützen (mit `shooters` synchronisiert) | write Admin/KM-Orga |
+| `km_ergebnisse` | KM-Ergebnisse | write Admin/KM-Orga |
+| `km_startlisten`, `km_startlisten_v2`, `km_startlisten_configs`, `km_startlisten_aenderungen` | Startlisten (aktiv v. a. `_v2`) | write Admin/KM-Orga |
+| `km_mannschaften` | KM-Mannschaften (`KMMannschaft`) | – |
+| `km_user_permissions` | KM-spezifische Berechtigungen | – |
+
+### KMDisziplin / KMMeldung / KMMannschaft (`src/types/km.ts`)
+```typescript
+interface KMDisziplin {
+  id: string;
+  spoNummer: string;               // z. B. "1.10"
+  name: string;
+  kategorie: 'LG' | 'LP' | 'KKG' | 'KKP' | 'AB' | 'LI' | 'BR'; // BR = Blasrohr
+  schusszahl: number;
+  schiesszeit?: number;            // Minuten
+  mindestalter: number;
+  auflage: boolean;
+  aktiv: boolean;
+  nurVereinsmeisterschaft?: boolean;
+}
+
+interface KMMeldung {
+  id: string;
+  schuetzeId: string; disziplinId: string; wettkampfklasseId: string;
+  lmTeilnahme: boolean; anmerkung?: string;
+  saison: string; meldedatum: Date;
+  status: 'gemeldet' | 'bestaetigt' | 'abgelehnt';
+  gemeldeteVon: string;
+  vmErgebnis?: { ringe: number; datum: Date; bemerkung?: string };
+}
+
+interface KMMannschaft {
+  id: string;
+  vereinId: string; disziplinId: string;
+  wettkampfklassen: string[];
+  saison: string;
+  schuetzenIds: string[];          // genau 3
+  name?: string; geschlechtGemischt?: boolean;
+}
+```
+> ⚠️ Schüler-Disziplinen tragen ein „S"-Suffix (z. B. `1.10S`) mit 20 statt 40 Schuss. Seed-Liste: `KM_DISZIPLINEN_2026` in `src/types/km.ts`.
+
+---
+
+## 4. Subcollections
+
+- `schiessnachweis_data/{userId}` und `schiessnachweis_data/{userId}/eintraege/{id}` – digitaler Schießnachweis. Migration vom Alt-Modell (ein Dokument mit Array) zum Ein-Dokument-pro-Eintrag-Modell in der Subcollection `eintraege` (`src/lib/services/schiessnachweis-service.ts`). Zugriff: **nur der eigene User** (`request.auth.uid == userId`).
+- `clubs/{clubId}/{document=**}` – Fallback-Regel für Vereins-Subdokumente (read `hasClubAccess`, write `canWriteClub`).
+
+> **Hinweis:** Es gibt **keine** `clubs/{id}/mitglieder`-Subcollection. „Mitgliederverwaltung" ist nur eine UI-Route und arbeitet auf der zentralen Collection `shooters` – eine gemeinsame Liste für RWK und KM.
+
+---
+
+## 5. Weitere Collections
+
+### News / Termine
+- `newsItems`, `rwk_news` – News (read öffentlich, write Admin).
+- `events` – Termine/Kalender (`src/lib/services/calendar-service.ts`); create/update für Angemeldete, delete Admin.
+- `updates`, `league_updates` – App-/Liga-Updates (`LeagueUpdateEntry` in `rwk.ts`).
+
+### Kommunikation / Support
+- `email_contacts`, `email_history`, `email_templates` – E-Mail-System (Admin/KM-Orga/Sportleiter/Vorstand).
+- `support_sessions` – Support-Zugänge (`clubId`, `supportCode`, `isActive`, `expiresAt` …).
+- `support_tickets` – Tickets (`SupportTicket`; create offen, read/update/delete Admin).
+- `feedback` – Bewertungen (create/read offen).
+- `protests` – Proteste (read Admin oder eigener Einreicher).
+
+### System / Admin / Audit
+- `user_permissions` – zentrale Berechtigungen (siehe unten).
+- `users` – read/write Admin oder eigener User.
+- `audit_logs` – Audit (create offen für Admin-SDK, read Admin, kein update/delete).
+- `login_events` – Login-Monitoring (create offen, read Admin).
+- `access_requests` – Vereinszugang-Anträge (read Admin; Client-Write gesperrt, nur über Admin-SDK-API).
+- `admin_settings`, `system_config`, `app_stats` – nur Admin.
+
+### Social Training / Ausbildung (in Rules vorhanden)
+`social_profiles`, `public_profiles`, `training_groups` (+ `members`, `results`), `live_competitions` (+ `results`), `social_training_results`, `duels`, `ausbildung_kurse`, `ausbildung_anmeldungen`.
+
+---
+
+## 6. Benutzer & Berechtigungen
+
+### UserPermission (`src/types/rwk.ts`), Collection `user_permissions`
+```typescript
+interface UserPermission {
+  uid: string;
+  email: string;
+  displayName?: string;
+  // Legacy
+  role?: 'admin' | 'superadmin' | 'vereinsvertreter' | 'mannschaftsfuehrer' | 'km_orga';
+  clubId?: string;
+  assignedClubId?: string;
+  representedClubs?: string[];
+  isActive?: boolean;
+  createdAt?: Date;
+  lastLogin?: Date;
+  // Neue 3-Ebenen-Struktur
+  platformRole?: string;                  // z. B. 'SUPER_ADMIN'
+  kvRoles?: Record<string, string>;       // Kreisverband-Rollen
+  clubRoles?: Record<string, string>;     // clubId -> 'SPORTLEITER' | 'VORSTAND' | 'MANNSCHAFTSFUEHRER' | ...
+}
+```
+> ⚠️ **Rollen-Gotcha:** KV-Rollen liegen in Altdaten mal als Einzelfeld `kvRole` (String), mal als Map `kvRoles` vor – die Rules akzeptieren **beide**. Zusätzlich existieren Legacy-`role`-Werte. Neue Zuordnungen laufen über `clubRoles`/`kvRoles`/`platformRole`.
+
+---
+
+## 7. Zugriffsmodell (Firestore-Rules, grob)
+
+Rollen-Helfer in `firestore.rules`:
+- `isSuperAdmin()` – E-Mail `admin@rwk-einbeck.de` **oder** `platformRole == 'SUPER_ADMIN'`.
+- `isKmOrgaGlobal()` – KV-Rolle `KV_KM_ORGA` / `KM_ORGANISATOR` / `KV_WETTKAMPFLEITER` (via `kvRole` oder `kvRoles`) oder Legacy `role == 'km_organisator'`.
+- Club-Rollen aus `clubRoles[clubId]`: `VORSTAND`, `SPORTLEITER`, `MANNSCHAFTSFUEHRER` (+ Legacy-Fallback).
+
+Grobe Linien:
+- **Öffentlich lesbar** sind fast alle Anzeige-Collections (seasons, clubs, leagues, shooters, teams, scores inkl. `rwk_scores_*`, km_* lesend, news, user_permissions für Namensanzeige …).
+- **Nur Admin schreibt** Stammdaten wie seasons, rwk_leagues, news, km_disziplinen/km_jahre/km_saisons, admin_settings/system_config/app_stats.
+- **Ergebnisse** (`rwk_scores` + `rwk_scores_*`): create nur mit gültiger Ringzahl (0–600) und einer Erfassungs-Rolle; update/delete nur Admin.
+- **Schützen** (`shooters`): delete grundsätzlich gesperrt (`false`) – nur über die Admin-SDK-API.
+- **Schießnachweis** und Club-Subdokumente: strikt auf eigenen User bzw. Vereinszugehörigkeit begrenzt.
+- Catch-all am Ende: `match /{document=**} { allow read, write: if false; }`.
+
+---
+
+## 8. Backstop: Ringzahl-Validierung
+
+In `firestore.rules`:
+```
+function isValidRingCount(rings) {
+  return rings is number && rings >= 0 && rings <= 600;
+}
+```
+Diese Grenze (≤ 600) ist ein großzügiges Sicherheitsnetz gegen Tippfehler. Die eigentliche, feine Disziplin-Grenze setzt `League.shotSettings.maxRings` bzw. der zentrale Helfer `getLeagueShotConfig()` (`src/lib/utils/league-shot-config.ts`). Erst wenn eine Disziplin mehr als 600 mögliche Ringe hätte, müsste diese Rule angehoben werden.
