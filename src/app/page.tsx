@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ListChecks, Info, CalendarDays, ChevronRight, Newspaper, MapPin, Clock } from 'lucide-react';
+import { ListChecks, Info, CalendarDays, ChevronRight, Newspaper, MapPin, Clock, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MeldefensterBanner } from '@/components/home/MeldefensterBanner';
 import { getUIDisciplineValueFromSpecificType, uiDisciplineFilterOptions } from '@/types/rwk';
@@ -313,15 +313,20 @@ export default function HomePage() {
                   return (
                     <div
                       key={event.id || index}
-                      className={`rounded-lg border p-3 transition-colors ${isToday ? 'border-primary bg-primary/5' : 'hover:bg-muted/30'}`}
+                      className={`rounded-lg border p-3 transition-colors ${isToday ? 'border-l-4 border-l-primary' : 'hover:bg-muted/30'}`}
                     >
                       <div className="flex justify-between items-start gap-2">
-                        <span className={`font-medium ${isToday ? 'text-primary' : ''}`}>{event.title}</span>
+                        <span className="font-medium inline-flex items-center gap-1.5">
+                          {isToday && (
+                            <Flame className="h-4 w-4 shrink-0 text-primary" aria-label="Heute" />
+                          )}
+                          {event.title}
+                        </span>
                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${meta.className}`}>
                           {meta.label}
                         </span>
                       </div>
-                      <div className={`mt-1 text-sm font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>
+                      <div className={`mt-1 text-sm font-medium ${isToday ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
                         {relativeDay(eventDate)}
                       </div>
                       <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
