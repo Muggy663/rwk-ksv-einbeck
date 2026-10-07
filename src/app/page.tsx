@@ -316,12 +316,12 @@ export default function HomePage() {
                   return (
                     <div
                       key={event.id || index}
-                      className={`rounded-lg border p-3 transition-colors ${isToday ? 'border-l-4 border-l-primary' : 'hover:bg-muted/30'}`}
+                      className={`rounded-lg border p-3 transition-colors ${isToday ? 'border-l-4 border-l-red-600 dark:border-l-red-500' : 'hover:bg-muted/30'}`}
                     >
                       <div className="flex justify-between items-start gap-2">
                         <span className="font-medium inline-flex items-center gap-1.5">
                           {isToday && (
-                            <Flame className="h-4 w-4 shrink-0 text-primary" aria-label="Heute" />
+                            <Flame className="h-4 w-4 shrink-0 text-red-600 dark:text-red-500" aria-label="Heute" />
                           )}
                           {event.title}
                         </span>
