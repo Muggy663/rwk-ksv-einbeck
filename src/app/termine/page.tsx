@@ -421,6 +421,17 @@ export default function TerminePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Nur für angemeldete Nutzer: direkt an diesem Tag einen Termin
+                  anlegen. Das gewählte Datum wird als Query-Parameter an das
+                  Formular übergeben und dort vorausgewählt. */}
+              {user && (
+                <Button asChild size="sm" className="w-full mb-4">
+                  <Link href={`/termine/add?date=${format(selectedDate, 'yyyy-MM-dd')}`}>
+                    <CalendarPlus className="mr-2 h-4 w-4" />
+                    Termin an diesem Tag anlegen
+                  </Link>
+                </Button>
+              )}
               {isLoading ? (
                 <Skeleton className="h-[160px] w-full" />
               ) : selectedEvents.length > 0 ? (

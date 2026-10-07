@@ -17,19 +17,33 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { createEvent } from '@/lib/services/calendar-service';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { containsProfanity, findProfanity } from '@/lib/utils/profanity-filter';
 
-export default function AddTerminPage() {
+// Wandelt einen "YYYY-MM-DD"-Query-Parameter sicher (ohne Zeitzonen-Versatz)
+// in ein lokales Datum um. Ungültige/fehlende Werte -> heute.
+function parseDateParam(value: string | null): Date {
+  if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split('-').map(Number);
+    const parsed = new Date(y, m - 1, d);
+    if (!isNaN(parsed.getTime())) return parsed;
+  }
+  return new Date();
+}
+
+function AddTerminForm() {
   const { toast } = useToast();
   const router = useRouter();
   const { user } = useAuth();
-  
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const searchParams = useSearchParams();
+
+  // Vorauswahl aus dem Kalender (?date=YYYY-MM-DD); sonst heute.
+  const [date, setDate] = useState<Date | undefined>(() => parseDateParam(searchParams.get('date')));
   const [time, setTime] = useState("19:00");
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
@@ -426,5 +440,14 @@ export default function AddTerminPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+// useSearchParams() verlangt im App Router eine Suspense-Boundary.
+export default function AddTerminPage() {
+  return (
+    <Suspense fallback={null}>
+      <AddTerminForm />
+    </Suspense>
   );
 }
