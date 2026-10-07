@@ -17,6 +17,8 @@ import { fetchEvents, type Event } from '@/lib/services/calendar-service';
 import { LinkifiedText } from '@/components/ui/linkified-text';
 import { findMapsUrlForLocation, type ClubMapsInfo } from '@/lib/utils/club-maps';
 import { newsService } from '@/lib/services/news-service';
+import { useAuth } from '@/hooks/use-auth';
+import { CalendarPlus } from 'lucide-react';
 
 const LEAGUE_UPDATES_COLLECTION = "league_updates";
 
@@ -56,6 +58,7 @@ const relativeDay = (date: Date): string => {
 };
 
 export default function HomePage() {
+  const { user } = useAuth();
   const [updates, setUpdates] = useState<LeagueUpdate[]>([]);
   const [loadingUpdates, setLoadingUpdates] = useState<boolean>(true);
   const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
@@ -354,6 +357,16 @@ export default function HomePage() {
                   );
                 })}
                 
+                {/* Nur für angemeldete Nutzer: Schnellzugriff zum Anlegen eines
+                    Termins (ohne Datums-Vorauswahl – die gibt es im Kalender). */}
+                {user && (
+                  <Button asChild variant="outline" className="w-full mt-2">
+                    <Link href="/termine/add">
+                      <CalendarPlus className="mr-1 h-4 w-4" />
+                      Termin anlegen
+                    </Link>
+                  </Button>
+                )}
                 <Button asChild variant="default" className="w-full mt-2">
                   <Link href="/termine">
                     Terminkalender öffnen
@@ -364,7 +377,15 @@ export default function HomePage() {
             ) : (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">Keine anstehenden Termine.</p>
-                <Button asChild variant="outline" className="w-full">
+                {user && (
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href="/termine/add">
+                      <CalendarPlus className="mr-1 h-4 w-4" />
+                      Termin anlegen
+                    </Link>
+                  </Button>
+                )}
+                <Button asChild variant="default" className="w-full">
                   <Link href="/termine">
                     Terminkalender öffnen
                     <ChevronRight className="ml-1 h-4 w-4" />

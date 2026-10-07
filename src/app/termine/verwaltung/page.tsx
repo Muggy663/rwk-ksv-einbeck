@@ -133,15 +133,15 @@ export default function TermineVerwaltungPage() {
     <div className="container py-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <h1 className="text-3xl font-bold text-primary mb-4 md:mb-0">Terminverwaltung</h1>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Link href="/termine/add">
-            <Button className="w-full sm:w-auto">
+        <div className="flex flex-col gap-2 w-full md:w-auto">
+          <Link href="/termine/add" className="w-full">
+            <Button className="w-full">
               <CalendarPlus className="mr-2 h-4 w-4" />
               Termin hinzufügen
             </Button>
           </Link>
-          <Link href="/termine">
-            <Button variant="outline" className="w-full sm:w-auto">
+          <Link href="/termine" className="w-full">
+            <Button variant="outline" className="w-full">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Zurück zum Kalender
             </Button>

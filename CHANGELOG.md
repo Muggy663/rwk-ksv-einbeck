@@ -10,7 +10,7 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 - **🐛 Fix: Ergebnis-Eingabe bei Luftgewehr Freihand**: In Luftgewehr-Freihand-Ligen konnten Ergebnisse über 300 Ringe nicht gespeichert werden. Die Ringgrenze richtet sich jetzt nach der Liga-Einstellung (bzw. dem korrekten Disziplin-Standard), sodass bis zu 400 Ringe sauber erfasst werden
 - **🔧 Liga-Einstellungen-Seite repariert**: Ligen ohne Sortier-Reihenfolge wurden nicht mehr angezeigt und Einstellungen für neue Ligen nicht gespeichert – beides behoben; die Seite zeigt für jede Liga einen passenden Vorschlag an
 - **🔥 Startseite: heutige Termine wieder lesbar**: Ein Termin, der heute stattfindet, wird auf der Startseite jetzt wieder mit einer Flamme und dezentem Rand markiert statt mit grüner Fläche samt grüner Schrift – das war im Dark Mode (vor allem mobil) kaum lesbar
-- **📅 Termin direkt am Kalendertag anlegen**: Angemeldete Nutzer finden im Terminkalender beim Antippen eines Tages einen Button „Termin an diesem Tag anlegen" – das Datum ist im Formular dann bereits vorausgewählt
+- **📅 Termin direkt am Kalendertag anlegen**: Angemeldete Nutzer finden im Terminkalender beim Antippen eines Tages einen Button „Termin an diesem Tag anlegen" – das Datum ist im Formular dann bereits vorausgewählt. Zusätzlich gibt es auf der Startseite in der Termin-Übersicht einen Schnellzugriff „Termin anlegen" (nur für angemeldete Nutzer)
 
 ---
 
