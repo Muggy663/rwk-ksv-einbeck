@@ -4,6 +4,11 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.3.3 (28.10.2026)
+- **🐛 Einzelschützen „Alle Luftdruck Auflage" wieder sichtbar**: In den RWK-Tabellen zeigte der Einzelschützen-Tab bei der Auswahl „Alle Luftdruck Auflage" fälschlich „keine Einzelschützen gefunden". Grund: Die Gesamtliste war fest an die Ligen einer alten Saison gebunden und blieb in neuen Jahren leer. Sie wird jetzt für das jeweils gewählte Jahr automatisch aus den Luftgewehr-Auflage-Ligen zusammengestellt
+
+---
+
 ## Version 3.3.2 (06.10.2026)
 - **🎯 Liga-Einstellungen jetzt wirklich einstellbar**: Schusszahl und maximale Ringzahl lassen sich pro Liga über „Admin → Liga-Einstellungen" festlegen und speichern – ohne Code-Änderung. Beispiel: KK Auflage auf 20 Schuss umstellen
 - **➕ Neue Disziplinen wählbar**: „Luftpistole Auflage" und „Blasrohr" stehen jetzt zur Auswahl; weitere Disziplinen lassen sich über „Benutzerdefiniert" ergänzen

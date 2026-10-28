@@ -463,18 +463,26 @@ export function useRwkTabellenData() {
           );
         }
       } else if (filterByLeagueId === "LGA_GESAMTLISTE") {
-        // Direkte Liga-IDs für Luftdruck-Ligen verwenden
-        const luftdruckLeagueIds = ["vOHbDJw7mktQI53Mzs5d", "wxotHc2CVAa4kflVhaPd", "YLpb9AklRcU7mpF870vP", "sTcYhFYKOmJ6AJ5w3IyN"];
-        // Secure logging: Liga-IDs count only
+        // Alle Luftgewehr-Auflage-Ligen (LGA) dynamisch für das gewählte Jahr
+        // ermitteln – NICHT hartcodierte IDs, die nur für eine einzelne alte
+        // Saison existieren (sonst "keine Einzelschützen" in neuen Jahren).
+        const leaguesSnap = await getDocs(query(
+          collection(db, "rwk_leagues"),
+          where("competitionYear", "==", config.year),
+          where("type", "==", "LGA")
+        ));
+        const luftdruckLeagueIds = leaguesSnap.docs.map(d => d.id);
         if (process.env.NODE_ENV === 'development') {
           logDebug('Debug LGA_GESAMTLISTE - Liga-IDs count:', luftdruckLeagueIds?.length || 0);
         }
-        
-        teamsQuery = query(
-          collection(db, "rwk_teams"),
-          where("leagueId", "in", luftdruckLeagueIds),
-          where("competitionYear", "==", config.year)
-        );
+
+        if (luftdruckLeagueIds.length > 0) {
+          teamsQuery = query(
+            collection(db, "rwk_teams"),
+            where("leagueId", "in", luftdruckLeagueIds),
+            where("competitionYear", "==", config.year)
+          );
+        }
       } else {
         teamsQuery = query(
           collection(db, "rwk_teams"),
@@ -535,12 +543,22 @@ export function useRwkTabellenData() {
           return [];
         }
       } else if (filterByLeagueId === "LGA_GESAMTLISTE") {
-        // Verwende die spezifischen Liga-IDs für Scores
-        const luftdruckLeagueIds = ["vOHbDJw7mktQI53Mzs5d", "wxotHc2CVAa4kflVhaPd", "YLpb9AklRcU7mpF870vP", "sTcYhFYKOmJ6AJ5w3IyN"];
-        scoresQueryConstraints = [
+        // Scores nach den dynamisch ermittelten Luftgewehr-Auflage-Liga-IDs
+        // (LGA) des gewählten Jahres filtern – siehe Teams-Zweig oben.
+        const leaguesSnap2 = await getDocs(query(
+          collection(db, "rwk_leagues"),
           where("competitionYear", "==", config.year),
-          where("leagueId", "in", luftdruckLeagueIds)
-        ];
+          where("type", "==", "LGA")
+        ));
+        const luftdruckLeagueIds2 = leaguesSnap2.docs.map(d => d.id);
+        if (luftdruckLeagueIds2.length > 0) {
+          scoresQueryConstraints = [
+            where("competitionYear", "==", config.year),
+            where("leagueId", "in", luftdruckLeagueIds2)
+          ];
+        } else {
+          return [];
+        }
       } else {
         // Filtere nach spezifischer Liga-ID
         scoresQueryConstraints = [
