@@ -4,6 +4,11 @@ Alle Versionen und Änderungen, neueste Version zuerst.
 
 ---
 
+## Version 3.3.4 (11.11.2026)
+- **🛠️ Ergebniseingabe lädt zuverlässiger**: Bei langsamer Internetverbindung oder wenn die Seite lange offen war, konnten Mannschaften oder Schützen in der Auswahl fehlen, bis man sich neu angemeldet hat. Die Listen werden jetzt auch dann vollständig angezeigt, ein Fehler bei einer einzelnen Mannschaft leert nicht mehr die ganze Liste, und nachträglich zugeordnete Schützen werden automatisch nachgeladen
+
+---
+
 ## Version 3.3.3 (28.10.2026)
 - **🐛 Einzelschützen „Alle Luftdruck Auflage" wieder sichtbar**: In den RWK-Tabellen zeigte der Einzelschützen-Tab bei der Auswahl „Alle Luftdruck Auflage" fälschlich „keine Einzelschützen gefunden". Grund: Die Gesamtliste war fest an die Ligen einer alten Saison gebunden und blieb in neuen Jahren leer. Sie wird jetzt für das jeweils gewählte Jahr automatisch aus den Luftgewehr-Auflage-Ligen zusammengestellt
 
