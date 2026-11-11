@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase/config';
 import { plausibilityService } from '@/lib/services/plausibility-service';
 import Link from 'next/link';
-import { collection, getDocs, getDoc, query, where, orderBy, writeBatch, serverTimestamp, doc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, getDoc, query, where, orderBy, writeBatch, serverTimestamp, doc, Timestamp, documentId } from 'firebase/firestore';
 import { getSeasonSpecificScoresCollection } from '@/lib/utils/collection-names';
 
 const SEASONS_COLLECTION = "seasons";
@@ -179,6 +179,34 @@ export default function SharedResultsPage({
         const shooters = allShootersFromDB.filter(sh => shooterIds.includes(sh.id));
         setShootersOfSelectedTeam(shooters);
         setAvailableShootersForDropdown(shooters);
+
+        // Die Schützenliste wird nur einmal beim Öffnen der Seite geladen. Ist
+        // ein Schütze der Mannschaft dort nicht enthalten (z. B. erst danach
+        // zugeordnet, Seite war lange offen), frisch aus der DB nachladen,
+        // statt ihn zu verschweigen.
+        const missingIds = shooterIds.filter(id => !allShootersFromDB.some(sh => sh.id === id));
+        if (missingIds.length > 0) {
+          (async () => {
+            try {
+              const loaded: Shooter[] = [];
+              for (let i = 0; i < missingIds.length; i += 30) {
+                const chunk = missingIds.slice(i, i + 30);
+                const snap = await getDocs(query(collection(db, SHOOTERS_COLLECTION), where(documentId(), 'in', chunk)));
+                snap.docs.forEach(d => loaded.push({ id: d.id, ...d.data() } as Shooter));
+              }
+              if (loaded.length > 0) {
+                // Zur globalen Liste hinzufügen; dadurch läuft dieser Effekt erneut
+                // und die Mannschaft zeigt nun alle Schützen.
+                setAllShootersFromDB(prev => [
+                  ...prev,
+                  ...loaded.filter(l => !prev.some(p => p.id === l.id)),
+                ]);
+              }
+            } catch (error) {
+              logError('Nachladen fehlender Schützen fehlgeschlagen:', error);
+            }
+          })();
+        }
       } else {
         setShootersOfSelectedTeam([]);
         setAvailableShootersForDropdown([]);
@@ -192,6 +220,7 @@ export default function SharedResultsPage({
   
   // Verfügbare Schützen für Dropdown filtern (ohne bereits erfasste Ergebnisse)
   useEffect(() => {
+    let cancelled = false; // veraltete Antworten (Team/Durchgang inzwischen gewechselt) verwerfen
     if (selectedTeamId && selectedRound && shootersOfSelectedTeam.length > 0) {
       // Im Bearbeitungsmodus alle Schützen anzeigen
       if (editMode) {
@@ -230,6 +259,7 @@ export default function SharedResultsPage({
             );
           }
           const scoresSnapshot = await getDocs(scoresQuery);
+          if (cancelled) return;
           const existingScores = scoresSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScoreEntry));
           setExistingScoresForTeamAndRound(existingScores);
           
@@ -262,6 +292,7 @@ export default function SharedResultsPage({
             setSelectedShooterId(availableShooters[0].id);
           }
         } catch (error) {
+          if (cancelled) return;
           logError('Error loading existing scores:', error);
           setAvailableShootersForDropdown(shootersOfSelectedTeam);
         }
@@ -271,11 +302,16 @@ export default function SharedResultsPage({
     } else {
       setAvailableShootersForDropdown(shootersOfSelectedTeam);
     }
+    return () => { cancelled = true; };
   }, [selectedTeamId, selectedRound, shootersOfSelectedTeam, pendingScores, justSavedScoreIdentifiers, selectedSeasonId, allSeasons, editMode]);
 
   // Teams laden mit Filterung für vollständige Ergebnisse
   useEffect(() => {
     const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId);
+    // Schutz vor veralteten Antworten: Wechselt Liga/Durchgang/Zwischenliste
+    // während noch geladen wird, darf die ältere (langsamere) Antwort die
+    // neuere nicht überschreiben – sonst wäre die Mannschaftsliste unvollständig.
+    let cancelled = false;
     if (selectedLeagueId && selectedSeason && !isLoadingLeagues) {
       setIsLoadingTeams(true);
       const fetchTeams = async () => {
@@ -289,6 +325,7 @@ export default function SharedResultsPage({
           
           const teamsSnapshot = await getDocs(teamsQuery);
           let fetchedTeams = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team)).filter(t => t.id);
+          if (cancelled) return;
           
           // Im Bearbeitungsmodus (Admin) alle Teams anzeigen
           if (editMode) {
@@ -314,6 +351,10 @@ export default function SharedResultsPage({
             const validShooterIds = teamShooterIds.filter(id => id && typeof id === 'string' && id.trim() !== "");
             if (validShooterIds.length === 0) return { team, allShootersHaveResults: false };
             
+            // Schlägt die Ergebnis-Abfrage für EIN Team fehl (z. B. kurzer
+            // Netzwerkfehler), bleibt die Mannschaft sichtbar, statt die ganze
+            // Liste zu leeren. Zu viel anzeigen ist harmlos, zu wenig blockiert.
+            try {
             // Ergebnisse für dieses Team und diesen Durchgang laden
             // Verwende saison-spezifische Collection falls vorhanden
             let scoresQuery;
@@ -361,7 +402,12 @@ export default function SharedResultsPage({
             const hasAtLeastOneShooterWithoutResult = validShooterIds.some(id => !shooterIdsWithResults.has(id));
             
             return { team, allShootersHaveResults: !hasAtLeastOneShooterWithoutResult };
+            } catch (teamError) {
+              logError(`Ergebnis-Prüfung für Team ${team.id} fehlgeschlagen – Team bleibt sichtbar:`, teamError);
+              return { team, allShootersHaveResults: false };
+            }
           }));
+          if (cancelled) return;
           
           // Teams anzeigen, bei denen mindestens ein Schütze noch kein Ergebnis hat
           const filteredTeams = teamsWithFilterInfo
@@ -372,17 +418,19 @@ export default function SharedResultsPage({
           
           setAllTeamsInSelectedLeague(filteredTeams);
         } catch (error) {
+          if (cancelled) return;
           logError("Error fetching teams:", error);
           toast({ title: "Fehler Teams laden", description: (error as Error).message, variant: "destructive" });
           setAllTeamsInSelectedLeague([]);
         } finally {
-          setIsLoadingTeams(false);
+          if (!cancelled) setIsLoadingTeams(false);
         }
       };
       fetchTeams();
     } else {
       setAllTeamsInSelectedLeague([]);
     }
+    return () => { cancelled = true; };
   }, [selectedLeagueId, selectedSeasonId, selectedRound, allSeasons, isLoadingLeagues, pendingScores, justSavedScoreIdentifiers, editMode, toast]);
 
   const handleOCRComplete = (ocrResults: OCRMatchResult[]) => {
